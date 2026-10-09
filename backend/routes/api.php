@@ -32,7 +32,9 @@ Route::prefix('v1')->group(function () {
 
     // Authentication Endpoints
     Route::prefix('auth')->group(function () {
-        Route::post('/login', [AuthController::class, 'login'])->name('api.v1.auth.login');
+        Route::post('/login', [AuthController::class, 'login'])
+            ->middleware('throttle:login')
+            ->name('api.v1.auth.login');
 
         // Authenticated Session Endpoints
         Route::middleware('auth:sanctum')->group(function () {

@@ -308,8 +308,8 @@ All reporting endpoints are strictly restricted to authenticated users with the 
   - Customer documents **never** expose: purchase costs, historical costs, line profits, total profit, internal expense IDs, or external supplier identifiers.
   - External products purchased specifically for a client appear as ordinary line items without any "خارجي" markers or workshop purchase prices.
 - **Wholesale vs Retail Ledger Transparency & Historical Immutability**:
-  - Wholesale sales explicitly show customer prior balance, invoice total, paid amount, and resulting account balance (debt or credit).
-  - **Historical Balance Audit Invariant**: `prior_balance` and `resulting_balance` are evaluated from the ledger sequence strictly prior to the invoice's earliest transaction (`min(customer_transactions.id)` for this invoice). Subsequent customer transactions (e.g. later settlements or new sales) never mutate historical invoice reprint figures.
+  - **Historical Balance Audit Invariant**: `prior_balance` and `resulting_balance` are evaluated from the ledger sequence strictly prior to the invoice's earliest transaction in chronological ordering (`created_at` ASC, `id` ASC). Subsequent customer transactions (e.g. later settlements or new sales) never mutate historical invoice reprint figures.
+  - **Audit Note**: Historical customer balance on invoice print is based on created_at then id. The system does not currently support a separate event date for transactions and does not allow back-dated transactions. If back-dated entry is added in the future, an occurred_at column must be added with explicit owner approval.
   - Retail sales do not require a customer and print cleanly for anonymous shoppers.
 - **Batch Printing Safety Limits**:
   - Maximum of 1,000 total labels per batch print request, enforced at both frontend queue and backend API validation layers (`BarcodePrintPreviewRequest`).

@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Rate Limiter for Login Endpoint (brute-force protection: 5 attempts per minute per IP + username)
+        RateLimiter::for('login', function (Request $request) {
+            $login = (string) $request->input('login', '');
+
+            return Limit::perMinute(5)->by($request->ip().'|'.strtolower(trim($login)));
+        });
+
         // Authorization Gates for Al-Alamiya ERP Foundation
         // Owner-only gates as defined in AGENTS.md Section 23
         Gate::define('access-reports', fn (User $user) => $user->is_active && $user->isOwner());

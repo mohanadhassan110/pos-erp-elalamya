@@ -61,6 +61,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (HttpException $e, Request $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
+                if ($e->getStatusCode() === 429) {
+                    return ApiResponse::error(
+                        'تجاوزت الحد المسموح من المحاولات، يرجى الانتظار والمحاولة لاحقاً',
+                        'TOO_MANY_REQUESTS',
+                        null,
+                        429
+                    );
+                }
+
                 return ApiResponse::error(
                     $e->getMessage() ?: 'حدث خطأ في الطلب',
                     'HTTP_ERROR',
