@@ -120,21 +120,42 @@ class BarcodePrintTest extends TestCase
 
     public function test_confidentiality_purchase_cost_is_strictly_omitted_from_labels(): void
     {
-        $res = $this->actingAs($this->cashier, 'sanctum')
+        $forbiddenKeys = [
+            'purchase_cost',
+            'unit_cost',
+            'total_cost',
+            'profit',
+            'expense_id',
+            'is_external',
+            'item_type',
+            'cost',
+        ];
+
+        // Test with Cashier
+        $cashierRes = $this->actingAs($this->cashier, 'sanctum')
             ->postJson(route('api.v1.products.barcodes.print-preview'), [
                 'items' => [['product_id' => $this->quilt->id, 'quantity' => 1]],
             ]);
 
-        $res->assertOk();
-        $label = $res->json('data.labels.0');
+        $cashierRes->assertOk();
+        $cashierLabel = $cashierRes->json('data.labels.0');
+        foreach ($forbiddenKeys as $key) {
+            $this->assertArrayNotHasKey($key, $cashierLabel);
+        }
+        $this->assertEquals('550.00', $cashierLabel['retail_price']);
+        $this->assertStringContainsString('550', $cashierLabel['retail_price_formatted']);
 
-        $this->assertArrayNotHasKey('purchase_cost', $label);
-        $this->assertArrayNotHasKey('cost', $label);
-        $this->assertArrayNotHasKey('profit', $label);
+        // Test with Owner
+        $ownerRes = $this->actingAs($this->owner, 'sanctum')
+            ->postJson(route('api.v1.products.barcodes.print-preview'), [
+                'items' => [['product_id' => $this->quilt->id, 'quantity' => 1]],
+            ]);
 
-        // Customer retail price is present and formatted
-        $this->assertEquals('550.00', $label['retail_price']);
-        $this->assertStringContainsString('550', $label['retail_price_formatted']);
+        $ownerRes->assertOk();
+        $ownerLabel = $ownerRes->json('data.labels.0');
+        foreach ($forbiddenKeys as $key) {
+            $this->assertArrayNotHasKey($key, $ownerLabel);
+        }
     }
 
     public function test_validation_rejects_empty_items_or_invalid_quantity(): void

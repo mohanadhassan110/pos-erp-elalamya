@@ -144,8 +144,17 @@ class Invoice extends Model
 
     /**
      * Compute authoritative customer prior and resulting balances at invoice time.
-     * Uses the historical customer ledger sequence so subsequent customer transactions
-     * never alter printed balance history.
+     *
+     * Ordering rule:
+     * Transactions are strictly ordered by event time first (`created_at` ASC),
+     * using transaction ID (`id` ASC) as the deterministic tiebreaker.
+     *
+     * A transaction is strictly BEFORE this invoice if:
+     * - its `created_at` is earlier than this invoice's earliest transaction event time, OR
+     * - its `created_at` equals the invoice event time AND its `id` is lower than the invoice transaction ID.
+     *
+     * Resulting balance = prior balance + (invoice total - amount paid on invoice).
+     * Consistent with the invariant: Customer Balance = SUM(debits) - SUM(credits).
      *
      * @return array{prior_balance: Money, resulting_balance: Money}
      */
@@ -158,23 +167,39 @@ class Invoice extends Model
             ];
         }
 
-        // Find the earliest customer transaction created by this invoice
-        $firstInvoiceTxId = CustomerTransaction::query()
+        // Find the earliest customer transaction created by this invoice in chronological ordering (created_at ASC, id ASC)
+        $firstInvoiceTx = CustomerTransaction::query()
             ->where('customer_id', $this->customer->id)
             ->where('reference_type', Invoice::class)
             ->where('reference_id', $this->id)
-            ->min('id');
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->first();
 
-        if ($firstInvoiceTxId !== null) {
-            $priorDebits = CustomerTransaction::query()
+        if ($firstInvoiceTx !== null) {
+            $anchorCreatedAt = $firstInvoiceTx->created_at;
+            $anchorId = $firstInvoiceTx->id;
+
+            $priorQuery = CustomerTransaction::query()
                 ->where('customer_id', $this->customer->id)
-                ->where('id', '<', $firstInvoiceTxId)
+                ->where(function ($query) use ($anchorCreatedAt, $anchorId) {
+                    $query->where('created_at', '<', $anchorCreatedAt)
+                        ->orWhere(function ($subQuery) use ($anchorCreatedAt, $anchorId) {
+                            $subQuery->where('created_at', '=', $anchorCreatedAt)
+                                ->where('id', '<', $anchorId);
+                        });
+                })
+                ->where(function ($q) {
+                    $q->where('reference_type', '!=', Invoice::class)
+                        ->orWhere('reference_id', '!=', $this->id)
+                        ->orWhereNull('reference_type');
+                });
+
+            $priorDebits = (clone $priorQuery)
                 ->where('direction', CustomerTransactionDirection::DEBIT->value)
                 ->sum('amount');
 
-            $priorCredits = CustomerTransaction::query()
-                ->where('customer_id', $this->customer->id)
-                ->where('id', '<', $firstInvoiceTxId)
+            $priorCredits = (clone $priorQuery)
                 ->where('direction', CustomerTransactionDirection::CREDIT->value)
                 ->sum('amount');
 
@@ -182,22 +207,26 @@ class Invoice extends Model
             $netImpact = $this->total->subtract($this->paid_amount);
             $resultingBalance = $priorBalance->add($netImpact);
         } else {
-            // For invoices without direct customer transactions (e.g. retail with attached customer),
+            // For invoices without direct customer transactions (e.g. retail with attached customer or unposted invoice),
             // calculate ledger balance strictly prior to invoice creation timestamp.
-            $priorDebits = CustomerTransaction::query()
+            $anchorCreatedAt = $this->created_at ?? now();
+
+            $priorQuery = CustomerTransaction::query()
                 ->where('customer_id', $this->customer->id)
-                ->where('created_at', '<', $this->created_at ?? now())
+                ->where('created_at', '<', $anchorCreatedAt);
+
+            $priorDebits = (clone $priorQuery)
                 ->where('direction', CustomerTransactionDirection::DEBIT->value)
                 ->sum('amount');
 
-            $priorCredits = CustomerTransaction::query()
-                ->where('customer_id', $this->customer->id)
-                ->where('created_at', '<', $this->created_at ?? now())
+            $priorCredits = (clone $priorQuery)
                 ->where('direction', CustomerTransactionDirection::CREDIT->value)
                 ->sum('amount');
 
             $priorBalance = Money::fromDecimal($priorDebits)->subtract(Money::fromDecimal($priorCredits));
-            $resultingBalance = $priorBalance;
+            $resultingBalance = $this->sale_type === SaleType::WHOLESALE
+                ? $priorBalance->add($this->total->subtract($this->paid_amount))
+                : $priorBalance;
         }
 
         return [
