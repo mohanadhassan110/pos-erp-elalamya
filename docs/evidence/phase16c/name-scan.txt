@@ -1,0 +1,38 @@
+﻿=== GIT GREP -n FOR: معرض الأمل ===
+scripts/scan-names.js:4:  'معرض الأمل',
+
+=== GIT GREP -n FOR: النساجون ===
+scripts/scan-names.js:5:  'النساجون',
+
+=== GIT GREP -n FOR: المحلة ===
+backend/app/Http/Resources/Sales/InvoicePrintResource.php:86:        $showroomAddress = Setting::get('showroom_address', 'المعرض الرئيسي - المحلة الكبرى');
+backend/database/factories/SupplierFactory.php:20:            'address' => 'المحلة الكبرى، مصر',
+backend/database/seeders/ProductionSeeder.php:84:            'showroom_address' => ['value' => 'المعرض الرئيسي - المحلة الكبرى', 'type' => 'string', 'group' => 'general'],
+frontend/src/__tests__/printing.test.ts:167:        address: 'المعرض الرئيسي - المحلة الكبرى',
+scripts/drill-backup-restore.ps1:46:VALUES (1, 'مصنع الغزل والنسيج بالمحلة', '01234567890', 'المحلة الكبرى', 1, NOW(), NOW());
+scripts/scan-names.js:6:  'المحلة',
+
+=== GIT GREP -n FOR: النور ===
+scripts/scan-names.js:7:  'النور',
+
+=== GIT GREP -n FOR: السعادة ===
+scripts/scan-names.js:8:  'السعادة',
+
+=== GIT GREP -n FOR: الفردوس ===
+scripts/scan-names.js:9:  'الفردوس',
+
+=== GIT GREP -n FOR: السلام ===
+scripts/scan-names.js:10:  'السلام',
+
+=== GIT GREP -n FOR: الأثاث ===
+scripts/scan-names.js:11:  'الأثاث',
+
+=== GIT GREP -n FOR: موبيليا ===
+scripts/scan-names.js:12:  'موبيليا',
+
+=== GIT GREP -n FOR: furniture ===
+scripts/scan-names.js:13:  'furniture',
+
+=== GIT GREP -n FOR: ستائر ===
+scripts/scan-names.js:14:  'ستائر'
+

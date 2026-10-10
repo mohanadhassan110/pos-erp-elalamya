@@ -1,0 +1,34 @@
+﻿=== RETAIL OVERPAYMENT AUDIT (Total 300 / Paid 400) ===
+API Response Status: HTTP 201
+
+--- 1. INVOICE HEADER FIELDS ---
+Invoice Number:    INV-20261010-0001
+Sale Type:         retail
+Subtotal:          300.00 ج.م
+Discount:          0.00 ج.م
+Total:             300.00 ج.م
+Paid Amount:       400.00 ج.م
+Remaining Amount:  0.00 ج.م
+Credit Amount:     100.00 ج.م (Change Due / باقي العميل)
+
+--- 2. INVOICE PAYMENTS ROWS (table: invoice_payments) ---
+ID: 1 | Invoice ID: 1 | Method ID: 1 | Amount: 400.00
+
+--- 3. PAYMENTS TABLE ROWS (table: payments) ---
+ID: 1 | Type: invoice_payment | Payable: App\Models\Invoice#1 | Amount: 400.00
+
+--- 4. PAYMENTS REPORT SUMMARY (PaymentReportService) ---
+Total Inflows:     400.00 ج.م
+Total Outflows:    0.00 ج.م
+Net Movement:      400.00 ج.م
+Cash Inflows:      400.00 ج.م
+Cash Outflows:     0.00 ج.م
+Net Cash Movement: 400.00 ج.م
+Invoice Payments:  400.00 ج.م
+
+--- 5. PHYSICAL CASH DRAWER REALITY ---
+Actual Cash Tendered by Customer:   400.00 ج.م
+Actual Change Returned to Customer: 100.00 ج.م
+Actual Cash Left in Cash Drawer:     300.00 ج.م
+System Reported Net Cash Inflow:     400.00 ج.م
+Discrepancy (Ghost Cash in System):  +100.00 ج.م (Overstated by change returned!)

@@ -1,0 +1,32 @@
+﻿
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90mD:/elalamya-main/frontend[39m
+
+ [32m✓[39m src/__tests__/posSales.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m src/__tests__/stockReceiving.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/__tests__/salesReturns.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/printing.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/__tests__/reports.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/__tests__/client.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m60 passed[39m[22m[90m (60)[39m
+[2m   Start at [22m 15:07:22
+[2m   Duration [22m 737ms[2m (transform 55%, import 23%, tests 13%, worker 8%)[22m
+
+Found 0 warnings and 0 errors.
+Finished in 177ms on 66 files with 116 rules using 8 threads.
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+[36mvite v8.3.3 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 77 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.06 kB │ gzip:   0.58 kB
+dist/assets/index-Dl5pgicM.css    4.37 kB │ gzip:   1.58 kB
+dist/assets/index-CbNG6Pin.js   508.52 kB │ gzip: 128.23 kB
+
+[32m✓ built in 1.52s[39m

@@ -1,0 +1,54 @@
+﻿=== APPLICATION-LEVEL CONCURRENCY PROOF (MariaDB Engine) ===
+[1] Running migrations on elalamya_test (MariaDB)...
+[2] Test product created: ID 1, Barcode K0001, Initial Stock: 1
+    Server Engine: Apache 2.4 (MPM WinNT) on Port 80
+    Target HTTP Endpoint: http://127.0.0.1/api/v1/invoices
+[3] Executing 30 concurrent rounds with 2 parallel HTTP client processes each...
+
+Round | Client 1 (Status) | Client 2 (Status) | Overlap    | Winner Invoice    | Stock | Result
+------------------------------------------------------------------------------------------
+1     | HTTP 201 (545.29ms) | HTTP 422 (539.21ms) | 520.2ms    | INV-20261010-0001 | 0     | PASS  
+2     | HTTP 201 (432.44ms) | HTTP 422 (418.53ms) | 418.5ms    | INV-20261010-0002 | 0     | PASS  
+3     | HTTP 201 (415.66ms) | HTTP 422 (397.85ms) | 397.9ms    | INV-20261010-0003 | 0     | PASS  
+4     | HTTP 201 (474.43ms) | HTTP 422 (451.97ms) | 452ms      | INV-20261010-0004 | 0     | PASS  
+5     | HTTP 201 (448.46ms) | HTTP 422 (425.68ms) | 425.7ms    | INV-20261010-0005 | 0     | PASS  
+6     | HTTP 201 (434.17ms) | HTTP 422 (416.88ms) | 416.9ms    | INV-20261010-0006 | 0     | PASS  
+7     | HTTP 201 (416.98ms) | HTTP 422 (399.66ms) | 399.7ms    | INV-20261010-0007 | 0     | PASS  
+8     | HTTP 201 (395.16ms) | HTTP 422 (375.55ms) | 375.6ms    | INV-20261010-0008 | 0     | PASS  
+9     | HTTP 201 (422.12ms) | HTTP 422 (399.75ms) | 399.8ms    | INV-20261010-0009 | 0     | PASS  
+10    | HTTP 201 (425.73ms) | HTTP 422 (405.22ms) | 405.2ms    | INV-20261010-0010 | 0     | PASS  
+11    | HTTP 201 (424.39ms) | HTTP 422 (415.18ms) | 415.2ms    | INV-20261010-0011 | 0     | PASS  
+12    | HTTP 201 (441.1ms) | HTTP 422 (421.65ms) | 421.6ms    | INV-20261010-0012 | 0     | PASS  
+13    | HTTP 201 (415.92ms) | HTTP 422 (378.71ms) | 378.7ms    | INV-20261010-0013 | 0     | PASS  
+14    | HTTP 201 (406.13ms) | HTTP 422 (390.08ms) | 390.1ms    | INV-20261010-0014 | 0     | PASS  
+15    | HTTP 201 (391.23ms) | HTTP 422 (373.64ms) | 373.6ms    | INV-20261010-0015 | 0     | PASS  
+16    | HTTP 201 (411.79ms) | HTTP 422 (387.33ms) | 387.3ms    | INV-20261010-0016 | 0     | PASS  
+17    | HTTP 201 (431.36ms) | HTTP 422 (410.84ms) | 410.8ms    | INV-20261010-0017 | 0     | PASS  
+18    | HTTP 201 (392.6ms) | HTTP 422 (372.71ms) | 372.7ms    | INV-20261010-0018 | 0     | PASS  
+19    | HTTP 201 (409.49ms) | HTTP 422 (384.24ms) | 384.2ms    | INV-20261010-0019 | 0     | PASS  
+20    | HTTP 201 (429.16ms) | HTTP 422 (376.21ms) | 376.2ms    | INV-20261010-0020 | 0     | PASS  
+21    | HTTP 422 (423.75ms) | HTTP 201 (407.44ms) | 404.9ms    | INV-20261010-0021 | 0     | PASS  
+22    | HTTP 201 (439.58ms) | HTTP 422 (419.29ms) | 419ms      | INV-20261010-0022 | 0     | PASS  
+23    | HTTP 201 (394.83ms) | HTTP 422 (376.66ms) | 376.7ms    | INV-20261010-0023 | 0     | PASS  
+24    | HTTP 201 (396.33ms) | HTTP 422 (378.63ms) | 367ms      | INV-20261010-0024 | 0     | PASS  
+25    | HTTP 201 (401.84ms) | HTTP 422 (382.08ms) | 382.1ms    | INV-20261010-0025 | 0     | PASS  
+26    | HTTP 422 (427.28ms) | HTTP 201 (414.31ms) | 413ms      | INV-20261010-0026 | 0     | PASS  
+27    | HTTP 201 (398.38ms) | HTTP 422 (387.18ms) | 387.2ms    | INV-20261010-0027 | 0     | PASS  
+28    | HTTP 201 (405.15ms) | HTTP 422 (387.63ms) | 387.6ms    | INV-20261010-0028 | 0     | PASS  
+29    | HTTP 201 (393.97ms) | HTTP 422 (376.7ms) | 376.7ms    | INV-20261010-0029 | 0     | PASS  
+30    | HTTP 201 (393.05ms) | HTTP 422 (376.69ms) | 376.7ms    | INV-20261010-0030 | 0     | PASS  
+------------------------------------------------------------------------------------------
+Rounds Completed: 30
+Total Successful (201 Created): 30 (Expected: 30)
+Total Rejected (422 Insufficient Stock): 30 (Expected: 30)
+Negative Stock Violations: 0 (Expected: 0)
+Duplicate Invoice Numbers: 0 (Expected: 0)
+Unique Invoices Created: 30
+
+[4] Testing Concurrent Idempotency Key Reuse...
+Process A: HTTP 201 -> Invoice INV-20261010-0031
+Process B: HTTP 200 -> Invoice INV-20261010-0031
+Final Stock after Idempotency Round: 0 (Expected: 0, not negative)
+IDEMPOTENCY CONCURRENCY CHECK: PASSED (Exact same invoice returned, zero double stock deductions)
+
+OVERALL CONCURRENCY PROOF RESULT: PASSED (100% RELIABILITY)

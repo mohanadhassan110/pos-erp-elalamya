@@ -1,0 +1,108 @@
+﻿=== 1. SCHEDULED TASK AUDIT ===
+
+
+State                 : Ready
+Actions               : {MSFT_TaskExecAction}
+Author                : 
+Date                  : 
+Description           : Daily automated database backup for Al-Alamiya ERP/POS
+Documentation         : 
+Principal             : MSFT_TaskPrincipal2
+SecurityDescriptor    : 
+Settings              : MSFT_TaskSettings3
+Source                : 
+TaskName              : AlAlamiya_Daily_Backup
+TaskPath              : \
+Triggers              : {MSFT_TaskDailyTrigger}
+URI                   : \AlAlamiya_Daily_Backup
+Version               : 
+PSComputerName        : 
+CimClass              : Root/Microsoft/Windows/TaskScheduler:MSFT_ScheduledTask
+CimInstanceProperties : {Actions, Author, Date, Description...}
+CimSystemProperties   : Microsoft.Management.Infrastructure.CimSystemProperties
+
+
+
+
+=== 2. SCHEDULED TASK INFO ===
+
+
+LastRunTime           : 11/30/1999 12:00:00 AM
+LastTaskResult        : 267011
+NextRunTime           : 10/10/2026 11:30:30 PM
+NumberOfMissedRuns    : 0
+TaskName              : AlAlamiya_Daily_Backup
+TaskPath              : 
+PSComputerName        : 
+CimClass              : Root/Microsoft/Windows/TaskScheduler:MSFT_TaskDynamicInfo
+CimInstanceProperties : {LastRunTime, LastTaskResult, NextRunTime, NumberOfMissedRuns...}
+CimSystemProperties   : Microsoft.Management.Infrastructure.CimSystemProperties
+
+
+
+
+=== 3. RUNNING FINANCIAL BACKUP & RESTORE DRILL ===
+=== 1. Resetting test database elalamya_test ===
+
+  Dropping all tables .................................................................................. 422.22ms DONE
+
+   INFO  Preparing database.  
+
+  Creating migration table .............................................................................. 17.12ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000000_create_users_table ................................................................. 132.52ms DONE
+  0001_01_01_000001_create_cache_table .................................................................. 27.49ms DONE
+  0001_01_01_000002_create_jobs_table ................................................................... 84.52ms DONE
+  2026_10_07_232447_create_personal_access_tokens_table ................................................. 95.71ms DONE
+  2026_10_08_022854_add_role_and_username_to_users_table ................................................ 33.45ms DONE
+  2026_10_08_030001_create_categories_table ............................................................. 55.01ms DONE
+  2026_10_08_030002_create_products_table .............................................................. 178.26ms DONE
+  2026_10_08_030003_create_customers_table ............................................................. 102.72ms DONE
+  2026_10_08_030004_create_suppliers_table .............................................................. 90.29ms DONE
+  2026_10_08_030005_create_payment_methods_table ........................................................ 65.65ms DONE
+  2026_10_08_030006_create_payments_table .............................................................. 267.83ms DONE
+  2026_10_08_030007_create_invoices_table .............................................................. 313.58ms DONE
+  2026_10_08_030008_create_invoice_items_table ......................................................... 265.56ms DONE
+  2026_10_08_030009_create_invoice_payments_table ...................................................... 346.49ms DONE
+  2026_10_08_030010_create_customer_transactions_table ................................................. 213.04ms DONE
+  2026_10_08_030011_create_supplier_transactions_table ................................................. 234.16ms DONE
+  2026_10_08_030012_create_expense_categories_table ..................................................... 48.78ms DONE
+  2026_10_08_030013_create_expenses_table .............................................................. 407.09ms DONE
+  2026_10_08_030014_create_inventory_movements_table ................................................... 225.07ms DONE
+  2026_10_08_030015_create_stock_receipts_table ........................................................ 179.24ms DONE
+  2026_10_08_030016_create_stock_receipt_items_table ................................................... 155.76ms DONE
+  2026_10_08_030017_create_sales_returns_table ......................................................... 417.03ms DONE
+  2026_10_08_030018_create_sales_return_items_table .................................................... 252.51ms DONE
+  2026_10_08_030019_create_stock_adjustments_table ..................................................... 134.24ms DONE
+  2026_10_08_030020_create_stock_adjustment_items_table ................................................ 139.52ms DONE
+  2026_10_08_030021_create_audit_logs_table ............................................................ 147.33ms DONE
+  2026_10_08_030022_create_settings_table ............................................................... 64.25ms DONE
+  2026_10_08_040001_add_idempotency_key_to_sales_returns_table .......................................... 38.06ms DONE
+  2026_10_10_000001_add_performance_indexes_to_invoices_and_returns_tables ............................. 114.61ms DONE
+
+
+=== 2. FINANCIAL STATE BEFORE BACKUP ===
+cnt_invoices	cnt_invoice_items	cnt_invoice_payments	cnt_payments	cnt_customer_tx	cnt_supplier_tx	cnt_expenses	cnt_sales_returns	cnt_return_items	cnt_inv_movements	cnt_receipts	cnt_receipt_items	customer_balance	supplier_payable
+1	1	1	1	2	2	1	1	1	1	1	1	3000.00	5000.00
+
+=== 3. Executing backup-database.ps1 (credentials file mode) ===
+[INFO] Created backup directory: D:\elalamya-backups\full_financial_drill
+Starting Database Backup for: elalamya_test
+Target File: D:\elalamya-backups\full_financial_drill\elalamya_test_backup_2026-10-10_160755.sql
+[SUCCESS] Backup created successfully: D:\elalamya-backups\full_financial_drill\elalamya_test_backup_2026-10-10_160755.sql (Size: 48.36 KB)
+[COMPLETE] Backup finished successfully.
+Produced Backup File: D:\elalamya-backups\full_financial_drill\elalamya_test_backup_2026-10-10_160755.sql
+
+=== 4. Disaster Simulation (Wiping database completely) ===
+=== 5. Restoring database via restore-database.ps1 ===
+Restoring Database: elalamya_test from D:\elalamya-backups\full_financial_drill\elalamya_test_backup_2026-10-10_160755.sql
+[SUCCESS] Database elalamya_test restored successfully.
+
+=== 6. FINANCIAL STATE AFTER RESTORE ===
+cnt_invoices	cnt_invoice_items	cnt_invoice_payments	cnt_payments	cnt_customer_tx	cnt_supplier_tx	cnt_expenses	cnt_sales_returns	cnt_return_items	cnt_inv_movements	cnt_receipts	cnt_receipt_items	customer_balance	supplier_payable
+1	1	1	1	2	2	1	1	1	1	1	1	3000.00	5000.00
+
+
+=== DRILL RESULT: SUCCESS - 100% MATCH ON ALL 11 FINANCIAL TABLES AND BALANCES ===

@@ -21,6 +21,19 @@ import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 import { useAuth } from '../../app/providers/useAuth';
+import {
+  BarChart3,
+  Lock,
+  RefreshCw,
+  TrendingUp,
+  Tag,
+  Wallet,
+  Users,
+  Package,
+  Coins,
+  FileText,
+  RotateCcw,
+} from 'lucide-react';
 
 type ReportTab = 'overview' | 'sales' | 'expenses' | 'ledgers' | 'inventory' | 'cash' | 'history';
 
@@ -308,8 +321,9 @@ export const ReportsPage: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', margin: 0 }}>
-            📊 التقارير المالية والتشغيلية
+          <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <BarChart3 size={24} style={{ color: 'var(--color-navy-800)' }} />
+            التقارير المالية والتشغيلية
           </h1>
           <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
             معرض العالمية للمفروشات — مؤشرات الأداء، الأرباح المحققة، حركة النقدية والمخزون
@@ -419,18 +433,22 @@ export const ReportsPage: React.FC = () => {
 
           {!isOwner && !isReportsLocked && (
             <Button variant="outline" size="sm" onClick={handleLockReports}>
-              🔒 قفل التقارير
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Lock size={14} /> قفل التقارير
+              </span>
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isLoading || isReportsLocked}>
-            🔄 تحديث
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              <RefreshCw size={14} /> تحديث
+            </span>
           </Button>
         </div>
       </div>
 
       {isReportsLocked ? (
         <div style={{ maxWidth: '30rem', margin: '3rem auto', width: '100%' }}>
-          <Card title="🔒 قسم التقارير مقفل بكلمة مرور">
+          <Card title="قسم التقارير مقفل بكلمة مرور">
             <form onSubmit={handleUnlockSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.6, margin: 0 }}>
                 قسم التقارير يحتوي على مؤشرات الأداء والأرباح. يتطلب هذا القسم إدخال كلمة المرور المصرح بها لإلغاء القفل مؤقتاً.
@@ -489,7 +507,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>📈</span>
+          <TrendingUp size={16} />
           <span>نظرة عامة</span>
         </button>
 
@@ -502,7 +520,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'sales' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'sales' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'sales' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'sales' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -510,7 +528,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>🏷️</span>
+          <Tag size={16} />
           <span>المبيعات والأرباح</span>
         </button>
 
@@ -523,7 +541,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'expenses' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'expenses' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'expenses' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'expenses' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -531,7 +549,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>💸</span>
+          <Wallet size={16} />
           <span>المصروفات التشغيلية</span>
         </button>
 
@@ -544,7 +562,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'ledgers' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'ledgers' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'ledgers' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'ledgers' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -552,7 +570,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>👥</span>
+          <Users size={16} />
           <span>العملاء والموردين</span>
         </button>
 
@@ -565,7 +583,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'inventory' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'inventory' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'inventory' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'inventory' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -573,7 +591,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>📦</span>
+          <Package size={16} />
           <span>تقييم المخزون</span>
         </button>
 
@@ -586,7 +604,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'cash' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'cash' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'cash' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'cash' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -594,7 +612,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>💵</span>
+          <Coins size={16} />
           <span>حركة وطرق الدفع</span>
         </button>
 
@@ -607,7 +625,7 @@ export const ReportsPage: React.FC = () => {
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
             fontWeight: activeTab === 'history' ? 'bold' : 'normal',
-            backgroundColor: activeTab === 'history' ? 'var(--color-primary-600)' : '#ffffff',
+            backgroundColor: activeTab === 'history' ? 'var(--color-navy-800)' : '#ffffff',
             color: activeTab === 'history' ? '#ffffff' : 'var(--text-main)',
             boxShadow: 'var(--shadow-xs)',
             display: 'flex',
@@ -615,7 +633,7 @@ export const ReportsPage: React.FC = () => {
             gap: '0.375rem',
           }}
         >
-          <span>📑</span>
+          <FileText size={16} />
           <span>سجل الفواتير والمرتجع</span>
         </button>
       </div>
@@ -793,7 +811,7 @@ export const ReportsPage: React.FC = () => {
                 }}
               >
                 <div style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-                  📌 محددات وقواعد الاحتساب المالية المعتمدة (Constitutional Invariants):
+                  محددات وقواعد الاحتساب المالية المعتمدة:
                 </div>
                 <ul style={{ margin: 0, paddingRight: '1.25rem' }}>
                   <li>أرباح المبيعات وتكلفة البضاعة المباعة تعتمد على لقطة التكلفة التاريخية المحفوظة مع كل بند فاتورة ولا تتغير بتغير سعر شراء المنتج الحالي.</li>
@@ -1570,14 +1588,18 @@ export const ReportsPage: React.FC = () => {
                   size="sm"
                   onClick={() => setHistorySubTab('invoices')}
                 >
-                  📄 سجل فواتير المبيعات
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <FileText size={14} /> سجل فواتير المبيعات
+                  </span>
                 </Button>
                 <Button
                   variant={historySubTab === 'returns' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setHistorySubTab('returns')}
                 >
-                  🔄 سجل عمليات المرتجع والاستبدال
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <RotateCcw size={14} /> سجل عمليات المرتجع والاستبدال
+                  </span>
                 </Button>
               </div>
 

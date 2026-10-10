@@ -3,28 +3,48 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/useAuth';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { formatLiveTime } from '../../utils/formatters';
+import logoWhite from '../../assets/brand/logo-white.png';
+import {
+  ShoppingCart,
+  FileText,
+  RefreshCw,
+  Package,
+  Tags,
+  ArrowDownToLine,
+  Layers,
+  Barcode,
+  Users,
+  Building2,
+  BarChart3,
+  Settings,
+  LogOut,
+  Clock,
+  User as UserIcon,
+  Menu,
+} from 'lucide-react';
+
+interface NavGroup {
+  heading: string;
+  items: {
+    to: string;
+    label: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    isOwnerOnly?: boolean;
+  }[];
+}
 
 export const AppLayout: React.FC = () => {
   const { user, isOwner, logout } = useAuth();
   const navigate = useNavigate();
-  const [cairoTime, setCairoTime] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCairoTime(
-        now.toLocaleTimeString('ar-EG', {
-          timeZone: 'Africa/Cairo',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        })
-      );
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -38,78 +58,151 @@ export const AppLayout: React.FC = () => {
     }
   };
 
-  const navItems = [
-    { to: '/system-check', label: 'فحص أساس النظام', isOwnerOnly: false, icon: '⚡' },
-    { to: '/categories', label: 'فئات الأصناف', isOwnerOnly: false, icon: '🏷️' },
-    { to: '/products', label: 'دليل المنتجات', isOwnerOnly: false, icon: '🛏️' },
-    { to: '/customers', label: 'العملاء والحسابات', isOwnerOnly: false, icon: '👥' },
-    { to: '/suppliers', label: 'الموردين والحسابات', isOwnerOnly: false, icon: '🏢' },
-    { to: '/stock-receiving', label: 'استلام بضاعة', isOwnerOnly: false, icon: '📥' },
-    { to: '/inventory', label: 'إدارة المخزون', isOwnerOnly: false, icon: '📦' },
-    { to: '/pos', label: 'نقطة البيع (POS)', isOwnerOnly: false, icon: '🛒' },
-    { to: '/invoices', label: 'فواتير المبيعات', isOwnerOnly: false, icon: '📄' },
-    { to: '/returns', label: 'مرتجع واستبدال', isOwnerOnly: false, icon: '🔄' },
-    { to: '/barcodes', label: 'طباعة الباركود', isOwnerOnly: false, icon: '🏷️' },
-    { to: '/expenses', label: 'سجل المصروفات', isOwnerOnly: false, icon: '💰' },
-    { to: '/reports', label: 'التقارير والأرباح', isOwnerOnly: false, icon: '📊' },
-    { to: '/settings', label: 'إعدادات النظام', isOwnerOnly: true, icon: '⚙️' },
+  const navGroups: NavGroup[] = [
+    {
+      heading: 'المبيعات',
+      items: [
+        { to: '/pos', label: 'نقطة البيع (POS)', icon: ShoppingCart },
+        { to: '/invoices', label: 'فواتير المبيعات', icon: FileText },
+        { to: '/returns', label: 'مرتجع واستبدال', icon: RefreshCw },
+      ],
+    },
+    {
+      heading: 'المخزون',
+      items: [
+        { to: '/products', label: 'دليل المنتجات', icon: Package },
+        { to: '/categories', label: 'فئات الأصناف', icon: Tags },
+        { to: '/stock-receiving', label: 'استلام بضاعة', icon: ArrowDownToLine },
+        { to: '/inventory', label: 'حركة المخزون', icon: Layers },
+        { to: '/barcodes', label: 'طباعة الباركود', icon: Barcode },
+      ],
+    },
+    {
+      heading: 'العملاء والموردين',
+      items: [
+        { to: '/customers', label: 'العملاء والحسابات', icon: Users },
+        { to: '/suppliers', label: 'الموردين والحسابات', icon: Building2 },
+      ],
+    },
+    {
+      heading: 'التقارير',
+      items: [
+        { to: '/reports', label: 'التقارير والأرباح', icon: BarChart3 },
+      ],
+    },
+    ...(isOwner
+      ? [
+          {
+            heading: 'الإدارة',
+            items: [
+              { to: '/settings', label: 'إعدادات النظام', icon: Settings, isOwnerOnly: true },
+            ],
+          },
+        ]
+      : []),
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-app)' }}>
-      {/* Top Application Bar */}
+      {/* Top Application Bar — Deep Navy (#0B1220) */}
       <header
         style={{
-          height: '3.5rem',
-          backgroundColor: 'var(--color-slate-900)',
+          height: '3.75rem',
+          backgroundColor: 'var(--color-navy-950, #0B1220)',
           color: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 1.25rem',
-          borderBottom: '1px solid var(--color-slate-800)',
-          zIndex: 'var(--z-fixed, 1030)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          zIndex: 100,
         }}
       >
+        {/* Right (Start side in RTL): Logo & Fixed Showroom Name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>🧵</span>
-            <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-lg)' }}>
-              العالمية ERP/POS
-            </span>
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            style={{
+              display: 'none',
+              background: 'transparent',
+              border: 'none',
+              color: '#ffffff',
+              cursor: 'pointer',
+              padding: '4px',
+            }}
+            className="md-mobile-menu-btn"
+            title="القائمة"
+          >
+            <Menu size={22} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <img
+              src={logoWhite}
+              alt="معرض العالمية للمفروشات"
+              style={{
+                height: '34px',
+                width: 'auto',
+                display: 'block',
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 700, fontSize: '15px', color: '#ffffff', lineHeight: 1.2 }}>
+                معرض العالمية للمفروشات
+              </span>
+              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: 1.2 }}>
+                نظام إدارة المبيعات ونقاط البيع والمخزون
+              </span>
+            </div>
           </div>
-          <span style={{ color: 'var(--color-slate-400)', fontSize: 'var(--font-size-xs)' }}>|</span>
-          <span style={{ color: 'var(--color-slate-300)', fontSize: 'var(--font-size-xs)' }}>
-            معرض المفروشات المنزلية
-          </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          {/* Cairo Clock */}
+        {/* Left (End side in RTL): Clock, User Role Badge, Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Live Cairo Clock */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.375rem',
-              backgroundColor: 'var(--color-slate-800)',
-              padding: '0.25rem 0.625rem',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 'var(--font-size-xs)',
-              fontFamily: 'var(--font-family-mono)',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              padding: '0.375rem 0.625rem',
+              borderRadius: 'var(--radius-sm, 4px)',
+              fontSize: '13px',
+              fontVariantNumeric: 'tabular-nums',
+              color: '#F8FAFC',
+              direction: 'ltr',
             }}
           >
-            <span style={{ color: 'var(--color-slate-400)' }}>القاهرة:</span>
-            <span>{cairoTime}</span>
+            <Clock size={14} style={{ color: '#94A3B8' }} />
+            <span>{formatLiveTime(currentTime)}</span>
           </div>
 
-          {/* User & Role Badge */}
+          {/* User info & Role badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Badge variant={isOwner ? 'primary' : 'warning'} size="sm">
-              {user?.role_label || 'كاشير'}
-            </Badge>
-            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)' }}>
-              {user?.name}
-            </span>
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+              }}
+            >
+              <UserIcon size={16} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2 }}>
+                {user?.name}
+              </span>
+              <Badge variant={isOwner ? 'warning' : 'primary'} size="sm">
+                {isOwner ? 'المالك' : 'كاشير'}
+              </Badge>
+            </div>
           </div>
 
           {/* Logout Action */}
@@ -118,117 +211,106 @@ export const AppLayout: React.FC = () => {
             size="sm"
             onClick={handleLogout}
             isLoading={isLoggingOut}
-            style={{ color: 'var(--color-slate-300)' }}
+            icon={<LogOut size={16} />}
+            style={{
+              color: '#CBD5E1',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              height: '36px',
+            }}
           >
-            تسجيل الخروج
+            خروج
           </Button>
         </div>
       </header>
 
-      {/* Main Body: RTL Sidebar + Content Area */}
+      {/* Main Body: Right Sidebar + Content Area */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar Navigation */}
+        {/* Right Sidebar Navigation */}
         <aside
           style={{
-            width: '16rem',
-            backgroundColor: 'var(--bg-surface)',
-            borderLeft: '1px solid var(--border-subtle)',
+            width: '15.5rem',
+            backgroundColor: 'var(--bg-surface, #ffffff)',
+            borderLeft: '1px solid var(--border-subtle, #E2E8F0)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             padding: '1rem 0',
+            overflowY: 'auto',
           }}
         >
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0 0.75rem' }}>
-            <span
-              style={{
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--text-muted)',
-                padding: '0.5rem 0.5rem 0.25rem',
-              }}
-            >
-              القوائم التشغيلية
-            </span>
-
-            {navItems.map((item) => {
-              const isLockedForCashier = item.isOwnerOnly && !isOwner;
-
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  style={({ isActive }) => ({
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: 'var(--font-size-base)',
-                    fontWeight: isActive ? 'var(--font-weight-bold)' : 'var(--font-weight-medium)',
-                    backgroundColor: isActive ? 'var(--color-primary-50)' : 'transparent',
-                    color: isActive
-                      ? 'var(--color-primary-800)'
-                      : isLockedForCashier
-                      ? 'var(--text-disabled)'
-                      : 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    opacity: isLockedForCashier ? 0.7 : 1,
-                  })}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0 0.75rem' }}>
+            {navGroups.map((group) => (
+              <div key={group.heading} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span
+                  style={{
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    color: 'var(--text-muted, #64748B)',
+                    padding: '0.25rem 0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </div>
-                  {item.isOwnerOnly && (
-                    <Badge variant={isOwner ? 'primary' : 'neutral'} size="sm">
-                      مالك فقط
-                    </Badge>
-                  )}
-                </NavLink>
-              );
-            })}
+                  {group.heading}
+                </span>
+
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      style={({ isActive }) => ({
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.5625rem 0.75rem',
+                        borderRadius: 'var(--radius-md, 6px)',
+                        fontSize: '14px',
+                        fontWeight: isActive ? 700 : 500,
+                        backgroundColor: isActive ? 'var(--color-navy-950, #0B1220)' : 'transparent',
+                        color: isActive ? '#FFFFFF' : 'var(--text-secondary, #334155)',
+                        textDecoration: 'none',
+                        transition: 'background-color 120ms ease, color 120ms ease',
+                      })}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </div>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
           <div
             style={{
               padding: '0.75rem 1rem',
-              borderTop: '1px solid var(--border-subtle)',
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--text-muted)',
+              borderTop: '1px solid var(--border-subtle, #E2E8F0)',
+              fontSize: '12px',
+              color: 'var(--text-muted, #64748B)',
+              textAlign: 'center',
             }}
           >
-            <div>الوضع التشغيلي: <strong style={{ color: 'var(--text-primary)' }}>متصل</strong></div>
-            <div style={{ marginTop: '0.25rem' }}>قاعدة البيانات: MySQL</div>
+            <span>معرض العالمية للمفروشات</span>
           </div>
         </aside>
 
         {/* Content Viewport */}
-        <main style={{ flex: 1, padding: '1.5rem', overflowY: 'auto' }}>
+        <main
+          style={{
+            flex: 1,
+            padding: '1.25rem 1.5rem',
+            overflowY: 'auto',
+            backgroundColor: 'var(--bg-app, #F8FAFC)',
+          }}
+        >
           <Outlet />
         </main>
       </div>
-
-      {/* Operational Footer Bar */}
-      <footer
-        style={{
-          height: '2rem',
-          backgroundColor: 'var(--color-slate-100)',
-          borderTop: '1px solid var(--border-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 1.25rem',
-          fontSize: 'var(--font-size-xs)',
-          color: 'var(--text-muted)',
-        }}
-      >
-        <span>العالمية ERP/POS — المرحلة 1 (الأساس الهندسي والتشغيلي)</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span>المنطقة الزمنية: Africa/Cairo</span>
-          <span>الاتصال: /api/v1</span>
-        </div>
-      </footer>
     </div>
   );
 };

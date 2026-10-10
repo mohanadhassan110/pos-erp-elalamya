@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 
 export type AlertType = 'info' | 'success' | 'warning' | 'error';
 
@@ -77,12 +78,14 @@ export const Alert: React.FC<AlertProps> = ({
             border: 'none',
             cursor: 'pointer',
             color: current.text,
-            lineHeight: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             padding: '0.25rem',
           }}
           aria-label="إغلاق التنبيه"
         >
-          ✕
+          <X size={16} />
         </button>
       )}
 

@@ -35,9 +35,12 @@ class ApiClient {
   private baseUrl: string;
 
   constructor() {
-    const defaultHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
-    const defaultUrl = `http://${defaultHost}:8000/api/v1`;
-    const rawUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || defaultUrl;
+    // In production same-origin deployment, use relative '/api/v1'.
+    // VITE_API_BASE_URL or VITE_API_URL can be provided as a development override.
+    const rawUrl =
+      (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+      (import.meta.env.VITE_API_URL as string | undefined) ||
+      '/api/v1';
     // Remove trailing slash if present
     this.baseUrl = rawUrl.replace(/\/+$/, '');
   }
@@ -52,7 +55,17 @@ class ApiClient {
 
   private buildUrl(path: string, params?: RequestOptions['params']): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    const url = new URL(`${this.baseUrl}${cleanPath}`);
+    const fullPath = `${this.baseUrl}${cleanPath}`;
+
+    // Resolve relative URL against current window origin or fallback for Node/testing
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'http://localhost';
+
+    const url = fullPath.startsWith('http://') || fullPath.startsWith('https://')
+      ? new URL(fullPath)
+      : new URL(fullPath, origin);
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

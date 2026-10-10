@@ -24,9 +24,6 @@ putenv('DB_USERNAME=root');
 putenv('DB_PASSWORD=');
 putenv('APP_ENV=testing');
 
-$app = require __DIR__.'/../bootstrap/app.php';
-$app->make(Kernel::class)->bootstrap();
-
 use App\Models\Category;
 use App\Models\PaymentMethod;
 use App\Models\Product;
@@ -35,6 +32,9 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
+$app = require __DIR__.'/../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 echo "=== APPLICATION-LEVEL CONCURRENCY PROOF (MariaDB Engine) ===\n";
 
@@ -77,18 +77,25 @@ $cashMethod = PaymentMethod::firstOrCreate(
     ['name' => 'نقدي', 'is_cash' => true, 'is_active' => true]
 );
 
-echo "[2] Test product created: ID {$product->id}, Barcode {$product->barcode}, Initial Stock: 1\n";
+$token = $cashier->createToken('concurrency-test')->plainTextToken;
+$tokenBase64 = base64_encode($token);
+$endpoint = 'http://127.0.0.1/api/v1/invoices';
 
-$rounds = 20;
+echo "[2] Test product created: ID {$product->id}, Barcode {$product->barcode}, Initial Stock: 1\n";
+echo "    Server Engine: Apache 2.4 (MPM WinNT) on Port 80\n";
+echo "    Target HTTP Endpoint: {$endpoint}\n";
+
+$rounds = 30;
 $successfulInvoices = [];
 $totalSuccessCount = 0;
 $totalRejectedCount = 0;
 $negativeStockViolations = 0;
 $duplicateInvoices = 0;
+$overlappingRounds = 0;
 
-echo "[3] Executing {$rounds} concurrent rounds with 2 parallel PHP processes each...\n\n";
-echo sprintf("%-6s | %-12s | %-12s | %-15s | %-12s | %-10s\n", 'Round', 'Process 1', 'Process 2', 'Winner Invoice', 'Final Stock', 'Status');
-echo str_repeat('-', 80)."\n";
+echo "[3] Executing {$rounds} concurrent rounds with 2 parallel HTTP client processes each...\n\n";
+echo sprintf("%-5s | %-16s | %-16s | %-10s | %-17s | %-5s | %-6s\n", 'Round', 'Client 1 (Status)', 'Client 2 (Status)', 'Overlap', 'Winner Invoice', 'Stock', 'Result');
+echo str_repeat('-', 90)."\n";
 
 $phpBinary = PHP_BINARY;
 $workerScript = __DIR__.'/ConcurrencyWorker.php';
@@ -100,8 +107,8 @@ for ($round = 1; $round <= $rounds; $round++) {
     $key1 = (string) Str::uuid();
     $key2 = (string) Str::uuid();
 
-    $cmd1 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$key1} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
-    $cmd2 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$key2} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
+    $cmd1 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$key1} --token={$tokenBase64} --endpoint={$endpoint} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
+    $cmd2 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$key2} --token={$tokenBase64} --endpoint={$endpoint} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
 
     $descriptors = [
         0 => ['pipe', 'r'],
@@ -129,6 +136,16 @@ for ($round = 1; $round <= $rounds; $round++) {
 
     $res1 = json_decode($out1, true) ?? ['status' => 500, 'error' => $err1];
     $res2 = json_decode($out2, true) ?? ['status' => 500, 'error' => $err2];
+
+    $s1 = (float) ($res1['start_ms'] ?? 0);
+    $e1 = (float) ($res1['end_ms'] ?? 0);
+    $s2 = (float) ($res2['start_ms'] ?? 0);
+    $e2 = (float) ($res2['end_ms'] ?? 0);
+
+    $overlapMs = round(max(0, min($e1, $e2) - max($s1, $s2)), 1);
+    if ($overlapMs > 0) {
+        $overlappingRounds++;
+    }
 
     $finalStock = (int) DB::table('products')->where('id', $product->id)->value('stock_quantity');
 
@@ -167,17 +184,18 @@ for ($round = 1; $round <= $rounds; $round++) {
     $statusStr = ($roundSuccess === 1 && $roundRejected === 1 && $finalStock === 0) ? 'PASS' : 'FAIL';
 
     echo sprintf(
-        "%-6d | %-12s | %-12s | %-15s | %-12d | %-10s\n",
+        "%-5d | %-16s | %-16s | %-10s | %-17s | %-5d | %-6s\n",
         $round,
-        'HTTP '.($res1['status'] ?? 'ERR'),
-        'HTTP '.($res2['status'] ?? 'ERR'),
+        'HTTP '.($res1['status'] ?? 'ERR')." ({$res1['elapsed_ms']}ms)",
+        'HTTP '.($res2['status'] ?? 'ERR')." ({$res2['elapsed_ms']}ms)",
+        "{$overlapMs}ms",
         $winnerInvoice ?? 'None',
         $finalStock,
         $statusStr
     );
 }
 
-echo str_repeat('-', 80)."\n";
+echo str_repeat('-', 90)."\n";
 echo "Rounds Completed: {$rounds}\n";
 echo "Total Successful (201 Created): {$totalSuccessCount} (Expected: {$rounds})\n";
 echo "Total Rejected (422 Insufficient Stock): {$totalRejectedCount} (Expected: {$rounds})\n";
@@ -190,8 +208,8 @@ echo "[4] Testing Concurrent Idempotency Key Reuse...\n";
 DB::table('products')->where('id', $product->id)->update(['stock_quantity' => 1]);
 $sharedKey = (string) Str::uuid();
 
-$cmdIdem1 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$sharedKey} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
-$cmdIdem2 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$sharedKey} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
+$cmdIdem1 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$sharedKey} --token={$tokenBase64} --endpoint={$endpoint} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
+$cmdIdem2 = "\"{$phpBinary}\" \"{$workerScript}\" --productId={$product->id} --idempotencyKey={$sharedKey} --token={$tokenBase64} --endpoint={$endpoint} --cashierId={$cashier->id} --cashMethodId={$cashMethod->id}";
 
 $procIdem1 = proc_open($cmdIdem1, $descriptors, $pipesIdem1);
 $procIdem2 = proc_open($cmdIdem2, $descriptors, $pipesIdem2);

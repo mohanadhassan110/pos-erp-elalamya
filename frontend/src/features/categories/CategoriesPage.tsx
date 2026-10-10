@@ -10,6 +10,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useToast } from '../../app/providers/useToast';
+import { AlertCircle } from 'lucide-react';
 
 export const CategoriesPage: React.FC = () => {
   const { showToast } = useToast();
@@ -302,8 +303,9 @@ export const CategoriesPage: React.FC = () => {
               required
             />
             {editingCategory && (editingCategory.products_count ?? 0) > 0 ? (
-              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-warning-700)', marginTop: '0.25rem' }}>
-                ⚠️ لا يمكن تغيير حرف الفئة لوجود منتجات مسجلة بالفعل مرتبطة بتسلسل هذا الحرف.
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-warning-text, #92400E)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <AlertCircle size={14} />
+                <span>لا يمكن تغيير حرف الفئة لوجود منتجات مسجلة بالفعل مرتبطة بتسلسل هذا الحرف.</span>
               </p>
             ) : (
               <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)', marginTop: '0.25rem' }}>

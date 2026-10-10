@@ -1,128 +1,101 @@
 :root {
-  /* Typography */
+  /* Bundled Arabic Typography (Cairo) */
   --font-family-base: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-mono: 'JetBrains Mono', monospace;
+  --font-family-mono: 'Cairo', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.8125rem;  /* 13px */
-  --font-size-base: 0.875rem; /* 14px - Default ERP density */
-  --font-size-md: 0.9375rem;  /* 15px */
-  --font-size-lg: 1rem;       /* 16px */
-  --font-size-xl: 1.125rem;   /* 18px */
-  --font-size-2xl: 1.25rem;   /* 20px */
-  --font-size-3xl: 1.5rem;    /* 24px */
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.84375rem;  /* 13.5px */
+  --font-size-base: 0.9375rem; /* 15px - Dense accounting readable */
+  --font-size-md: 1rem;        /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px - POS Totals */
+  --font-size-3xl: 1.875rem;   /* 30px - Prominent Figures */
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
 
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
-  --line-height-relaxed: 1.625;
+  --line-height-relaxed: 1.6;
 
-  /* Color Palette: Operational Neutral (Slate) */
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  /* Spacing Scale (4px-based) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
 
-  /* Brand / Primary: Professional Deep Indigo */
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  /* Component Dimensions (Touch / Rush-Hour Ergonomics) */
+  --control-height: 44px;
+  --control-height-lg: 56px;
+  --table-row-height: 46px;
+  --pos-cart-row-height: 52px;
 
-  /* Success / Positive (Revenue, Stock Receipts, Paid Invoices) */
-  --color-success-50: #ecfdf5;
-  --color-success-100: #d1fae5;
-  --color-success-200: #a7f3d0;
-  --color-success-500: #10b981;
-  --color-success-600: #059669;
-  --color-success-700: #047857;
+  /* Color Palette — Calm Accounting Interface */
+  /* Single Brand Accent: Deep Navy (#0B1220) */
+  --color-navy-950: #0B1220;
+  --color-navy-900: #101B2E;
+  --color-navy-800: #1B2D4B;
+  --color-navy-700: #28426C;
+  --color-navy-100: #E6EBF4;
+  --color-navy-50: #F1F4F9;
 
-  /* Warning / Attention (Pending, Low Stock, Unpaid Balance) */
-  --color-warning-50: #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-200: #fde68a;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
+  /* Surfaces & Neutrals (Slate) */
+  --bg-app: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F1F5F9;
+  --bg-surface-hover: #F8FAFC;
 
-  /* Danger / Debt / Expenses / Cancellations */
-  --color-danger-50: #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-200: #fecaca;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
 
-  /* Semantic UI Tokens */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-subtle: #f1f5f9;
-  --bg-surface-hover: #f8fafc;
-  --bg-surface-active: #e2e8f0;
+  --border-subtle: #E2E8F0;
+  --border-medium: #CBD5E1;
+  --border-strong: #94A3B8;
 
-  --border-subtle: #e2e8f0;
-  --border-default: #cbd5e1;
-  --border-strong: #94a3b8;
+  /* Semantic Status Colors (Used Strictly for Financial Meaning) */
+  /* Paid / Active / Revenue (Green) */
+  --color-success: #15803D;
+  --color-success-bg: #DCFCE7;
+  --color-success-border: #BBF7D0;
+  --color-success-text: #166534;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-disabled: #94a3b8;
-  --text-inverse: #ffffff;
+  /* Partial / Low Stock / Attention (Amber) */
+  --color-warning: #B45309;
+  --color-warning-bg: #FEF3C7;
+  --color-warning-border: #FDE68A;
+  --color-warning-text: #92400E;
 
-  /* Spacing Scale */
-  --space-0-5: 0.125rem; /* 2px */
-  --space-1: 0.25rem;    /* 4px */
-  --space-1-5: 0.375rem; /* 6px */
-  --space-2: 0.5rem;     /* 8px */
-  --space-2-5: 0.625rem; /* 10px */
-  --space-3: 0.75rem;    /* 12px */
-  --space-4: 1rem;       /* 16px */
-  --space-5: 1.25rem;    /* 20px */
-  --space-6: 1.5rem;     /* 24px */
-  --space-8: 2rem;       /* 32px */
-  --space-10: 2.5rem;    /* 40px */
-  --space-12: 3rem;      /* 48px */
+  /* Debt / Due / Cancelled / Destructive (Red) */
+  --color-danger: #B91C1C;
+  --color-danger-bg: #FEE2E2;
+  --color-danger-border: #FECACA;
+  --color-danger-text: #991B1B;
 
-  /* Radii (Operational, not overly rounded) */
+  /* Radius (Crisp Operational Minimal) */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-full: 9999px;
 
-  /* Elevation / Shadows */
+  /* Shadows (Subtle, Clean) */
+  --shadow-none: none;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 
   /* Transitions */
-  --transition-fast: 120ms ease-in-out;
-  --transition-normal: 180ms ease-in-out;
-
-  /* Z-Index */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-fixed: 1030;
-  --z-modal-backdrop: 1040;
-  --z-modal: 1050;
-  --z-toast: 1080;
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
 }

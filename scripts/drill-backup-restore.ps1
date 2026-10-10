@@ -43,12 +43,16 @@ VALUES
 
 -- Supplier & Transactions
 REPLACE INTO suppliers (id, name, phone, address, is_active, created_at, updated_at)
-VALUES (1, 'مصنع الغزل والنسيج بالمحلة', '01234567890', 'المحلة الكبرى', 1, NOW(), NOW());
+VALUES (1, 'مصنع الدلتا للغزل والنسيج', '01012345678', 'المنصورة', 1, NOW(), NOW());
 
 REPLACE INTO supplier_transactions (id, supplier_id, type, amount, direction, reference_type, reference_id, description, created_by, created_at, updated_at)
 VALUES
 (1, 1, 'stock_receipt', 8000.00, 'credit', 'StockReceipt', 1, 'استلام بضاعة إذن رقم REC-1001', 1, NOW(), NOW()),
 (2, 1, 'payment', 3000.00, 'debit', NULL, NULL, 'سداد دفعة للمصنع', 1, NOW(), NOW());
+
+-- Payments table
+REPLACE INTO payments (id, payment_number, payment_method_id, amount, payment_type, payable_type, payable_id, notes, paid_at, created_by, created_at, updated_at)
+VALUES (1, 'PAY-1001', 1, 2000.00, 'invoice_payment', 'App\\Models\\Invoice', 1, 'دفعة نقدية', NOW(), 1, NOW(), NOW());
 
 -- Stock Receipt & Items
 REPLACE INTO stock_receipts (id, receipt_number, supplier_id, received_date, total_cost, notes, created_by, created_at, updated_at)
@@ -97,6 +101,7 @@ SELECT
     (SELECT COUNT(*) FROM invoices) AS cnt_invoices,
     (SELECT COUNT(*) FROM invoice_items) AS cnt_invoice_items,
     (SELECT COUNT(*) FROM invoice_payments) AS cnt_invoice_payments,
+    (SELECT COUNT(*) FROM payments) AS cnt_payments,
     (SELECT COUNT(*) FROM customer_transactions) AS cnt_customer_tx,
     (SELECT COUNT(*) FROM supplier_transactions) AS cnt_supplier_tx,
     (SELECT COUNT(*) FROM expenses) AS cnt_expenses,

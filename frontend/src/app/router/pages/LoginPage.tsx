@@ -5,8 +5,9 @@ import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
-import { Badge } from '../../../components/ui/Badge';
 import { ApiError } from '../../../types/api';
+import logoWhite from '../../../assets/brand/logo-white.png';
+import { LogIn } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [loginInput, setLoginInput] = useState<string>('');
@@ -19,7 +20,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/system-check';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/pos';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +42,7 @@ export const LoginPage: React.FC = () => {
       await login({
         login: loginInput.trim(),
         password,
-        device_name: 'web-browser-pos',
+        device_name: 'shop-terminal',
       });
       navigate(from, { replace: true });
     } catch (err: unknown) {
@@ -51,18 +52,11 @@ export const LoginPage: React.FC = () => {
           setFieldErrors(err.errors);
         }
       } else {
-        setError('حدث خطأ غير متوقع أثناء تسجيل الدخول');
+        setError('حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة ثانية');
       }
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleQuickFill = (u: string, p: string) => {
-    setLoginInput(u);
-    setPassword(p);
-    setError(null);
-    setFieldErrors({});
   };
 
   return (
@@ -73,36 +67,51 @@ export const LoginPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1.5rem',
-        backgroundColor: 'var(--color-slate-900)',
+        backgroundColor: '#0B1220',
       }}
+      dir="rtl"
     >
-      <div style={{ width: '100%', maxWidth: '28rem' }}>
-        {/* Header Branding */}
+      <div style={{ width: '100%', maxWidth: '26rem' }}>
+        {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🧵</div>
-          <h1 style={{ color: '#ffffff', fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-extrabold)' }}>
-            العالمية ERP/POS
+          <img
+            src={logoWhite}
+            alt="معرض العالمية للمفروشات"
+            style={{
+              maxWidth: '240px',
+              height: 'auto',
+              margin: '0 auto 1rem',
+              display: 'block',
+            }}
+          />
+          <h1 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, margin: 0 }}>
+            معرض العالمية للمفروشات
           </h1>
-          <p style={{ color: 'var(--color-slate-400)', fontSize: 'var(--font-size-sm)', marginTop: '0.25rem' }}>
-            نظام إدارة معرض المفروشات والمنسوجات — تسجيل الدخول
+          <p style={{ color: '#94A3B8', fontSize: '13px', marginTop: '0.25rem' }}>
+            نظام إدارة المبيعات ونقاط البيع والمخزون
           </p>
         </div>
 
-        <Card>
+        {/* Login Form Card */}
+        <Card style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {error && <Alert type="error" message={error} />}
 
             <Input
-              label="اسم المستخدم أو البريد الإلكتروني"
+              id="login-input"
+              name="login"
+              label="اسم المستخدم"
               value={loginInput}
               onChange={(e) => setLoginInput(e.target.value)}
-              placeholder="مثال: owner أو cashier"
+              placeholder="اسم المستخدم"
               required
               autoFocus
               error={fieldErrors['login']?.[0]}
             />
 
             <Input
+              id="password-input"
+              name="password"
               label="كلمة المرور"
               type="password"
               value={password}
@@ -117,71 +126,12 @@ export const LoginPage: React.FC = () => {
               variant="primary"
               size="lg"
               isLoading={isSubmitting}
-              style={{ width: '100%', marginTop: '0.5rem' }}
+              icon={<LogIn size={18} />}
+              style={{ width: '100%', marginTop: '0.5rem', height: '48px' }}
             >
-              تسجيل الدخول للنظام
+              تسجيل الدخول
             </Button>
           </form>
-
-          {/* Quick Demo Credentials Assistant */}
-          <div
-            style={{
-              marginTop: '1.5rem',
-              paddingTop: '1.25rem',
-              borderTop: '1px solid var(--border-subtle)',
-              fontSize: 'var(--font-size-xs)',
-            }}
-          >
-            <span style={{ color: 'var(--text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>
-              حسابات تجريبية سريعة للفحص:
-            </span>
-
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('owner', 'password123')}
-                style={{
-                  padding: '0.375rem 0.625rem',
-                  backgroundColor: 'var(--bg-surface-subtle)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  fontSize: 'var(--font-size-xs)',
-                  fontFamily: 'inherit',
-                }}
-              >
-                <Badge variant="primary" size="sm">
-                  مالك
-                </Badge>
-                <span>owner / password123</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickFill('cashier', 'password123')}
-                style={{
-                  padding: '0.375rem 0.625rem',
-                  backgroundColor: 'var(--bg-surface-subtle)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  fontSize: 'var(--font-size-xs)',
-                  fontFamily: 'inherit',
-                }}
-              >
-                <Badge variant="warning" size="sm">
-                  كاشير
-                </Badge>
-                <span>cashier / password123</span>
-              </button>
-            </div>
-          </div>
         </Card>
       </div>
     </div>

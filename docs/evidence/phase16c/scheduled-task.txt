@@ -1,0 +1,8 @@
+﻿
+
+TaskName : AlAlamiya_Daily_Backup
+State    : Ready
+TaskPath : \
+
+
+

@@ -92,6 +92,7 @@ class CreateCashierCommand extends Command
         $user = User::create([
             'name' => $name,
             'username' => $username,
+            'email' => "{$username}@elalamya.local",
             'password' => Hash::make($password),
             'role' => UserRole::CASHIER,
             'is_active' => true,

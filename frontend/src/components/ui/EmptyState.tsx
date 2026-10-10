@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { AlertTriangle } from 'lucide-react';
 
 export interface EmptyStateProps {
   title: string;
@@ -78,7 +79,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         textAlign: 'center',
       }}
     >
-      <div style={{ color: 'var(--color-danger-500)', fontSize: '2rem', marginBottom: '0.75rem' }}>⚠️</div>
+      <div style={{ color: 'var(--color-danger, #B91C1C)', marginBottom: '0.75rem' }}>
+        <AlertTriangle size={36} />
+      </div>
       <h4 style={{ fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-danger-700)' }}>
         {message}
       </h4>

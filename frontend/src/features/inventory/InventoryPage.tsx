@@ -11,6 +11,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Package, Coins } from 'lucide-react';
+import { formatQuantity } from '../../utils/formatters';
 
 export const InventoryPage: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryResponse | null>(null);
@@ -199,10 +201,12 @@ export const InventoryPage: React.FC = () => {
                   fontFamily: 'var(--font-family-mono)',
                 }}
               >
-                {inventory?.summary.total_quantity?.toLocaleString('ar-EG') ?? '0'} قطعة
+                {formatQuantity(inventory?.summary.total_quantity ?? 0)} قطعة
               </div>
             </div>
-            <div style={{ fontSize: '2rem' }}>📦</div>
+            <div style={{ color: 'var(--color-navy-800)', opacity: 0.8 }}>
+              <Package size={32} />
+            </div>
           </div>
         </Card>
 
@@ -224,7 +228,9 @@ export const InventoryPage: React.FC = () => {
                 {inventory?.summary.total_valuation_formatted ?? '0.00 ج.م'}
               </div>
             </div>
-            <div style={{ fontSize: '2rem' }}>💰</div>
+            <div style={{ color: 'var(--color-success-700)', opacity: 0.8 }}>
+              <Coins size={32} />
+            </div>
           </div>
         </Card>
       </div>

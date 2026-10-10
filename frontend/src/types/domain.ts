@@ -261,11 +261,11 @@ export interface PrintableInvoice {
   cashier_name: string;
   showroom: {
     name: string;
-    subtitle: string;
-    phone: string;
-    address: string;
-    return_policy: string;
-    footer_note: string;
+    subtitle?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    return_policy?: string | null;
+    footer_note?: string | null;
   };
 }
 

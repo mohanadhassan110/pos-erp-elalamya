@@ -17,7 +17,7 @@ class SupplierFactory extends Factory
         return [
             'name' => 'مورد تجريبي '.fake()->unique()->numberBetween(100, 9999),
             'phone' => '01'.fake()->numberBetween(100000000, 999999999),
-            'address' => 'المحلة الكبرى، مصر',
+            'address' => 'مدينة نصر، القاهرة',
             'notes' => null,
             'is_active' => true,
         ];

@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -96,14 +97,15 @@ export const Modal: React.FC<ModalProps> = ({
               border: 'none',
               cursor: 'pointer',
               color: 'var(--text-muted)',
-              fontSize: '1.25rem',
-              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '0.25rem',
               borderRadius: 'var(--radius-sm)',
             }}
             aria-label="إغلاق النافذة"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 

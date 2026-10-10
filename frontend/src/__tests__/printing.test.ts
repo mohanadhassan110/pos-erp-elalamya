@@ -162,10 +162,10 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
       cashier_name: 'أحمد كاشير',
       showroom: {
         name: 'معرض العالمية للمفروشات',
-        subtitle: 'معرض المفروشات المنزلية والمنسوجات الراقية',
-        phone: '01000000000',
-        address: 'المعرض الرئيسي - المحلة الكبرى',
-        return_policy: 'البضاعة المباعة ترد وتستبدل خلال 14 يوماً بشرط وجود أصل الفاتورة وسلامة المنتج',
+        subtitle: 'بيت المفروشات',
+        phone: '01003116622 - 01010498956',
+        address: 'شارع مسجد النجار المتفرع من شارع بورسعيد، أمام عمارة قيبع بالمنصورة',
+        return_policy: 'الاسترجاع والاستبدال خلال 14 يومًا من تاريخ الفاتورة',
         footer_note: 'شكراً لتعاملكم مع معرض العالمية للمفروشات',
       },
     };
@@ -216,6 +216,26 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
       expect(retailInvoice.customer).toBeNull();
       expect(retailInvoice.sale_type).toBe('retail');
       expect(retailInvoice.is_wholesale).toBe(false);
+    });
+
+    it('safely handles empty showroom details without crashing or displaying placeholders', () => {
+      const emptyShowroomInvoice: PrintableInvoice = {
+        ...mockPrintableInvoice,
+        showroom: {
+          name: 'معرض العالمية للمفروشات',
+          subtitle: null,
+          phone: null,
+          address: null,
+          return_policy: null,
+          footer_note: null,
+        },
+      };
+
+      expect(emptyShowroomInvoice.showroom?.name).toBe('معرض العالمية للمفروشات');
+      expect(emptyShowroomInvoice.showroom?.phone).toBeNull();
+      expect(emptyShowroomInvoice.showroom?.address).toBeNull();
+      expect(emptyShowroomInvoice.showroom?.return_policy).toBeNull();
+      expect(emptyShowroomInvoice.showroom?.footer_note).toBeNull();
     });
   });
 

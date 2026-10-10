@@ -13,6 +13,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useToast } from '../../app/providers/useToast';
+import { Barcode, AlertCircle, Plus } from 'lucide-react';
 
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -266,8 +267,9 @@ export const ProductsPage: React.FC = () => {
             size="sm"
             onClick={() => navigate(`/barcodes?productId=${p.id}`)}
             title="طباعة ملصق باركود لهذا المنتج"
+            icon={<Barcode size={14} />}
           >
-            🏷️ باركود
+            باركود
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(p)}>
             تعديل
@@ -297,11 +299,11 @@ export const ProductsPage: React.FC = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button variant="outline" onClick={() => navigate('/barcodes')}>
-            🏷️ طباعة ملصقات الباركود
+          <Button variant="outline" onClick={() => navigate('/barcodes')} icon={<Barcode size={16} />}>
+            طباعة ملصقات الباركود
           </Button>
-          <Button variant="primary" onClick={handleOpenAddModal}>
-            + إضافة منتج جديد
+          <Button variant="primary" onClick={handleOpenAddModal} icon={<Plus size={16} />}>
+            إضافة منتج جديد
           </Button>
         </div>
       </div>
@@ -446,7 +448,7 @@ export const ProductsPage: React.FC = () => {
 
           <Input
             label="اسم المنتج"
-            placeholder="مثال: غرفة نوم كينج، ركنة مودرن 3×2"
+            placeholder="مثال: لحاف شتوي قطن، طقم ملاية 5 قطع، بطانية مورانو"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             required
@@ -522,8 +524,9 @@ export const ProductsPage: React.FC = () => {
           )}
 
           {editingProduct && (
-            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
-              ⚠️ تعديل سعر الشراء يؤثر على المبيعات المستقبلية فقط ولا يغير تكلفة أو أرباح الفواتير التاريخية السابقة.
+            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <AlertCircle size={14} style={{ color: 'var(--color-warning)' }} />
+              <span>تعديل سعر الشراء يؤثر على المبيعات المستقبلية فقط ولا يغير تكلفة أو أرباح الفواتير التاريخية السابقة.</span>
             </p>
           )}
 

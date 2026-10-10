@@ -1,0 +1,27 @@
+﻿
+Name                                            Count
+----                                            -----
+Tests\Feature\Api\V1\AuthorizationTest              3
+Tests\Feature\Api\V1\AuthTest                       7
+Tests\Feature\Api\V1\BarcodePrintTest               6
+Tests\Feature\Api\V1\HealthTest                     1
+Tests\Feature\Api\V1\InvoicePrintTest              14
+Tests\Feature\Api\V1\InvoiceTest                   22
+Tests\Feature\Api\V1\MasterDataTest                 9
+Tests\Feature\Api\V1\ReportTest                    25
+Tests\Feature\Api\V1\SalesReturnTest               37
+Tests\Feature\Api\V1\SecurityTest                  25
+Tests\Feature\Api\V1\StockReceivingTest             8
+Tests\Feature\Console\UserManagementCommandTest     5
+Tests\Feature\DatabaseIntegrityTest                13
+Tests\Feature\ExampleTest                           1
+Tests\Unit\Domain\BarcodeGeneratorTest              6
+Tests\Unit\Domain\CustomerLedgerTest                2
+Tests\Unit\Domain\HistoricalCostTest                1
+Tests\Unit\Domain\MoneyTest                         5
+Tests\Unit\Domain\QuantityTest                      4
+Tests\Unit\Domain\SupplierLedgerTest                2
+Tests\Unit\ExampleTest                              1
+
+
+

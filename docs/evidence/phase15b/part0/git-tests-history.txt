@@ -1,0 +1,23 @@
+﻿=== GIT STATUS & HEAD & CHECK-IGNORE ===
+ M .gitignore
+ M backend/.env.production.example
+ M backend/.gitignore
+ M backend/app/Console/Commands/CreateCashierCommand.php
+ M backend/tests/ApplicationConcurrencyProof.php
+ M backend/tests/ConcurrencyWorker.php
+ M backend/tests/Feature/Api/V1/ReportTest.php
+ M docs/RUNBOOK.md
+ M frontend/src/services/api/client.ts
+?? backend/app/Console/Commands/SetReportsPasswordCommand.php
+?? backend/tests/Feature/Console/
+?? backend/tests/README-CONCURRENCY-PROOF.md
+?? deploy/
+?? docs/GO-LIVE-GAPS.md
+?? docs/evidence/
+2555dad9ddf7105eaea3018c96b13013e2ac6bda
+backend/.gitignore:11:.env.testing	backend/.env.testing
+
+=== GIT LOG DELETED FILES IN BACKEND/TESTS ===
+
+=== GIT LOG FOR POSSALETEST AND HEALTHTEST ===
+99bfacc feat: complete phases 1 to 12 of Al-Alamiya ERP/POS system

@@ -183,6 +183,16 @@ powershell -ExecutionPolicy Bypass -File "D:\elalamya-main\scripts\restore-datab
    ```powershell
    php artisan user:toggle-status username
    ```
+4. **تعيين أو تغيير كلمة مرور قسم التقارير (لحسابات الكاشير):**
+   - يمكن للمالك تعيين أو تغيير كلمة المرور مباشرة من شاشة **الإعدادات** في واجهة المستخدم.
+   - أو عبر أمر الكونسول الآمن (يطلب كلمة المرور بشكل مخفي دون تمريرها كمعامل):
+   ```powershell
+   php artisan reports:set-password
+   ```
+   - للتشغيل الآلي عبر السكريبتات دون إظهار كلمة المرور في الذاكرة:
+   ```powershell
+   php artisan reports:set-password --password-file="C:\path\to\password.txt"
+   ```
 
 ---
 

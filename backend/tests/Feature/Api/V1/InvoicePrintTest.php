@@ -13,6 +13,7 @@ use App\Models\CustomerTransaction;
 use App\Models\Invoice;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,6 +77,8 @@ class InvoicePrintTest extends TestCase
             'address' => 'عنوان تجريبي',
             'is_active' => true,
         ]);
+
+        Setting::set('invoice_return_policy', 'الاسترجاع والاستبدال خلال 14 يومًا من تاريخ الفاتورة');
     }
 
     public function test_anonymous_retail_invoice_printing(): void
@@ -813,5 +816,39 @@ class InvoicePrintTest extends TestCase
     public function test_unauthenticated_request_is_rejected(): void
     {
         $this->getJson(route('api.v1.invoices.print', 1))->assertUnauthorized();
+    }
+
+    public function test_empty_showroom_settings_yield_null_detail_blocks(): void
+    {
+        Setting::truncate();
+        $action = app(CreateInvoiceAction::class);
+        $invoice = $action->execute([
+            'sale_type' => SaleType::RETAIL->value,
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->quilt->id,
+                    'quantity' => 1,
+                    'unit_price' => 900.00,
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => 900.00,
+                ],
+            ],
+        ], $this->cashier);
+
+        $res = $this->actingAs($this->cashier, 'sanctum')
+            ->getJson(route('api.v1.invoices.print', $invoice));
+
+        $res->assertOk()
+            ->assertJsonPath('data.showroom.name', 'معرض العالمية للمفروشات')
+            ->assertJsonPath('data.showroom.phone', null)
+            ->assertJsonPath('data.showroom.address', null)
+            ->assertJsonPath('data.showroom.subtitle', null)
+            ->assertJsonPath('data.showroom.return_policy', null)
+            ->assertJsonPath('data.showroom.footer_note', null);
     }
 }

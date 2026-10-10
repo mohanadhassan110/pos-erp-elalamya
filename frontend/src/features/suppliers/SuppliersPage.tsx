@@ -415,7 +415,7 @@ export const SuppliersPage: React.FC = () => {
 
           <div style={{ backgroundColor: 'var(--color-primary-50)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-800)', margin: 0 }}>
-              💡 هذه العملية تزيد رصيد المستحق للمورد في دفتر الأستاذ (مثل فواتير توريد خارجية سابقة) ولا تؤثر على المخزون الفعلي. استلام البضاعة للمخزن يتم عبر شاشة <strong>استلام بضاعة</strong>.
+              ملاحظة هامة: هذه العملية تزيد رصيد المستحق للمورد في دفتر الأستاذ (مثل فواتير توريد خارجية سابقة) ولا تؤثر على المخزون الفعلي. استلام البضاعة للمخزن يتم عبر شاشة <strong>استلام بضاعة</strong>.
             </p>
           </div>
 

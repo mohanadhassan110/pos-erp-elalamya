@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { X } from 'lucide-react';
 import { ToastContext, type Toast, type ToastType } from './toastContextDef';
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,14 +75,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   border: 'none',
                   color: 'inherit',
                   cursor: 'pointer',
-                  fontSize: '1rem',
-                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   padding: '0.25rem',
                   opacity: 0.8,
                 }}
                 aria-label="إغلاق الإشعار"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
           );

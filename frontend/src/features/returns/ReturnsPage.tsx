@@ -20,6 +20,16 @@ import {
   Table,
   EmptyState,
 } from '../../components/ui';
+import {
+  RotateCcw,
+  FileText,
+  Search,
+  Banknote,
+  Scale,
+  TrendingUp,
+  UserCheck,
+  Trash2,
+} from 'lucide-react';
 
 interface SelectedReturnItem {
   invoice_item_id: number;
@@ -373,7 +383,9 @@ export const ReturnsPage: React.FC = () => {
             onClick={() => setActiveTab('create')}
             size="sm"
           >
-            🔄 عملية مرتجع جديدة
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <RotateCcw size={15} /> عملية مرتجع جديدة
+            </span>
           </Button>
           <Button
             variant={activeTab === 'history' ? 'primary' : 'secondary'}
@@ -383,7 +395,9 @@ export const ReturnsPage: React.FC = () => {
             }}
             size="sm"
           >
-            📋 سجل المرتجعات السابقة
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <FileText size={15} /> سجل المرتجعات السابقة
+            </span>
           </Button>
         </div>
       </div>
@@ -403,7 +417,9 @@ export const ReturnsPage: React.FC = () => {
                 />
               </div>
               <Button type="submit" variant="primary" isLoading={isSearchingInvoice}>
-                🔍 بحث عن الفاتورة
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Search size={15} /> بحث عن الفاتورة
+                </span>
               </Button>
             </form>
           </Card>
@@ -598,7 +614,9 @@ export const ReturnsPage: React.FC = () => {
                         checked={resolution === 'refund_cash'}
                         onChange={() => setResolution('refund_cash')}
                       />
-                      <span style={{ fontWeight: 'bold' }}>💵 استرداد نقدي</span>
+                      <span style={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Banknote size={16} /> استرداد نقدي
+                      </span>
                     </div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
                       صرف قيمة المرتجع نقداً للعميل مباشرة من الخزينة
@@ -623,7 +641,9 @@ export const ReturnsPage: React.FC = () => {
                         checked={resolution === 'exchange_equal'}
                         onChange={() => setResolution('exchange_equal')}
                       />
-                      <span style={{ fontWeight: 'bold' }}>⚖️ استبدال متطابق القيمة</span>
+                      <span style={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Scale size={16} /> استبدال متطابق القيمة
+                      </span>
                     </div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
                       استبدال ببضاعة بديلة بنفس قيمة المرتجع دون فارق نقدي
@@ -648,7 +668,9 @@ export const ReturnsPage: React.FC = () => {
                         checked={resolution === 'exchange_upgrade'}
                         onChange={() => setResolution('exchange_upgrade')}
                       />
-                      <span style={{ fontWeight: 'bold' }}>⬆️ استبدال بقيمة أعلى (ترقية)</span>
+                      <span style={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <TrendingUp size={16} /> استبدال بقيمة أعلى (ترقية)
+                      </span>
                     </div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
                       استبدال ببضاعة أعلى قيمة وتحصيل الفارق الإضافي من العميل
@@ -679,7 +701,9 @@ export const ReturnsPage: React.FC = () => {
                         checked={resolution === 'customer_account_credit'}
                         onChange={() => setResolution('customer_account_credit')}
                       />
-                      <span style={{ fontWeight: 'bold' }}>👤 رصيد دائن لحساب العميل</span>
+                      <span style={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <UserCheck size={16} /> رصيد دائن لحساب العميل
+                      </span>
                     </div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
                       {invoice.customer_id
@@ -810,8 +834,8 @@ export const ReturnsPage: React.FC = () => {
                                 {(r.unit_sale_price * r.quantity).toFixed(2)} ج.م
                               </td>
                               <td style={{ padding: '0.5rem' }}>
-                                <Button size="sm" variant="danger" onClick={() => handleRemoveReplacement(idx)}>
-                                  ✕
+                                <Button size="sm" variant="danger" onClick={() => handleRemoveReplacement(idx)} title="حذف البديل">
+                                  <Trash2 size={14} />
                                 </Button>
                               </td>
                             </tr>
@@ -853,7 +877,7 @@ export const ReturnsPage: React.FC = () => {
                       <div>
                         {resolution === 'exchange_equal' ? (
                           Math.abs(totalReplacementAmount - totalReturnAmount) < 0.01 ? (
-                            <Badge variant="success">القيمة متطابقة تماماً ✓</Badge>
+                            <Badge variant="success">القيمة متطابقة تماماً</Badge>
                           ) : (
                             <Badge variant="danger">
                               غير متطابق بفارق: {(totalReplacementAmount - totalReturnAmount).toFixed(2)} ج.م

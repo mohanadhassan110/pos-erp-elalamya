@@ -1421,4 +1421,162 @@ class ReportTest extends TestCase
         $this->assertEquals('2026-10-30', $autumnEnd->format('Y-m-d'));
         $this->assertTrue($autumnEnd->greaterThan($autumnStart));
     }
+
+    public function test_cairo_day_boundary_coverage_across_all_date_filtered_report_endpoints(): void
+    {
+        $cairoNow = Carbon::now('Africa/Cairo');
+        $todayStr = $cairoNow->toDateString();
+
+        // 1. Create Invoice, Item & Payment on today's boundary (23:59:50)
+        $todayInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '2000.00',
+            'total' => '2000.00',
+            'paid_amount' => '2000.00',
+            'created_at' => $cairoNow->copy()->endOfDay()->subSeconds(10)->toDateTimeString(),
+        ]);
+        InvoiceItem::create([
+            'invoice_id' => $todayInvoice->id,
+            'product_id' => $this->product->id,
+            'item_type' => InvoiceItemType::PRODUCT,
+            'product_name' => $this->product->name,
+            'barcode' => $this->product->barcode,
+            'quantity' => Quantity::from(2),
+            'unit_sale_price' => Money::from(1000),
+            'unit_cost' => Money::from(500),
+            'subtotal' => Money::from(2000),
+            'total_cost' => Money::from(1000),
+            'profit' => Money::from(1000),
+        ]);
+        $todayPayment = Payment::create([
+            'payment_number' => 'PAY-CAIRO-TODAY',
+            'payment_method_id' => $this->cashMethod->id,
+            'payment_type' => 'invoice_payment',
+            'payable_type' => Invoice::class,
+            'payable_id' => $todayInvoice->id,
+            'amount' => '2000.00',
+            'paid_at' => $cairoNow->copy()->endOfDay()->subSeconds(10)->toDateTimeString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        // 2. Create Next-Day Invoice, Item & Payment (00:00:10 next day)
+        $tomorrowInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '3000.00',
+            'total' => '3000.00',
+            'paid_amount' => '3000.00',
+            'created_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(10)->toDateTimeString(),
+        ]);
+        InvoiceItem::create([
+            'invoice_id' => $tomorrowInvoice->id,
+            'product_id' => $this->product->id,
+            'item_type' => InvoiceItemType::PRODUCT,
+            'product_name' => $this->product->name,
+            'barcode' => $this->product->barcode,
+            'quantity' => Quantity::from(3),
+            'unit_sale_price' => Money::from(1000),
+            'unit_cost' => Money::from(500),
+            'subtotal' => Money::from(3000),
+            'total_cost' => Money::from(1500),
+            'profit' => Money::from(1500),
+        ]);
+        $tomorrowPayment = Payment::create([
+            'payment_number' => 'PAY-CAIRO-TOMORROW',
+            'payment_method_id' => $this->cashMethod->id,
+            'payment_type' => 'invoice_payment',
+            'payable_type' => Invoice::class,
+            'payable_id' => $tomorrowInvoice->id,
+            'amount' => '3000.00',
+            'paid_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(10)->toDateTimeString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        // 3. Create Expense for today and tomorrow
+        $todayExpense = Expense::create([
+            'expense_category_id' => $this->overheadCategory->id,
+            'amount' => '400.00',
+            'description' => 'مصروف اليوم الحدودي',
+            'expense_date' => $todayStr,
+            'created_by' => $this->owner->id,
+            'created_at' => $cairoNow->copy()->endOfDay()->subSeconds(10)->toDateTimeString(),
+        ]);
+        $tomorrowExpense = Expense::create([
+            'expense_category_id' => $this->overheadCategory->id,
+            'amount' => '700.00',
+            'description' => 'مصروف الغد',
+            'expense_date' => $cairoNow->copy()->addDay()->toDateString(),
+            'created_by' => $this->owner->id,
+            'created_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(10)->toDateTimeString(),
+        ]);
+
+        // 4. Create Return for today and tomorrow
+        $todayReturn = SalesReturn::create([
+            'return_number' => 'RET-CAIRO-TODAY',
+            'invoice_id' => $todayInvoice->id,
+            'resolution' => SalesReturnResolution::REFUND_CASH,
+            'total_return_amount' => '500.00',
+            'difference_amount' => '0.00',
+            'created_by' => $this->owner->id,
+        ]);
+        $todayReturn->forceFill([
+            'created_at' => $cairoNow->copy()->endOfDay()->subSeconds(10)->toDateTimeString(),
+            'updated_at' => $cairoNow->copy()->endOfDay()->subSeconds(10)->toDateTimeString(),
+        ])->save();
+
+        $tomorrowReturn = SalesReturn::create([
+            'return_number' => 'RET-CAIRO-TOMORROW',
+            'invoice_id' => $tomorrowInvoice->id,
+            'resolution' => SalesReturnResolution::REFUND_CASH,
+            'total_return_amount' => '600.00',
+            'difference_amount' => '0.00',
+            'created_by' => $this->owner->id,
+        ]);
+        $tomorrowReturn->forceFill([
+            'created_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(10)->toDateTimeString(),
+            'updated_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(10)->toDateTimeString(),
+        ])->save();
+
+        // TEST 1: Overview
+        $overviewRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/overview?from_date={$todayStr}&to_date={$todayStr}");
+        $overviewRes->assertOk();
+        $this->assertEquals('2000.00', $overviewRes->json('data.gross_sales'));
+
+        // TEST 2: Profit
+        $profitRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/profit?from_date={$todayStr}&to_date={$todayStr}");
+        $profitRes->assertOk();
+        $this->assertEquals('2000.00', $profitRes->json('data.gross_revenue'));
+
+        // TEST 3: Expenses
+        $expensesRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/expenses?from_date={$todayStr}&to_date={$todayStr}");
+        $expensesRes->assertOk();
+        $this->assertEquals('400.00', $expensesRes->json('data.total_expenses'));
+
+        // TEST 4: Payments
+        $paymentsRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/payments?from_date={$todayStr}&to_date={$todayStr}");
+        $paymentsRes->assertOk();
+        $this->assertEquals('2000.00', $paymentsRes->json('data.total_inflows'));
+
+        // TEST 5: Invoice History
+        $invHistoryRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/history/invoices?from_date={$todayStr}&to_date={$todayStr}");
+        $invHistoryRes->assertOk();
+        $invIds = collect($invHistoryRes->json('data.items'))->pluck('id')->all();
+        $this->assertContains($todayInvoice->id, $invIds);
+        $this->assertNotContains($tomorrowInvoice->id, $invIds);
+
+        // TEST 6: Returns History
+        $retHistoryRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/history/returns?from_date={$todayStr}&to_date={$todayStr}");
+        $retHistoryRes->assertOk();
+        $retIds = collect($retHistoryRes->json('data.items'))->pluck('id')->all();
+        $this->assertContains($todayReturn->id, $retIds);
+        $this->assertNotContains($tomorrowReturn->id, $retIds);
+
+        // TEST 7: Payment Movements
+        $pmRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/payment-movements?from_date={$todayStr}&to_date={$todayStr}");
+        $pmRes->assertOk();
+        $pmIds = collect($pmRes->json('data.payments'))->pluck('id')->all();
+        $this->assertContains($todayPayment->id, $pmIds);
+        $this->assertNotContains($tomorrowPayment->id, $pmIds);
+    }
 }

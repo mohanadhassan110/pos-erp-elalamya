@@ -78,13 +78,9 @@ class ProductionSeeder extends Seeder
         }
 
         // 3. Base Showroom Settings (Official Identity)
+        // Showroom name is permanently fixed. Detail fields are managed dynamically by the owner.
         $baseSettings = [
             'showroom_name' => ['value' => 'معرض العالمية للمفروشات', 'type' => 'string', 'group' => 'general'],
-            'showroom_subtitle' => ['value' => 'أرقى المفروشات العصرية والمنزلية', 'type' => 'string', 'group' => 'general'],
-            'showroom_address' => ['value' => 'المعرض الرئيسي - المحلة الكبرى', 'type' => 'string', 'group' => 'general'],
-            'showroom_phone' => ['value' => '01000000000', 'type' => 'string', 'group' => 'general'],
-            'return_policy' => ['value' => 'البضاعة المباعة ترد وتستبدل خلال 14 يوماً بأصل الفاتورة بحالتها الأصلية', 'type' => 'string', 'group' => 'general'],
-            'footer_note' => ['value' => 'شكراً لتعاملكم مع معرض العالمية للمفروشات', 'type' => 'string', 'group' => 'general'],
             'currency' => ['value' => 'ج.م', 'type' => 'string', 'group' => 'general'],
         ];
 

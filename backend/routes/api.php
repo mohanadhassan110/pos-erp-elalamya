@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Purchasing\StockReceiptController;
 use App\Http\Controllers\Api\V1\Reports\ReportController;
 use App\Http\Controllers\Api\V1\Returns\SalesReturnController;
 use App\Http\Controllers\Api\V1\Sales\InvoiceController;
+use App\Http\Controllers\Api\V1\Settings\ShowroomSettingsController;
 use App\Http\Controllers\Api\V1\Suppliers\SupplierController;
 use App\Http\Controllers\Api\V1\System\SystemCheckController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
             Route::get('/me', [AuthController::class, 'me'])->name('api.v1.auth.me');
         });
+    });
+
+    // Owner Settings Endpoints (Task 6 — Showroom Display Settings)
+    Route::middleware(['auth:sanctum', 'role:owner'])->prefix('settings')->group(function () {
+        Route::get('/showroom', [ShowroomSettingsController::class, 'show'])->name('api.v1.settings.showroom.show');
+        Route::put('/showroom', [ShowroomSettingsController::class, 'update'])->name('api.v1.settings.showroom.update');
     });
 
     // Authorization & System Foundation Verification Endpoints

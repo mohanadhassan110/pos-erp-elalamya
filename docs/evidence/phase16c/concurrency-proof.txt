@@ -1,0 +1,43 @@
+﻿=== APPLICATION-LEVEL CONCURRENCY PROOF (MariaDB Engine) ===
+[1] Running migrations on elalamya_test (MariaDB)...
+[2] Test product created: ID 1, Barcode K0001, Initial Stock: 1
+    Target HTTP Endpoint: http://127.0.0.1:8001/api/v1/invoices
+[3] Executing 20 concurrent rounds with 2 parallel HTTP client processes each...
+
+Round  | Process 1    | Process 2    | Winner Invoice  | Final Stock  | Status    
+--------------------------------------------------------------------------------
+1      | HTTP 201     | HTTP 422     | INV-20261010-0001 | 0            | PASS      
+2      | HTTP 201     | HTTP 422     | INV-20261010-0002 | 0            | PASS      
+3      | HTTP 201     | HTTP 422     | INV-20261010-0003 | 0            | PASS      
+4      | HTTP 201     | HTTP 422     | INV-20261010-0004 | 0            | PASS      
+5      | HTTP 201     | HTTP 422     | INV-20261010-0005 | 0            | PASS      
+6      | HTTP 201     | HTTP 422     | INV-20261010-0006 | 0            | PASS      
+7      | HTTP 201     | HTTP 422     | INV-20261010-0007 | 0            | PASS      
+8      | HTTP 201     | HTTP 422     | INV-20261010-0008 | 0            | PASS      
+9      | HTTP 201     | HTTP 422     | INV-20261010-0009 | 0            | PASS      
+10     | HTTP 201     | HTTP 422     | INV-20261010-0010 | 0            | PASS      
+11     | HTTP 201     | HTTP 422     | INV-20261010-0011 | 0            | PASS      
+12     | HTTP 201     | HTTP 422     | INV-20261010-0012 | 0            | PASS      
+13     | HTTP 201     | HTTP 422     | INV-20261010-0013 | 0            | PASS      
+14     | HTTP 201     | HTTP 422     | INV-20261010-0014 | 0            | PASS      
+15     | HTTP 201     | HTTP 422     | INV-20261010-0015 | 0            | PASS      
+16     | HTTP 201     | HTTP 422     | INV-20261010-0016 | 0            | PASS      
+17     | HTTP 201     | HTTP 422     | INV-20261010-0017 | 0            | PASS      
+18     | HTTP 201     | HTTP 422     | INV-20261010-0018 | 0            | PASS      
+19     | HTTP 201     | HTTP 422     | INV-20261010-0019 | 0            | PASS      
+20     | HTTP 201     | HTTP 422     | INV-20261010-0020 | 0            | PASS      
+--------------------------------------------------------------------------------
+Rounds Completed: 20
+Total Successful (201 Created): 20 (Expected: 20)
+Total Rejected (422 Insufficient Stock): 20 (Expected: 20)
+Negative Stock Violations: 0 (Expected: 0)
+Duplicate Invoice Numbers: 0 (Expected: 0)
+Unique Invoices Created: 20
+
+[4] Testing Concurrent Idempotency Key Reuse...
+Process A: HTTP 201 -> Invoice INV-20261010-0021
+Process B: HTTP 200 -> Invoice INV-20261010-0021
+Final Stock after Idempotency Round: 0 (Expected: 0, not negative)
+IDEMPOTENCY CONCURRENCY CHECK: PASSED (Exact same invoice returned, zero double stock deductions)
+
+OVERALL CONCURRENCY PROOF RESULT: PASSED (100% RELIABILITY)
