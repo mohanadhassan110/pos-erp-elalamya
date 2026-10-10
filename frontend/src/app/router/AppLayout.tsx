@@ -41,7 +41,7 @@ export const AppLayout: React.FC = () => {
   const navItems = [
     { to: '/system-check', label: 'فحص أساس النظام', isOwnerOnly: false, icon: '⚡' },
     { to: '/categories', label: 'فئات الأصناف', isOwnerOnly: false, icon: '🏷️' },
-    { to: '/products', label: 'دليل المنتجات', isOwnerOnly: false, icon: '🛋️' },
+    { to: '/products', label: 'دليل المنتجات', isOwnerOnly: false, icon: '🛏️' },
     { to: '/customers', label: 'العملاء والحسابات', isOwnerOnly: false, icon: '👥' },
     { to: '/suppliers', label: 'الموردين والحسابات', isOwnerOnly: false, icon: '🏢' },
     { to: '/stock-receiving', label: 'استلام بضاعة', isOwnerOnly: false, icon: '📥' },
@@ -51,7 +51,7 @@ export const AppLayout: React.FC = () => {
     { to: '/returns', label: 'مرتجع واستبدال', isOwnerOnly: false, icon: '🔄' },
     { to: '/barcodes', label: 'طباعة الباركود', isOwnerOnly: false, icon: '🏷️' },
     { to: '/expenses', label: 'سجل المصروفات', isOwnerOnly: false, icon: '💰' },
-    { to: '/reports', label: 'التقارير والأرباح', isOwnerOnly: true, icon: '📊' },
+    { to: '/reports', label: 'التقارير والأرباح', isOwnerOnly: false, icon: '📊' },
     { to: '/settings', label: 'إعدادات النظام', isOwnerOnly: true, icon: '⚙️' },
   ];
 
@@ -73,14 +73,14 @@ export const AppLayout: React.FC = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>🛋️</span>
+            <span style={{ fontSize: '1.25rem' }}>🧵</span>
             <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-lg)' }}>
               العالمية ERP/POS
             </span>
           </div>
           <span style={{ color: 'var(--color-slate-400)', fontSize: 'var(--font-size-xs)' }}>|</span>
           <span style={{ color: 'var(--color-slate-300)', fontSize: 'var(--font-size-xs)' }}>
-            معرض الأثاث والمفروشات
+            معرض المفروشات المنزلية
           </span>
         </div>
 

@@ -60,3 +60,80 @@ describe('ApiError', () => {
     expect(error.errors?.product_id).toContain('المتاح حالياً: 2');
   });
 });
+
+describe('ApiClient Error Handling', () => {
+  it('throws ApiError with status 403 and code when server returns 403 Forbidden', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: 'قسم التقارير مقفل', code: 'REPORTS_LOCKED' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    try {
+      await expect(apiClient.get('/reports/overview')).rejects.toThrow('قسم التقارير مقفل');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('throws ApiError with status 404 when resource is not found', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: 'العنصر غير موجود' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    try {
+      await expect(apiClient.get('/invoices/99999')).rejects.toThrow('العنصر غير موجود');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('throws ApiError with status 429 when rate limited', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: 'تم تجاوز الحد المسموح من الطلبات' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    try {
+      await expect(apiClient.post('/auth/login', {})).rejects.toThrow('تم تجاوز الحد المسموح من الطلبات');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('throws ApiError with status 500 on internal server error', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: 'خطأ داخلي في الخادم' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    try {
+      await expect(apiClient.get('/inventory')).rejects.toThrow('خطأ داخلي في الخادم');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('throws ApiError with code NETWORK_ERROR on connection failure', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+
+    try {
+      await expect(apiClient.get('/products')).rejects.toThrow(
+        'تعذر الاتصال بالخادم، يرجى التحقق من اتصال الشبكة أو تشغيل الخادم الخلفي'
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});

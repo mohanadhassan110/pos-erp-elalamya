@@ -44,7 +44,7 @@ class DatabaseIntegrityTest extends TestCase
         $this->expectException(QueryException::class);
 
         Category::create([
-            'name' => 'كراسي مكاتب',
+            'name' => 'ملايات إضافية',
             'code' => 'K', // Duplicate code!
             'is_active' => true,
         ]);
@@ -128,11 +128,11 @@ class DatabaseIntegrityTest extends TestCase
 
     public function test_cannot_delete_category_when_products_exist_due_to_restrict_on_delete(): void
     {
-        $category = Category::create(['name' => 'دواليب', 'code' => 'W', 'is_active' => true]);
+        $category = Category::create(['name' => 'ألحفة', 'code' => 'W', 'is_active' => true]);
 
         Product::create([
             'category_id' => $category->id,
-            'name' => 'دولاب جرار 3 ضلفة',
+            'name' => 'لحاف قطن كبير',
             'barcode' => 'W0001',
             'purchase_cost' => Money::from(4000),
             'wholesale_price' => Money::from(5000),
@@ -181,7 +181,7 @@ class DatabaseIntegrityTest extends TestCase
     public function test_audit_log_records_polymorphic_action_with_json_metadata(): void
     {
         $user = User::factory()->create();
-        $category = Category::create(['name' => 'مكاتب', 'code' => 'O', 'is_active' => true]);
+        $category = Category::create(['name' => 'مفروشات', 'code' => 'O', 'is_active' => true]);
 
         $log = AuditLog::create([
             'user_id' => $user->id,
@@ -189,7 +189,7 @@ class DatabaseIntegrityTest extends TestCase
             'auditable_type' => Category::class,
             'auditable_id' => $category->id,
             'old_values' => null,
-            'new_values' => ['name' => 'مكاتب', 'code' => 'O'],
+            'new_values' => ['name' => 'مفروشات', 'code' => 'O'],
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit Test Agent',
         ]);
@@ -197,16 +197,16 @@ class DatabaseIntegrityTest extends TestCase
         $this->assertSame($category->id, $log->auditable->id);
         $this->assertSame('created', $log->action);
         $this->assertIsArray($log->new_values);
-        $this->assertSame('مكاتب', $log->new_values['name']);
+        $this->assertSame('مفروشات', $log->new_values['name']);
     }
 
     public function test_setting_store_and_retrieve_helper(): void
     {
-        Setting::set('store_name', 'العالمية للأثاث والموبيليا', 'string', 'general');
+        Setting::set('store_name', 'معرض العالمية للمفروشات', 'string', 'general');
         Setting::set('allow_negative_stock', false, 'boolean', 'inventory');
         Setting::set('max_discount_percentage', 15, 'integer', 'sales');
 
-        $this->assertSame('العالمية للأثاث والموبيليا', Setting::get('store_name'));
+        $this->assertSame('معرض العالمية للمفروشات', Setting::get('store_name'));
         $this->assertFalse(Setting::get('allow_negative_stock'));
         $this->assertSame(15, Setting::get('max_discount_percentage'));
     }
@@ -215,7 +215,7 @@ class DatabaseIntegrityTest extends TestCase
     {
         $user = User::factory()->create();
         $customer = Customer::create([
-            'name' => 'معرض السلام بالمنصورة',
+            'name' => 'عميل تجريبي',
             'phone' => '01099887766',
             'is_active' => true,
         ]);
@@ -297,15 +297,15 @@ class DatabaseIntegrityTest extends TestCase
     {
         $user = User::factory()->create();
         $supplier = Supplier::create([
-            'name' => 'مصنع الخشب الزان',
+            'name' => 'مورد تجريبي',
             'phone' => '01000000000',
             'is_active' => true,
         ]);
 
-        $category = Category::create(['name' => 'صالون', 'code' => 'Z', 'is_active' => true]);
+        $category = Category::create(['name' => 'أطقم سرير', 'code' => 'Z', 'is_active' => true]);
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'صالون ملكي',
+            'name' => 'طقم سرير ملكي',
             'barcode' => 'Z0001',
             'purchase_cost' => Money::from(10000),
             'wholesale_price' => Money::from(12000),
@@ -319,7 +319,7 @@ class DatabaseIntegrityTest extends TestCase
             'supplier_id' => $supplier->id,
             'received_date' => now()->toDateString(),
             'total_cost' => Money::from(20000),
-            'notes' => 'استلام صالونين ملكي',
+            'notes' => 'استلام طقمين سرير ملكي',
             'created_by' => $user->id,
         ]);
 
@@ -408,10 +408,10 @@ class DatabaseIntegrityTest extends TestCase
     public function test_cannot_force_delete_product_when_inventory_movements_exist(): void
     {
         $user = User::factory()->create();
-        $category = Category::create(['name' => 'طاولات قهوة', 'code' => 'K', 'is_active' => true]);
+        $category = Category::create(['name' => 'كوفرتات', 'code' => 'K', 'is_active' => true]);
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'طاولة قهوة زجاج',
+            'name' => 'كوفرتة قطن صيفي',
             'barcode' => 'K0001',
             'purchase_cost' => Money::from(800),
             'wholesale_price' => Money::from(1000),

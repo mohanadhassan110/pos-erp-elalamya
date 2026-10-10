@@ -71,9 +71,9 @@ class InvoicePrintTest extends TestCase
         ]);
 
         $this->customer = Customer::factory()->create([
-            'name' => 'معرض النور للمفروشات',
+            'name' => 'عميل تجريبي',
             'phone' => '01012345678',
-            'address' => 'دمياط - شارع التجاريين',
+            'address' => 'عنوان تجريبي',
             'is_active' => true,
         ]);
     }
@@ -110,7 +110,7 @@ class InvoicePrintTest extends TestCase
             ->assertJsonPath('data.total', '1800.00')
             ->assertJsonPath('data.paid_amount', '1800.00')
             ->assertJsonPath('data.remaining_amount', '0.00')
-            ->assertJsonPath('data.showroom.name', 'العالمية للأثاث والموبيليا')
+            ->assertJsonPath('data.showroom.name', 'معرض العالمية للمفروشات')
             ->assertJsonPath('data.items.0.product_name', 'طقم لحاف مطرز 6 قطع')
             ->assertJsonPath('data.items.0.quantity', 2)
             ->assertJsonPath('data.items.0.unit_price', '900.00')
@@ -149,7 +149,7 @@ class InvoicePrintTest extends TestCase
         $res->assertOk()
             ->assertJsonPath('data.sale_type', 'wholesale')
             ->assertJsonPath('data.is_wholesale', true)
-            ->assertJsonPath('data.customer.name', 'معرض النور للمفروشات')
+            ->assertJsonPath('data.customer.name', 'عميل تجريبي')
             ->assertJsonPath('data.customer.prior_balance', '0.00')
             ->assertJsonPath('data.customer.resulting_balance', '400.00')
             ->assertJsonPath('data.total', '1400.00')
@@ -644,9 +644,9 @@ class InvoicePrintTest extends TestCase
 
         // 2. New customer with zero CustomerTransaction rows in the database
         $newCustomer = Customer::factory()->create([
-            'name' => 'معرض السعادة للمفروشات',
+            'name' => 'عميل تجريبي ثان',
             'phone' => '01099887766',
-            'address' => 'المحلة الكبرى - شارع مفروشات',
+            'address' => 'عنوان تجريبي',
             'is_active' => true,
         ]);
 

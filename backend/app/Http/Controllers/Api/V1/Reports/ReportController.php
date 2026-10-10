@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\V1\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportDateFilterRequest;
+use App\Http\Requests\Reports\SetReportsPasswordRequest;
+use App\Http\Requests\Reports\UnlockReportsRequest;
 use App\Models\Invoice;
 use App\Models\SalesReturn;
+use App\Models\Setting;
 use App\Services\Reports\CustomerReportService;
 use App\Services\Reports\ExpenseReportService;
 use App\Services\Reports\InventoryReportService;
@@ -17,6 +20,9 @@ use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -242,13 +248,15 @@ class ReportController extends Controller
         }
 
         if ($fromDate = $request->query('from_date')) {
-            $startUtc = Carbon::parse($fromDate, 'Africa/Cairo')->startOfDay()->utc();
-            $query->where('created_at', '>=', $startUtc);
+            $storageTz = config('app.timezone', 'Africa/Cairo');
+            $startBoundary = Carbon::parse($fromDate, 'Africa/Cairo')->startOfDay()->setTimezone($storageTz);
+            $query->where('created_at', '>=', $startBoundary);
         }
 
         if ($toDate = $request->query('to_date')) {
-            $endUtc = Carbon::parse($toDate, 'Africa/Cairo')->endOfDay()->utc();
-            $query->where('created_at', '<=', $endUtc);
+            $storageTz = config('app.timezone', 'Africa/Cairo');
+            $endBoundary = Carbon::parse($toDate, 'Africa/Cairo')->endOfDay()->setTimezone($storageTz);
+            $query->where('created_at', '<=', $endBoundary);
         }
 
         if ($search = $request->query('search')) {
@@ -304,13 +312,15 @@ class ReportController extends Controller
         }
 
         if ($fromDate = $request->query('from_date')) {
-            $startUtc = Carbon::parse($fromDate, 'Africa/Cairo')->startOfDay()->utc();
-            $query->where('created_at', '>=', $startUtc);
+            $storageTz = config('app.timezone', 'Africa/Cairo');
+            $startBoundary = Carbon::parse($fromDate, 'Africa/Cairo')->startOfDay()->setTimezone($storageTz);
+            $query->where('created_at', '>=', $startBoundary);
         }
 
         if ($toDate = $request->query('to_date')) {
-            $endUtc = Carbon::parse($toDate, 'Africa/Cairo')->endOfDay()->utc();
-            $query->where('created_at', '<=', $endUtc);
+            $storageTz = config('app.timezone', 'Africa/Cairo');
+            $endBoundary = Carbon::parse($toDate, 'Africa/Cairo')->endOfDay()->setTimezone($storageTz);
+            $query->where('created_at', '<=', $endBoundary);
         }
 
         if ($search = $request->query('search')) {
@@ -349,5 +359,81 @@ class ReportController extends Controller
                 'total' => $paginated->total(),
             ],
         ], 'تم جلب سجل المرتجعات بنجاح');
+    }
+
+    /**
+     * Unlock reports access for cashier's current session token (TTL 15 minutes).
+     */
+    public function unlock(UnlockReportsRequest $request): JsonResponse
+    {
+        $hash = Setting::get('reports_password_hash');
+
+        if (! $hash) {
+            return ApiResponse::error(
+                'لم يتم تعيين كلمة مرور لقسم التقارير بعد، يرجى مراجعة إدارة المعرض',
+                'REPORTS_PASSWORD_NOT_CONFIGURED',
+                null,
+                JsonResponse::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $password = $request->validated('password');
+
+        if (! Hash::check($password, $hash)) {
+            Log::warning('فشلت محاولة إلغاء قفل قسم التقارير', [
+                'user_id' => $request->user()?->id,
+                'ip' => $request->ip(),
+            ]);
+
+            return ApiResponse::error(
+                'كلمة المرور غير صحيحة',
+                'INVALID_PASSWORD',
+                null,
+                JsonResponse::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $token = $request->user()?->currentAccessToken();
+        $tokenKey = $token?->id ?? ('user_'.$request->user()->id);
+
+        Cache::put("reports_unlocked_token_{$tokenKey}", true, now()->addMinutes(15));
+
+        return ApiResponse::success([
+            'unlocked' => true,
+            'expires_in_minutes' => 15,
+        ], 'تم إلغاء قفل التقارير بنجاح لمدة 15 دقيقة');
+    }
+
+    /**
+     * Lock reports access immediately for cashier's current session token.
+     */
+    public function lock(Request $request): JsonResponse
+    {
+        $token = $request->user()?->currentAccessToken();
+        $tokenKey = $token?->id ?? ('user_'.$request->user()?->id);
+
+        if ($tokenKey) {
+            Cache::forget("reports_unlocked_token_{$tokenKey}");
+        }
+
+        return ApiResponse::success([
+            'unlocked' => false,
+        ], 'تم قفل قسم التقارير بنجاح');
+    }
+
+    /**
+     * Set or update reports gate password (Owner only).
+     */
+    public function setPassword(SetReportsPasswordRequest $request): JsonResponse
+    {
+        $newPassword = $request->validated('password');
+
+        Setting::set('reports_password_hash', Hash::make($newPassword), 'string', 'security');
+
+        Log::info('تم تحديث كلمة مرور قسم التقارير بواسطة المالك', [
+            'owner_id' => $request->user()?->id,
+        ]);
+
+        return ApiResponse::success(null, 'تم تعيين كلمة مرور قسم التقارير بنجاح');
     }
 }

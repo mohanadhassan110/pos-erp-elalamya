@@ -181,7 +181,7 @@ describe('Phase 6 — Financial and Operational Reports Frontend Domain Logic', 
         customers: [
           {
             id: 1,
-            name: 'معرض الأمل',
+            name: 'عميل تجريبي 1',
             phone: '01011111111',
             is_active: true,
             total_debits: '20000.00', // Sales invoices
@@ -192,7 +192,7 @@ describe('Phase 6 — Financial and Operational Reports Frontend Domain Logic', 
           },
           {
             id: 2,
-            name: 'تاجر الجملة الحاج سعيد',
+            name: 'عميل تجريبي 2',
             phone: '01022222222',
             is_active: true,
             total_debits: '15000.00',
@@ -241,7 +241,7 @@ describe('Phase 6 — Financial and Operational Reports Frontend Domain Logic', 
         suppliers: [
           {
             id: 1,
-            name: 'مصنع مفروشات المحلة',
+            name: 'مورد تجريبي 1',
             phone: '01044444444',
             is_active: true,
             total_purchases_credits: '50000.00',
@@ -252,7 +252,7 @@ describe('Phase 6 — Financial and Operational Reports Frontend Domain Logic', 
           },
           {
             id: 2,
-            name: 'مورد بطاطين تركي',
+            name: 'مورد تجريبي 2',
             phone: '01055555555',
             is_active: true,
             total_purchases_credits: '10000.00',

@@ -51,11 +51,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="barcodes" element={<BarcodePrintingPage />} />
         <Route path="expenses" element={<ExpensesPlaceholderPage />} />
 
-        {/* Owner-Only Restricted Routes */}
+        {/* Reports Section (Subject to server-side password gate for Cashier) */}
         <Route
           path="reports"
           element={
-            <RequireRole roles={['owner']}>
+            <RequireRole roles={['owner', 'cashier']}>
               <ReportsPage />
             </RequireRole>
           }

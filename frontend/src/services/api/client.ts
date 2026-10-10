@@ -35,7 +35,9 @@ class ApiClient {
   private baseUrl: string;
 
   constructor() {
-    const rawUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:8000/api/v1';
+    const defaultHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+    const defaultUrl = `http://${defaultHost}:8000/api/v1`;
+    const rawUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || defaultUrl;
     // Remove trailing slash if present
     this.baseUrl = rawUrl.replace(/\/+$/, '');
   }

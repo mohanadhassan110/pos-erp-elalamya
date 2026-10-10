@@ -103,9 +103,9 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
       status_label: 'مرحلة',
       customer: {
         id: 5,
-        name: 'معرض النور للأثاث والمفروشات',
+        name: 'عميل تجريبي',
         phone: '01012345678',
-        address: 'دمياط - شارع التجاريين',
+        address: 'عنوان العميل',
         prior_balance: '1500.00',
         prior_balance_formatted: '1,500.00 ج.م',
         resulting_balance: '3500.00',
@@ -161,12 +161,12 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
       notes: 'تسليم المعرض',
       cashier_name: 'أحمد كاشير',
       showroom: {
-        name: 'العالمية للأثاث والموبيليا',
-        subtitle: 'معرض المفروشات المنزلية والأثاث الراقي',
+        name: 'معرض العالمية للمفروشات',
+        subtitle: 'معرض المفروشات المنزلية والمنسوجات الراقية',
         phone: '01000000000',
-        address: 'المعرض الرئيسي - دمياط',
+        address: 'المعرض الرئيسي - المحلة الكبرى',
         return_policy: 'البضاعة المباعة ترد وتستبدل خلال 14 يوماً بشرط وجود أصل الفاتورة وسلامة المنتج',
-        footer_note: 'شكراً لتعاملكم مع معرض العالمية للأثاث والموبيليا',
+        footer_note: 'شكراً لتعاملكم مع معرض العالمية للمفروشات',
       },
     };
 
@@ -233,7 +233,7 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
         wholesale_price_formatted: '350.00 ج.م',
         stock_quantity: 12,
         print_quantity: 4,
-        showroom_name: 'العالمية للأثاث والموبيليا',
+        showroom_name: 'معرض العالمية للمفروشات',
       },
       {
         product_id: 2,
@@ -247,7 +247,7 @@ describe('Phase 12 — Barcode & Invoice Printing Implementation', () => {
         wholesale_price_formatted: '950.00 ج.م',
         stock_quantity: 8,
         print_quantity: 3,
-        showroom_name: 'العالمية للأثاث والموبيليا',
+        showroom_name: 'معرض العالمية للمفروشات',
       },
     ];
 

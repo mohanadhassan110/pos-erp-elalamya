@@ -69,5 +69,8 @@ export const API_ENDPOINTS = {
     DOCUMENTS: '/reports/documents',
     INVOICES_HISTORY: '/reports/history/invoices',
     RETURNS_HISTORY: '/reports/history/returns',
+    UNLOCK: '/reports/unlock',
+    LOCK: '/reports/lock',
+    PASSWORD: '/reports/password',
   },
 } as const;

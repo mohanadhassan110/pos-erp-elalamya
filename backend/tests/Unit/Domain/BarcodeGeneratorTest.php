@@ -19,7 +19,7 @@ class BarcodeGeneratorTest extends TestCase
     public function test_generates_first_sequential_barcode_for_category(): void
     {
         $category = Category::create([
-            'name' => 'صالونات',
+            'name' => 'مفروشات سرير',
             'code' => 'S',
             'is_active' => true,
         ]);
@@ -33,18 +33,18 @@ class BarcodeGeneratorTest extends TestCase
     public function test_increments_sequential_barcode_correctly(): void
     {
         $category = Category::create([
-            'name' => 'غرف نوم',
+            'name' => 'بطاطين',
             'code' => 'B',
             'is_active' => true,
         ]);
 
         Product::create([
             'category_id' => $category->id,
-            'name' => 'غرفة نوم ماستر',
+            'name' => 'بطانية مفرد شتوي',
             'barcode' => 'B0001',
-            'purchase_cost' => Money::from(10000),
-            'wholesale_price' => Money::from(12000),
-            'retail_price' => Money::from(15000),
+            'purchase_cost' => Money::from(1000),
+            'wholesale_price' => Money::from(1200),
+            'retail_price' => Money::from(1500),
             'stock_quantity' => Quantity::from(2),
             'is_active' => true,
         ]);
@@ -54,11 +54,11 @@ class BarcodeGeneratorTest extends TestCase
 
         Product::create([
             'category_id' => $category->id,
-            'name' => 'غرفة نوم أطفال',
+            'name' => 'بطانية أطفال رسومات',
             'barcode' => $nextBarcode,
-            'purchase_cost' => Money::from(7000),
-            'wholesale_price' => Money::from(8500),
-            'retail_price' => Money::from(10000),
+            'purchase_cost' => Money::from(700),
+            'wholesale_price' => Money::from(850),
+            'retail_price' => Money::from(1000),
             'stock_quantity' => Quantity::from(3),
             'is_active' => true,
         ]);
@@ -69,16 +69,16 @@ class BarcodeGeneratorTest extends TestCase
 
     public function test_different_categories_maintain_independent_sequences(): void
     {
-        $categoryA = Category::create(['name' => 'أطقم أنتريه', 'code' => 'A', 'is_active' => true]);
-        $categoryB = Category::create(['name' => 'مطابخ', 'code' => 'M', 'is_active' => true]);
+        $categoryA = Category::create(['name' => 'ألحفة', 'code' => 'A', 'is_active' => true]);
+        $categoryB = Category::create(['name' => 'ملايات', 'code' => 'M', 'is_active' => true]);
 
         Product::create([
             'category_id' => $categoryA->id,
-            'name' => 'أنتريه مودرن',
+            'name' => 'لحاف قطن فاخر',
             'barcode' => 'A0001',
-            'purchase_cost' => Money::from(5000),
-            'wholesale_price' => Money::from(6000),
-            'retail_price' => Money::from(7000),
+            'purchase_cost' => Money::from(500),
+            'wholesale_price' => Money::from(600),
+            'retail_price' => Money::from(700),
             'stock_quantity' => Quantity::from(1),
             'is_active' => true,
         ]);
@@ -89,11 +89,11 @@ class BarcodeGeneratorTest extends TestCase
 
     public function test_soft_deleted_product_preserves_barcode_sequence_without_collision(): void
     {
-        $category = Category::create(['name' => 'كراسي', 'code' => 'C', 'is_active' => true]);
+        $category = Category::create(['name' => 'كوفرتات', 'code' => 'C', 'is_active' => true]);
 
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'كرسي سفرة',
+            'name' => 'كوفرتة سرير تركي',
             'barcode' => 'C0001',
             'purchase_cost' => Money::from(500),
             'wholesale_price' => Money::from(650),
@@ -118,11 +118,11 @@ class BarcodeGeneratorTest extends TestCase
 
     public function test_throws_exception_when_category_reaches_maximum_capacity(): void
     {
-        $category = Category::create(['name' => 'طاولات', 'code' => 'T', 'is_active' => true]);
+        $category = Category::create(['name' => 'فوط وبشاكير', 'code' => 'T', 'is_active' => true]);
 
         Product::create([
             'category_id' => $category->id,
-            'name' => 'طاولة رقم 9999',
+            'name' => 'بشكير قطن رقم 9999',
             'barcode' => 'T9999',
             'purchase_cost' => Money::from(100),
             'wholesale_price' => Money::from(150),

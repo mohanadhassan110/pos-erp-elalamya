@@ -1,7 +1,7 @@
 # Al-Alamiya ERP/POS — Master Data Specification (Phase 3)
 
 ## 1. Overview
-Master data establishes catalog and ledger entities for **Al-Alamiya ERP/POS (العالمية للأثاث والموبيليا)**:
+Master data establishes catalog and ledger entities for **Al-Alamiya ERP/POS (معرض العالمية للمفروشات)**:
 - **Categories (فئات الأصناف)**
 - **Products (دليل المنتجات)**
 - **Customers (العملاء وحسابات الجملة)**

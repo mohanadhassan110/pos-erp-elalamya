@@ -19,7 +19,7 @@ class SupplierLedgerTest extends TestCase
     {
         $user = User::factory()->create();
         $supplier = Supplier::create([
-            'name' => 'مصنع دمياط للمصنوعات الخشبية',
+            'name' => 'مورد تجريبي',
             'phone' => '01122334455',
             'is_active' => true,
         ]);
@@ -33,7 +33,7 @@ class SupplierLedgerTest extends TestCase
             'type' => SupplierTransactionType::MANUAL_BALANCE_INCREASE,
             'direction' => SupplierTransactionDirection::CREDIT,
             'amount' => Money::from(25000),
-            'description' => 'فاتورة شراء 20 قطعة لحاف وأنتريه',
+            'description' => 'فاتورة شراء 20 قطعة لحاف وبطانية',
             'created_by' => $user->id,
         ]);
 

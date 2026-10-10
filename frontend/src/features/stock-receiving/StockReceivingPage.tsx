@@ -351,7 +351,7 @@ export const StockReceivingPage: React.FC = () => {
             استلام بضاعة للمخزن
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)', marginTop: '0.25rem' }}>
-            توريد قطع أثاث للمخزن، تحديث تكلفة الشراء، قيد المستحق للمورد، وحركات الوارد
+            توريد مفروشات للمخزن، تحديث تكلفة الشراء، قيد المستحق للمورد، وحركات الوارد
           </p>
         </div>
 
@@ -424,7 +424,7 @@ export const StockReceivingPage: React.FC = () => {
 
               <Input
                 label="ملاحظات / رقم الفاتورة الورقية"
-                placeholder="مثال: توريد دفعة الصالونات، فاتورة دمياط رقم 402"
+                placeholder="مثال: توريد دفعة ألحفة، إذن استلام رقم 402"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />

@@ -2,7 +2,7 @@
 
 ## 1. Purpose and Authority
 
-This file is the authoritative constitution for **العالمية ERP/POS — Al-Alamiya ERP/POS**, an Arabic RTL furniture-showroom ERP/POS built with Laravel/PHP backend, React frontend, and MySQL.
+This file is the authoritative constitution for **العالمية ERP/POS — Al-Alamiya ERP/POS**, an Arabic RTL home-textiles showroom ERP/POS (معرض مفروشات منزلية: لحف، بطاطين، فوط، أطقم ملايات) built with Laravel/PHP backend, React frontend, and MySQL.
 
 The system covers retail and wholesale sales, inventory, customers, suppliers, stock receiving, returns/exchanges, expenses, reports, barcode printing, invoice printing, authentication, and Owner/Cashier permissions.
 

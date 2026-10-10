@@ -293,7 +293,7 @@ export const ProductsPage: React.FC = () => {
             إدارة منتجات المعرض
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)', marginTop: '0.25rem' }}>
-            تعريف قطع الأثاث، الأسعار، توليد الباركود، ومتابعة الأرصدة
+            تعريف أصناف المفروشات، الأسعار، توليد الباركود، ومتابعة الأرصدة
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>

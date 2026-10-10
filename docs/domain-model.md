@@ -2,7 +2,7 @@
 
 ## 1. Domain Entities & Value Objects
 
-The domain layer models the business operations of **العالمية للأثاث والموبيليا** in accordance with the `AGENTS.md` constitution.
+The domain layer models the business operations of **معرض العالمية للمفروشات** (مفروشات منزلية: ألحفة، بطاطين، فوط، ملايات) in accordance with the `AGENTS.md` constitution.
 
 ### 1.1 Value Objects
 - **`Money`** (`App\Domain\Support\Money`):
@@ -290,8 +290,8 @@ All reporting endpoints are strictly restricted to authenticated users with the 
 ### 7.2 Customer-Facing Invoice Printing Workflow
 - **Dedicated Endpoint & Resource**: `GET /api/v1/invoices/{id}/print` returning `InvoicePrintResource`.
 - **Supported Layout Formats**:
-  1. **Official A4 Invoice (`a4`)**: Standard full-page invoice for official corporate records, wholesale clients, and luxury furniture showroom sales.
-     - Complete showroom branding: **العالمية للأثاث والموبيليا**, subtitle, phone, and address.
+  1. **Official A4 Invoice (`a4`)**: Standard full-page invoice for official corporate records, wholesale clients, and luxury home textiles showroom sales.
+     - Complete showroom branding: **معرض العالمية للمفروشات**, subtitle, phone, and address.
      - Issue date & time in Arabic.
      - Cashier / sales associate attribution.
      - Dense item table: Product name, barcode, quantity, unit price, and line total.
@@ -319,6 +319,59 @@ All reporting endpoints are strictly restricted to authenticated users with the 
 - **Print Optimization**:
   - Print-specific CSS (`@media print`) hides application chrome, navigation, headers, and action buttons.
   - Individual table rows, headers, and labels avoid breaks (`break-inside: avoid`), while multi-page containers paginate cleanly without clipping.
+
+---
+
+## 8. Phase 13-B — Permissions Matrix & Reports Password Gate Specification
+
+### 8.1 Roles and Permission Matrix
+The system defines two operational roles:
+1. **Owner (`owner`)**: Full, unrestricted administrative access across the entire system. Accesses all analytical and financial reports unconditionally without requiring a password. Exclusively authorized to change the reports password and manage users/settings.
+2. **Cashier (`cashier`)**: Empowered to perform ALL daily operational actions:
+   - POS sales, retail/wholesale checkout, payment processing.
+   - Products (view, create, update prices, archive) and category management.
+   - Customers (create, update, ledger payments).
+   - Suppliers (create, update, ledger payments, and manual balance additions).
+   - Stock receiving and stock adjustments.
+   - Invoices & Sales Returns/Exchanges.
+   - Barcode printing and customer invoice printing.
+   - Inventory movements view.
+
+**Operational Cost Visibility Invariant (Owner Decision)**:
+- Cashier **MAY SEE** `purchase_cost` on products catalog (`/api/v1/products`) and stock receiving screens (`/api/v1/stock-receipts`) because the cashier enters purchase costs directly from physical supplier invoices.
+- Cashier **STILL MUST NOT SEE** profit, expense links, or external-product markers anywhere.
+- Cashier **STILL MUST NOT SEE** `purchase_cost`, `unit_cost`, `total_cost`, or `profit` on invoices, returns, customer print outputs (`InvoicePrintResource`), or barcode labels (`BarcodeLabelResource`).
+
+### 8.2 Reports Password Gate Architecture
+- **Restricted Scope**: All 15 report endpoints under `/api/v1/reports/*` are guarded by the `reports.access` (`EnsureReportsAccess`) middleware.
+- **Default State**: Cashier access without unlocking returns `403 Forbidden` with the machine-readable error code `REPORTS_LOCKED` and an Arabic user notification.
+- **Hashed Password Storage**: The reports password is stored as a bcrypt hash in the `settings` table (`key: 'reports_password_hash'`, `group: 'security'`). The plaintext password is never stored, never transmitted to the frontend, and never logged.
+- **Temporary Session-Tied Unlock**:
+  - `POST /api/v1/reports/unlock` accepts `{ password }`.
+  - Verifies the candidate password with `Hash::check()`.
+  - Upon success, generates a server-side cache record keyed by the active Sanctum token identifier: `reports_unlocked_token_{$tokenId}`.
+  - TTL is strictly 15 minutes (`now()->addMinutes(15)`).
+- **Manual & Automatic Relocking**:
+  - `POST /api/v1/reports/lock` explicitly purges the cache key.
+  - User logout (`POST /api/v1/auth/logout`) and token revocation immediately purge the cache key.
+  - User deactivation (`is_active = false`) revokes access globally.
+- **Brute-Force Protection**:
+  - `reports-unlock` rate limiter restricts attempts to 5 requests per minute keyed by user ID and IP address.
+  - Failed attempts log security audit notices without logging the submitted password.
+- **Confidentiality Invariant**:
+  - Unlocking reports grants access to `/reports/*` analytical endpoints only.
+  - It **never** leaks internal purchase costs or line profits on customer-facing or non-report operational endpoints (invoices, returns, printable receipts, barcode labels).
+
+---
+
+## 9. Phase 16 — Production Readiness & LAN Multi-Device Architecture
+
+### 9.1 Architecture & Single-Stock Showroom Model
+- **Deployment Target**: ONE Windows shop PC operates as the local LAN host (backend API + MariaDB + built React frontend). A second device upstairs connects over the local router (`http://<static-LAN-IP>`).
+- **Unified Inventory**: Both devices transact against the single MariaDB database. There are no separate store branches; it is ONE inventory.
+- **Strict Concurrency Protection**: High-traffic simultaneous requests acquire InnoDB row locks (`SELECT ... FOR UPDATE`) inside atomic database transactions (`DB::transaction`). A concurrent attempt to purchase the last remaining item is blocked until the first transaction commits, then re-checks available stock and is rejected with `INSUFFICIENT_STOCK` (422), preventing negative stock.
+- **Retail Overpayment Invariant**: When a retail customer pays more than the total, the excess amount is recorded as `credit_amount` on the invoice header as change due to the customer, but creates zero customer ledger accounts.
+- **Device Attribution**: Invoices capture the user ID (`created_by`). Recording specific physical hardware terminals is flagged as "Needs owner decision".
 
 
 

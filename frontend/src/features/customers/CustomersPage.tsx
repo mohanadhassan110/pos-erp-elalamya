@@ -315,8 +315,8 @@ export const CustomersPage: React.FC = () => {
           {formError && <Alert type="error" message={formError} />}
 
           <Input
-            label="اسم العميل أو المعرض"
-            placeholder="مثال: معرض الأمل للأثاث، أحمد محمود"
+            label="اسم العميل"
+            placeholder="مثال: محمد أحمد"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             required

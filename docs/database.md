@@ -2,7 +2,7 @@
 
 ## 1. Overview & Principles
 
-The database schema for **Al-Alamiya ERP/POS (العالمية للأثاث)** is engineered for financial correctness, auditability, and data integrity:
+The database schema for **Al-Alamiya ERP/POS (معرض العالمية للمفروشات)** is engineered for financial correctness, auditability, and data integrity:
 
 1. **Fixed-Precision Decimal Money**: All monetary amounts are defined as `DECIMAL(15,2)` in MySQL/SQLite. Floating-point arithmetic is strictly forbidden.
 2. **Whole-Number Quantities**: All product and inventory quantities are non-negative whole numbers (`INTEGER`).
@@ -21,7 +21,7 @@ The database schema for **Al-Alamiya ERP/POS (العالمية للأثاث)** i
 ### 2.2 Catalog & Master Data
 - **`categories`**:
   - `id`: Primary key.
-  - `name`: Category name (e.g. صالونات).
+  - `name`: Category name (e.g. مفروشات).
   - `code`: VARCHAR(10) unique single-letter barcode code (e.g. `B`, `S`).
   - `is_active`: Boolean.
   - Timestamps, soft deletes.
@@ -261,3 +261,16 @@ The database schema for **Al-Alamiya ERP/POS (العالمية للأثاث)** i
 - **Payments & Cash Movement**:
   - Queried from `payments` using `paid_at` or `created_at` timestamp range, separating positive inflows (`PaymentType::INVOICE_PAYMENT`, `PaymentType::EXCHANGE_PAYMENT`) and outflows (`PaymentType::REFUND`).
 
+### 2.12 Phase 16 Performance Indexes (Additive Migration)
+- **`invoices.created_at`** (`invoices_created_at_index`): Accelerates date-range reporting and period filtering.
+- **`invoices(customer_id, created_at)`** (`invoices_customer_id_created_at_index`): Accelerates customer account history and statement generation.
+- **`sales_returns.created_at`** (`sales_returns_created_at_index`): Accelerates sales return date filtering and period reconciliation.
+- **Verified Existing Core Indexes**:
+  - `products(barcode)` (unique)
+  - `products(category_id)` (FK)
+  - `customers(phone)` (unique)
+  - `suppliers(phone)` (unique)
+  - `invoices(invoice_number)` (unique)
+  - `invoices(idempotency_key)` (unique)
+  - `sales_returns(return_number)` (unique)
+  - `sales_returns(idempotency_key)` (unique)

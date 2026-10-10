@@ -15,9 +15,9 @@ class SupplierFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'مصنع '.fake()->company(),
+            'name' => 'مورد تجريبي '.fake()->unique()->numberBetween(100, 9999),
             'phone' => '01'.fake()->numberBetween(100000000, 999999999),
-            'address' => 'دمياط، مصر',
+            'address' => 'المحلة الكبرى، مصر',
             'notes' => null,
             'is_active' => true,
         ];

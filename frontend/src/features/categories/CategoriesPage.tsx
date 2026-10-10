@@ -284,7 +284,7 @@ export const CategoriesPage: React.FC = () => {
 
           <Input
             label="اسم الفئة"
-            placeholder="مثال: غرف نوم، صالونات، كراسي"
+            placeholder="مثال: ألحفة وبطاطين، ملايات، مناشف وبشاكير"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             required

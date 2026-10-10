@@ -40,12 +40,12 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'غرف نوم', 'code' => 'B', 'is_active' => true]);
-        $supplier = Supplier::create(['name' => 'مصنع الاتحاد', 'phone' => '01000000001', 'is_active' => true]);
+        $category = Category::create(['name' => 'ألحفة', 'code' => 'B', 'is_active' => true]);
+        $supplier = Supplier::create(['name' => 'مورد تجريبي', 'phone' => '01000000001', 'is_active' => true]);
 
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'دولاب 3 دلفة جرار',
+            'name' => 'لحاف شتوي كبير',
             'barcode' => 'B0001',
             'purchase_cost' => Money::from(4000), // Old cost
             'wholesale_price' => Money::from(5000),
@@ -109,11 +109,11 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'طاولات', 'code' => 'T', 'is_active' => true]);
+        $category = Category::create(['name' => 'بطاطين', 'code' => 'T', 'is_active' => true]);
 
         $p1 = Product::create([
             'category_id' => $category->id,
-            'name' => 'طاولة شاي خشبية',
+            'name' => 'بطانية صوف مفرد',
             'barcode' => 'T0001',
             'purchase_cost' => Money::from(300),
             'wholesale_price' => Money::from(400),
@@ -124,7 +124,7 @@ class StockReceivingTest extends TestCase
 
         $p2 = Product::create([
             'category_id' => $category->id,
-            'name' => 'طاولة تلفزيون 160 سم',
+            'name' => 'بطانية مزدوجة فاخرة',
             'barcode' => 'T0002',
             'purchase_cost' => Money::from(1000),
             'wholesale_price' => Money::from(1300),
@@ -159,13 +159,13 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'صالونات', 'code' => 'S', 'is_active' => true]);
-        $supplier = Supplier::create(['name' => 'مورد اختبار', 'phone' => '01000000002', 'is_active' => true]);
+        $category = Category::create(['name' => 'لحف', 'code' => 'L', 'is_active' => true]);
+        $supplier = Supplier::create(['name' => 'مورد تجريبي', 'phone' => '01000000002', 'is_active' => true]);
 
         $validProduct = Product::create([
             'category_id' => $category->id,
-            'name' => 'كنبة ركنة',
-            'barcode' => 'S0001',
+            'name' => 'لحاف شتوي تركي',
+            'barcode' => 'L0001',
             'purchase_cost' => Money::from(5000),
             'wholesale_price' => Money::from(6500),
             'retail_price' => Money::from(8000),
@@ -175,7 +175,7 @@ class StockReceivingTest extends TestCase
 
         $inactiveProduct = Product::create([
             'category_id' => $category->id,
-            'name' => 'كرسي معطل',
+            'name' => 'لحاف معطل',
             'barcode' => 'S0002',
             'purchase_cost' => Money::from(500),
             'wholesale_price' => Money::from(650),
@@ -208,10 +208,10 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'أسرّة', 'code' => 'B', 'is_active' => true]);
+        $category = Category::create(['name' => 'ملايات', 'code' => 'B', 'is_active' => true]);
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'سرير أطفال',
+            'name' => 'طقم ملاية أطفال',
             'barcode' => 'B0001',
             'purchase_cost' => Money::from(1500),
             'wholesale_price' => Money::from(1800),
@@ -268,11 +268,11 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'نيش', 'code' => 'N', 'is_active' => true]);
+        $category = Category::create(['name' => 'مناشف', 'code' => 'N', 'is_active' => true]);
 
         Product::create([
             'category_id' => $category->id,
-            'name' => 'نيش مودرن 3 ضلفة',
+            'name' => 'طقم مناشف قطن فاخر',
             'barcode' => 'N0001',
             'purchase_cost' => Money::from(5000),
             'wholesale_price' => Money::from(6000),
@@ -292,10 +292,10 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'مطابخ', 'code' => 'K', 'is_active' => true]);
+        $category = Category::create(['name' => 'كوفرتات', 'code' => 'K', 'is_active' => true]);
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'وحدة مطبخ علوية',
+            'name' => 'كوفرتة صيفي مفرد',
             'barcode' => 'K0001',
             'purchase_cost' => Money::from(1000),
             'wholesale_price' => Money::from(1200),
@@ -325,13 +325,13 @@ class StockReceivingTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'صالونات', 'code' => 'S', 'is_active' => true]);
-        $supplier = Supplier::create(['name' => 'مورد إدمبوتنسي', 'phone' => '01099999999', 'is_active' => true]);
+        $category = Category::create(['name' => 'بطاطين', 'code' => 'B', 'is_active' => true]);
+        $supplier = Supplier::create(['name' => 'مورد تجريبي', 'phone' => '01099999999', 'is_active' => true]);
 
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'أنتريه كلاسيك',
-            'barcode' => 'S0001',
+            'name' => 'بطانية شتوي حفر ليزر',
+            'barcode' => 'B0001',
             'purchase_cost' => Money::from(7000),
             'wholesale_price' => Money::from(8500),
             'retail_price' => Money::from(10000),

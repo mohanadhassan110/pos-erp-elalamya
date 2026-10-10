@@ -19,7 +19,7 @@ class CustomerLedgerTest extends TestCase
     {
         $user = User::factory()->create();
         $customer = Customer::create([
-            'name' => 'معرض الأمل للموبيليا',
+            'name' => 'عميل تجريبي',
             'phone' => '01012345678',
             'is_active' => true,
         ]);

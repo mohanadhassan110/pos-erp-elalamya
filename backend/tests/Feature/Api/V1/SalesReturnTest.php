@@ -106,7 +106,7 @@ class SalesReturnTest extends TestCase
         ]);
 
         $this->customer = Customer::factory()->create([
-            'name' => 'معرض الأمل للموبيليا',
+            'name' => 'عميل تجريبي',
             'phone' => '01011112222',
             'is_active' => true,
         ]);
@@ -450,7 +450,7 @@ class SalesReturnTest extends TestCase
             'items' => [
                 [
                     'type' => 'external',
-                    'product_name' => 'ستائر مخصصة',
+                    'product_name' => 'طقم لحاف مخصص',
                     'quantity' => 2,
                     'purchase_cost' => '300.00',
                     'unit_sale_price' => '450.00',
@@ -491,7 +491,7 @@ class SalesReturnTest extends TestCase
             'items' => [
                 [
                     'type' => 'external',
-                    'product_name' => 'ستائر مخصصة يدوياً',
+                    'product_name' => 'طقم مفرش مخصص يدوياً',
                     'quantity' => 2,
                     'purchase_cost' => '300.00',
                     'unit_sale_price' => '450.00',

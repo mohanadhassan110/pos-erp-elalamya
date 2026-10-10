@@ -96,7 +96,7 @@ describe('Phase 5 — Sales Returns, Refunds, Exchanges & Customer Credit Domain
         remaining_amount: '2000.00',
         credit_amount: '0.00',
         customer_id: 5,
-        customer_name: 'معرض الأمل للموبيليا',
+        customer_name: 'عميل تجريبي',
         customer_phone: '01011112222',
         created_at: '2026-10-08T11:00:00Z',
         created_at_formatted: '2026-10-08 11:00',

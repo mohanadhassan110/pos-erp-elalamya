@@ -31,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip().'|'.strtolower(trim($login)));
         });
 
+        // Rate Limiter for Reports Unlock Gate (5 attempts per minute per user + IP)
+        RateLimiter::for('reports-unlock', function (Request $request) {
+            $userKey = $request->user()?->id ?? 'guest';
+
+            return Limit::perMinute(5)->by($userKey.'|'.$request->ip());
+        });
+
         // Authorization Gates for Al-Alamiya ERP Foundation
         // Owner-only gates as defined in AGENTS.md Section 23
         Gate::define('access-reports', fn (User $user) => $user->is_active && $user->isOwner());

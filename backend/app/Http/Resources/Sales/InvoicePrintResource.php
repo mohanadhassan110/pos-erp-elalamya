@@ -80,10 +80,10 @@ class InvoicePrintResource extends JsonResource
             ];
         });
 
-        $showroomName = Setting::get('showroom_name', 'العالمية للأثاث والموبيليا');
-        $showroomSubtitle = Setting::get('showroom_subtitle', 'معرض المفروشات المنزلية والأثاث الراقي');
+        $showroomName = Setting::get('showroom_name', 'معرض العالمية للمفروشات');
+        $showroomSubtitle = Setting::get('showroom_subtitle', 'معرض المفروشات المنزلية والمنسوجات الراقية');
         $showroomPhone = Setting::get('showroom_phone', '01000000000');
-        $showroomAddress = Setting::get('showroom_address', 'المعرض الرئيسي - دمياط');
+        $showroomAddress = Setting::get('showroom_address', 'المعرض الرئيسي - المحلة الكبرى');
         $returnPolicy = Setting::get('invoice_return_policy', 'البضاعة المباعة ترد وتستبدل خلال 14 يوماً وفقاً لأحكام قانون حماية المستهلك ولائحة المعرض بشرط وجود أصل الفاتورة وسلامة المنتج بحالته الأصلية.');
 
         return [
@@ -121,7 +121,7 @@ class InvoicePrintResource extends JsonResource
                 'phone' => $showroomPhone,
                 'address' => $showroomAddress,
                 'return_policy' => $returnPolicy,
-                'footer_note' => 'شكراً لتعاملكم مع معرض العالمية للأثاث والموبيليا',
+                'footer_note' => 'شكراً لتعاملكم مع معرض العالمية للمفروشات',
             ],
         ];
     }

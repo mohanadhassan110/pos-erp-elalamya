@@ -14,6 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \RuntimeException('لا يمكن تشغيل DatabaseSeeder في بيئة الإنتاج لمنع حقن حسابات تجريبية بكلمات مرور افتراضية. استخدم ProductionSeeder وأمر make:owner بدلاً منه.');
+        }
+
         // 1. Owner account
         User::updateOrCreate(
             ['username' => 'owner'],

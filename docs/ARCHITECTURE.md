@@ -2,7 +2,7 @@
 
 ## 1. Architectural Principles
 
-Al-Alamiya ERP/POS is designed for furniture showroom operations in Egypt, following the project constitution ([AGENTS.md](file:///d:/elalamya-main/AGENTS.md)).
+Al-Alamiya ERP/POS is designed for home textiles showroom operations in Egypt (معرض العالمية للمفروشات), following the project constitution ([AGENTS.md](file:///d:/elalamya-main/AGENTS.md)).
 
 Core architectural rules established in Phase 1:
 1. **Server-Side Authoritative Truth**: The backend is the sole source of truth for business rules, calculations, authorizations, and data integrity. The React frontend is a strict client of the API.

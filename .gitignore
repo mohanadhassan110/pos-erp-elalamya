@@ -58,3 +58,9 @@ pnpm-debug.log*
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Database dumps & local backups
+*.sql
+*.sql.gz
+backups/
+*-backups/

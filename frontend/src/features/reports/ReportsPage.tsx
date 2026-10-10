@@ -20,6 +20,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
+import { useAuth } from '../../app/providers/useAuth';
 
 type ReportTab = 'overview' | 'sales' | 'expenses' | 'ledgers' | 'inventory' | 'cash' | 'history';
 
@@ -53,6 +54,14 @@ export const ReportsPage: React.FC = () => {
   const [invoiceHistoryPage, setInvoiceHistoryPage] = useState<number>(1);
   const [returnResolutionFilter, setReturnResolutionFilter] = useState<string>('');
   const [returnHistoryPage, setReturnHistoryPage] = useState<number>(1);
+
+  // Auth & Password Gate states
+  const { isOwner } = useAuth();
+  const [isReportsLocked, setIsReportsLocked] = useState<boolean>(false);
+  const [unlockPassword, setUnlockPassword] = useState<string>('');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [isSubmittingUnlock, setIsSubmittingUnlock] = useState<boolean>(false);
+  const [fetchTrigger, setFetchTrigger] = useState<number>(0);
 
   // Loading & Error states
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -136,8 +145,13 @@ export const ReportsPage: React.FC = () => {
     runFetch()
       .catch((err: unknown) => {
         if (active) {
-          const error = err as { message?: string };
-          setErrorMessage(error?.message || 'حدث خطأ أثناء جلب بيانات التقرير.');
+          const error = err as { message?: string; code?: string };
+          if (error?.code === 'REPORTS_LOCKED') {
+            setIsReportsLocked(true);
+            setErrorMessage(null);
+          } else {
+            setErrorMessage(error?.message || 'حدث خطأ أثناء جلب بيانات التقرير.');
+          }
         }
       })
       .finally(() => {
@@ -167,7 +181,49 @@ export const ReportsPage: React.FC = () => {
     periodPreset,
     customStartDate,
     customEndDate,
+    fetchTrigger,
   ]);
+
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unlockPassword.trim()) return;
+
+    setIsSubmittingUnlock(true);
+    setUnlockError(null);
+
+    try {
+      await reportsApi.unlock(unlockPassword);
+      setIsReportsLocked(false);
+      setUnlockPassword('');
+      setErrorMessage(null);
+      setIsLoading(true);
+      setFetchTrigger((prev) => prev + 1);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setUnlockError(error?.message || 'كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsSubmittingUnlock(false);
+    }
+  };
+
+  const handleLockReports = async () => {
+    try {
+      await reportsApi.lock();
+    } catch {
+      // Ignored
+    } finally {
+      setIsReportsLocked(true);
+      setOverviewData(null);
+      setSalesData(null);
+      setExpensesData(null);
+      setCustomerData(null);
+      setSupplierData(null);
+      setInventoryData(null);
+      setPaymentsData(null);
+      setInvoicesHistory(null);
+      setReturnsHistory(null);
+    }
+  };
 
   const handleRefresh = () => {
     // Trigger re-render / re-fetch
@@ -256,7 +312,7 @@ export const ReportsPage: React.FC = () => {
             📊 التقارير المالية والتشغيلية
           </h1>
           <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
-            معرض العالمية للأثاث والمفروشات — مؤشرات الأداء، الأرباح المحققة، حركة النقدية والمخزون
+            معرض العالمية للمفروشات — مؤشرات الأداء، الأرباح المحققة، حركة النقدية والمخزون
           </p>
         </div>
 
@@ -361,13 +417,52 @@ export const ReportsPage: React.FC = () => {
             </div>
           )}
 
-          <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isLoading}>
+          {!isOwner && !isReportsLocked && (
+            <Button variant="outline" size="sm" onClick={handleLockReports}>
+              🔒 قفل التقارير
+            </Button>
+          )}
+          <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isLoading || isReportsLocked}>
             🔄 تحديث
           </Button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {isReportsLocked ? (
+        <div style={{ maxWidth: '30rem', margin: '3rem auto', width: '100%' }}>
+          <Card title="🔒 قسم التقارير مقفل بكلمة مرور">
+            <form onSubmit={handleUnlockSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.6, margin: 0 }}>
+                قسم التقارير يحتوي على مؤشرات الأداء والأرباح. يتطلب هذا القسم إدخال كلمة المرور المصرح بها لإلغاء القفل مؤقتاً.
+              </p>
+
+              {unlockError && <Alert type="error" message={unlockError} />}
+
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', marginBottom: '0.375rem' }}>
+                  كلمة مرور التقارير
+                </label>
+                <Input
+                  type="password"
+                  value={unlockPassword}
+                  onChange={(e) => setUnlockPassword(e.target.value)}
+                  placeholder="أدخل كلمة المرور..."
+                  disabled={isSubmittingUnlock}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <Button type="submit" variant="primary" disabled={isSubmittingUnlock || !unlockPassword.trim()}>
+                  {isSubmittingUnlock ? 'جاري التحقق...' : 'إلغاء القفل ومتابعة'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      ) : (
+        <>
+          {/* Navigation Tabs */}
       <div
         style={{
           display: 'flex',
@@ -1654,6 +1749,8 @@ export const ReportsPage: React.FC = () => {
               )}
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </div>

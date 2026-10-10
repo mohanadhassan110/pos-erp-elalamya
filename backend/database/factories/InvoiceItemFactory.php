@@ -23,7 +23,7 @@ class InvoiceItemFactory extends Factory
             'invoice_id' => Invoice::factory(),
             'product_id' => Product::factory(),
             'item_type' => InvoiceItemType::PRODUCT,
-            'product_name' => 'طقم أنتريه فاخر',
+            'product_name' => 'طقم لحاف فاخر',
             'barcode' => 'A0001',
             'quantity' => Quantity::from(1),
             'unit_sale_price' => Money::from(650),

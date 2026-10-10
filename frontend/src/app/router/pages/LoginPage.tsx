@@ -79,12 +79,12 @@ export const LoginPage: React.FC = () => {
       <div style={{ width: '100%', maxWidth: '28rem' }}>
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🛋️</div>
+          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🧵</div>
           <h1 style={{ color: '#ffffff', fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-extrabold)' }}>
             العالمية ERP/POS
           </h1>
           <p style={{ color: 'var(--color-slate-400)', fontSize: 'var(--font-size-sm)', marginTop: '0.25rem' }}>
-            نظام إدارة معارض الأثاث والمفروشات — تسجيل الدخول
+            نظام إدارة معرض المفروشات والمنسوجات — تسجيل الدخول
           </p>
         </div>
 

@@ -360,7 +360,7 @@ export const SuppliersPage: React.FC = () => {
 
           <Input
             label="اسم المورد أو المصنع"
-            placeholder="مثال: مصنع دمياط للموبيليا، ورشة الأمانة"
+            placeholder="مثال: مورد تجريبي، اسم المورد"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             required
@@ -376,7 +376,7 @@ export const SuppliersPage: React.FC = () => {
 
           <Input
             label="العنوان"
-            placeholder="مثال: دمياط - المنطقة الصناعية"
+            placeholder="مثال: عنوان المورد..."
             value={formAddress}
             onChange={(e) => setFormAddress(e.target.value)}
           />
@@ -433,7 +433,7 @@ export const SuppliersPage: React.FC = () => {
 
           <Input
             label="البيان / تفاصيل العملية"
-            placeholder="مثال: فاتورة شراء 20 قطعة لحاف تركي، مصنعية دهانات"
+            placeholder="مثال: فاتورة شراء 20 قطعة لحاف تركي"
             value={balanceDescription}
             onChange={(e) => setBalanceDescription(e.target.value)}
             required

@@ -476,6 +476,9 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
                       <p>البضاعة المباعة ترد وتستبدل خلال 14 يوماً بأصل الفاتورة بحالتها الأصلية</p>
                       <p className="mt-0.5 font-bold">{invoice.showroom.footer_note}</p>
                     </div>
+
+                    {/* Paper Feed / Cut Gap for 80mm thermal cutter bar */}
+                    <div className="h-6 print:h-8" aria-hidden="true" />
                   </div>
                 )}
               </div>

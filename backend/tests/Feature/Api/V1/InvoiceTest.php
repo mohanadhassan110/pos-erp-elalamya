@@ -7,6 +7,8 @@ use App\Domain\Customers\Enums\CustomerTransactionDirection;
 use App\Domain\Customers\Enums\CustomerTransactionType;
 use App\Domain\Inventory\Enums\InventoryMovementType;
 use App\Domain\Sales\Enums\InvoiceItemType;
+use App\Domain\Support\Money;
+use App\Domain\Support\Quantity;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerTransaction;
@@ -85,7 +87,7 @@ class InvoiceTest extends TestCase
         ]);
 
         $this->customer = Customer::factory()->create([
-            'name' => 'معرض الأمل للموبيليا',
+            'name' => 'عميل تجريبي',
             'phone' => '01011112222',
             'is_active' => true,
         ]);
@@ -779,7 +781,7 @@ class InvoiceTest extends TestCase
                 ],
                 [
                     'type' => 'external',
-                    'product_name' => 'طاولة خاصة مستوردة',
+                    'product_name' => 'طقم مفارش خاص مستورد',
                     'quantity' => 2,
                     'purchase_cost' => '300.00',
                     'unit_sale_price' => '450.00',
@@ -920,5 +922,120 @@ class InvoiceTest extends TestCase
         $invalidResponse = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $invalidPayload);
         $invalidResponse->assertStatus(422)
             ->assertJsonValidationErrors(['payments.0.payment_method_id']);
+    }
+
+    public function test_concurrent_sale_of_last_unit_row_level_locking_prevents_negative_stock(): void
+    {
+        // 1. Arrange a product with exactly 1 unit in stock
+        $lastUnitProduct = Product::create([
+            'category_id' => $this->product1->category_id,
+            'name' => 'طقم لحاف آخر قطعة',
+            'barcode' => 'L0099',
+            'purchase_cost' => Money::from(500),
+            'wholesale_price' => Money::from(650),
+            'retail_price' => Money::from(750),
+            'stock_quantity' => Quantity::from(1),
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'sale_type' => 'retail',
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $lastUnitProduct->id,
+                    'quantity' => 1,
+                    'unit_sale_price' => '750.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '750.00',
+                ],
+            ],
+        ];
+
+        // First sale takes the last unit
+        $response1 = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response1->assertStatus(201);
+
+        $lastUnitProduct->refresh();
+        $this->assertSame(0, $lastUnitProduct->stock_quantity->toInt());
+
+        // Second immediate sale attempting to sell the same unit must be rejected
+        $response2 = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response2->assertStatus(422)
+            ->assertJsonValidationErrors(['items']);
+
+        // Invariant: Stock must remain exactly 0 and never drop below zero
+        $lastUnitProduct->refresh();
+        $this->assertSame(0, $lastUnitProduct->stock_quantity->toInt());
+    }
+
+    public function test_wholesale_overpayment_creates_customer_credit_balance(): void
+    {
+        // Wholesale sale with total 1000, paid 1500 => credit balance 500
+        $payload = [
+            'sale_type' => 'wholesale',
+            'customer_id' => $this->customer->id,
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->product1->id,
+                    'quantity' => 2, // 2 * 500 = 1000
+                    'unit_sale_price' => '500.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '1500.00', // 500 overpayment
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.total', '1000.00')
+            ->assertJsonPath('data.paid_amount', '1500.00')
+            ->assertJsonPath('data.remaining_amount', '0.00')
+            ->assertJsonPath('data.credit_amount', '500.00');
+
+        // Verify customer ledger: Debit 1000, Credit 1500 => Net Credit 500 (balance -500.00)
+        $this->customer->refresh();
+        $this->assertEquals('-500.00', $this->customer->calculateBalance()->toDecimal());
+    }
+
+    public function test_retail_overpayment_records_change_due_without_customer_ledger(): void
+    {
+        // Retail sale without registered customer: total 1000, paid 1200 => credit_amount 200 (change due)
+        $payload = [
+            'sale_type' => 'retail',
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->product1->id,
+                    'quantity' => 2, // 2 * 500 = 1000
+                    'unit_sale_price' => '500.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '1200.00', // 200 excess / change due
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.total', '1000.00')
+            ->assertJsonPath('data.paid_amount', '1200.00')
+            ->assertJsonPath('data.remaining_amount', '0.00')
+            ->assertJsonPath('data.credit_amount', '200.00');
+
+        // Retail customer has no ledger account: zero customer transactions created
+        $this->assertSame(0, CustomerTransaction::count());
     }
 }

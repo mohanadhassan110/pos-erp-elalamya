@@ -82,12 +82,12 @@ class ReportTest extends TestCase
         ]);
 
         $this->customer = Customer::factory()->create([
-            'name' => 'معرض الأمل',
+            'name' => 'عميل تجريبي',
             'phone' => '01012345678',
         ]);
 
         $this->supplier = Supplier::factory()->create([
-            'name' => 'مصنع المحلة للغزل',
+            'name' => 'مورد تجريبي رئيسي',
             'phone' => '01212345678',
         ]);
 
@@ -452,7 +452,7 @@ class ReportTest extends TestCase
 
         // Customer 2: Net credit balance of 500 (creditor / advance balance)
         $customer2 = Customer::factory()->create([
-            'name' => 'معرض السعادة',
+            'name' => 'عميل تجريبي ثان',
             'phone' => '01122334455',
         ]);
 
@@ -487,7 +487,7 @@ class ReportTest extends TestCase
             'type' => SupplierTransactionType::MANUAL_BALANCE_INCREASE,
             'direction' => SupplierTransactionDirection::CREDIT,
             'amount' => Money::from(50000),
-            'description' => 'فاتورة شراء 20 قطعة لحاف وأنتريه',
+            'description' => 'فاتورة شراء 20 قطعة لحاف وبطانية',
             'created_by' => $this->owner->id,
         ]);
 
@@ -717,7 +717,7 @@ class ReportTest extends TestCase
         ]);
 
         // Customer 2: Creditor 200
-        $c2 = Customer::factory()->create(['name' => 'معرض السلام', 'phone' => '01599887766']);
+        $c2 = Customer::factory()->create(['name' => 'عميل تجريبي خاص', 'phone' => '01599887766']);
         CustomerTransaction::create([
             'customer_id' => $c2->id,
             'type' => CustomerTransactionType::PAYMENT,
@@ -728,7 +728,7 @@ class ReportTest extends TestCase
         ]);
 
         // 1. Search by name
-        $searchRes = $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/reports/customer-balances?search=السلام');
+        $searchRes = $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/reports/customer-balances?search=خاص');
         $searchRes->assertStatus(200);
         $this->assertCount(1, $searchRes->json('data.customers'));
         $this->assertEquals($c2->name, $searchRes->json('data.customers.0.name'));
@@ -754,10 +754,10 @@ class ReportTest extends TestCase
         ]);
 
         // Supplier 2: Settled 0
-        $s2 = Supplier::factory()->create(['name' => 'مصنع النور', 'phone' => '01199998888']);
+        $s2 = Supplier::factory()->create(['name' => 'مورد تجريبي ثان', 'phone' => '01199998888']);
 
         // Search by name
-        $searchRes = $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/reports/supplier-payables?search=المحلة');
+        $searchRes = $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/reports/supplier-payables?search=رئيسي');
         $searchRes->assertStatus(200);
         $this->assertCount(1, $searchRes->json('data.suppliers'));
         $this->assertEquals($this->supplier->name, $searchRes->json('data.suppliers.0.name'));
@@ -1273,5 +1273,152 @@ class ReportTest extends TestCase
         $this->assertEquals('1200.00', $profit['gross_profit']);
         $this->assertEquals('300.00', $profit['profit_reversal']);
         $this->assertEquals('900.00', $profit['net_profit']);
+    }
+
+    public function test_cairo_timezone_midnight_boundaries_inclusion_and_exclusion(): void
+    {
+        $cairoNow = Carbon::now('Africa/Cairo');
+        $todayDate = $cairoNow->toDateString();
+
+        // 1. Invoice at today's start edge (00:00:01 Cairo time)
+        $startEdgeInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '500.00',
+            'total' => '500.00',
+            'paid_amount' => '500.00',
+            'created_at' => $cairoNow->copy()->startOfDay()->addSecond()->toDateTimeString(),
+        ]);
+        InvoiceItem::factory()->create([
+            'invoice_id' => $startEdgeInvoice->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'unit_sale_price' => '500.00',
+            'unit_cost' => '300.00',
+            'subtotal' => '500.00',
+            'total_cost' => '300.00',
+            'profit' => '200.00',
+        ]);
+
+        // 2. Invoice at today's end edge (23:59:58 Cairo time)
+        $endEdgeInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '700.00',
+            'total' => '700.00',
+            'paid_amount' => '700.00',
+            'created_at' => $cairoNow->copy()->endOfDay()->subSeconds(2)->toDateTimeString(),
+        ]);
+        InvoiceItem::factory()->create([
+            'invoice_id' => $endEdgeInvoice->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'unit_sale_price' => '700.00',
+            'unit_cost' => '400.00',
+            'subtotal' => '700.00',
+            'total_cost' => '400.00',
+            'profit' => '300.00',
+        ]);
+
+        // 3. Yesterday's invoice just before midnight (yesterday 23:59:58 Cairo time) -> MUST BE EXCLUDED from today
+        $yesterdayInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '999.00',
+            'total' => '999.00',
+            'paid_amount' => '999.00',
+            'created_at' => $cairoNow->copy()->subDay()->endOfDay()->subSeconds(2)->toDateTimeString(),
+        ]);
+        InvoiceItem::factory()->create([
+            'invoice_id' => $yesterdayInvoice->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'unit_sale_price' => '999.00',
+            'unit_cost' => '500.00',
+            'subtotal' => '999.00',
+            'total_cost' => '500.00',
+            'profit' => '499.00',
+        ]);
+
+        // 4. Tomorrow's invoice just after midnight (tomorrow 00:00:02 Cairo time) -> MUST BE EXCLUDED from today
+        $tomorrowInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '888.00',
+            'total' => '888.00',
+            'paid_amount' => '888.00',
+            'created_at' => $cairoNow->copy()->addDay()->startOfDay()->addSeconds(2)->toDateTimeString(),
+        ]);
+        InvoiceItem::factory()->create([
+            'invoice_id' => $tomorrowInvoice->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'unit_sale_price' => '888.00',
+            'unit_cost' => '450.00',
+            'subtotal' => '888.00',
+            'total_cost' => '450.00',
+            'profit' => '438.00',
+        ]);
+
+        // Query today's sales report with range_preset=today
+        $response = $this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/reports/sales?range_preset=today');
+        $response->assertStatus(200);
+
+        // Expected today: exactly 500.00 + 700.00 = 1200.00 gross sales, exactly 2 invoices
+        $this->assertEquals('1200.00', $response->json('data.sales_summary.gross_sales'));
+        $this->assertEquals(2, $response->json('data.sales_summary.invoices_count'));
+
+        // Query today with explicit custom date range from_date = to_date = today
+        $customRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/sales?from_date={$todayDate}&to_date={$todayDate}");
+        $customRes->assertStatus(200);
+        $this->assertEquals('1200.00', $customRes->json('data.sales_summary.gross_sales'));
+        $this->assertEquals(2, $customRes->json('data.sales_summary.invoices_count'));
+    }
+
+    public function test_cairo_dst_boundary_and_documents_history_date_filtering(): void
+    {
+        // 1. Verify documents/invoices history date filter covers entire day up to 23:59:59 Cairo time
+        $cairoNow = Carbon::now('Africa/Cairo');
+        $targetDate = $cairoNow->toDateString();
+
+        $lateEveningInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '1500.00',
+            'total' => '1500.00',
+            'paid_amount' => '1500.00',
+            'created_at' => $cairoNow->copy()->endOfDay()->subMinute()->toDateTimeString(),
+        ]);
+
+        $nextDayEarlyInvoice = Invoice::factory()->create([
+            'sale_type' => 'retail',
+            'status' => InvoiceStatus::POSTED,
+            'subtotal' => '800.00',
+            'total' => '800.00',
+            'paid_amount' => '800.00',
+            'created_at' => $cairoNow->copy()->addDay()->startOfDay()->addMinute()->toDateTimeString(),
+        ]);
+
+        $docRes = $this->actingAs($this->owner, 'sanctum')->getJson("/api/v1/reports/documents?from_date={$targetDate}&to_date={$targetDate}");
+        $docRes->assertStatus(200);
+        $itemIds = collect($docRes->json('data.items'))->pluck('id')->all();
+
+        $this->assertContains($lateEveningInvoice->id, $itemIds, 'Late evening invoice before midnight must be included in date filter');
+        $this->assertNotContains($nextDayEarlyInvoice->id, $itemIds, 'Next day invoice must be excluded');
+
+        // 2. DST boundary verification for Africa/Cairo (April spring forward & October fall back)
+        $springDst = Carbon::parse('2026-04-24 14:00:00', 'Africa/Cairo');
+        $springStart = $springDst->copy()->startOfDay();
+        $springEnd = $springDst->copy()->endOfDay();
+        $this->assertEquals('2026-04-24', $springStart->format('Y-m-d'));
+        $this->assertEquals('2026-04-24', $springEnd->format('Y-m-d'));
+        $this->assertTrue($springEnd->greaterThan($springStart));
+
+        $autumnDst = Carbon::parse('2026-10-30 14:00:00', 'Africa/Cairo');
+        $autumnStart = $autumnDst->copy()->startOfDay();
+        $autumnEnd = $autumnDst->copy()->endOfDay();
+        $this->assertEquals('2026-10-30', $autumnStart->format('Y-m-d'));
+        $this->assertEquals('2026-10-30', $autumnEnd->format('Y-m-d'));
+        $this->assertTrue($autumnEnd->greaterThan($autumnStart));
     }
 }

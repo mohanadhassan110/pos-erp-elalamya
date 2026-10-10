@@ -133,4 +133,22 @@ export const reportsApi = {
     const res = await apiClient.get<ReportReturnsHistoryData>(API_ENDPOINTS.REPORTS.RETURNS_HISTORY, { params });
     return res.data;
   },
+
+  unlock: async (password: string): Promise<{ unlocked: boolean; expires_in_minutes: number }> => {
+    const res = await apiClient.post<{ unlocked: boolean; expires_in_minutes: number }>(
+      API_ENDPOINTS.REPORTS.UNLOCK,
+      { password }
+    );
+    return res.data;
+  },
+
+  lock: async (): Promise<{ unlocked: boolean }> => {
+    const res = await apiClient.post<{ unlocked: boolean }>(API_ENDPOINTS.REPORTS.LOCK);
+    return res.data;
+  },
+
+  setPassword: async (password: string): Promise<void> => {
+    await apiClient.post(API_ENDPOINTS.REPORTS.PASSWORD, { password });
+  },
 };
+

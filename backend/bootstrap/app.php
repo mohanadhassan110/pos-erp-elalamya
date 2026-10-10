@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureReportsAccess;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Support\ApiResponse;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => EnsureUserRole::class,
+            'reports.access' => EnsureReportsAccess::class,
         ]);
 
         $middleware->api(prepend: [

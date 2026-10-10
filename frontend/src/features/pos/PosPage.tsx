@@ -313,26 +313,10 @@ export const PosPage: React.FC = () => {
     setPaidAmountInput(total.toFixed(2));
   }, [total]);
 
-  // Keyboard Shortcuts (F2 search, F4 sale type, F8 payment, F9 submit)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F2') {
-        e.preventDefault();
-        barcodeInputRef.current?.focus();
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        setSaleType((prev) => (prev === 'retail' ? 'wholesale' : 'retail'));
-      } else if (e.key === 'F8') {
-        e.preventDefault();
-        handleExactPayment();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExactPayment]);
+
 
   // Submit Checkout
-  const handleCheckout = async () => {
+  const handleCheckout = useCallback(async () => {
     setCheckoutError(null);
 
     if (cart.length === 0) {
@@ -406,7 +390,43 @@ export const PosPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    cart,
+    saleType,
+    selectedCustomerId,
+    selectedPaymentMethodId,
+    paidAmountNumber,
+    idempotencyKey,
+    invoiceNotes,
+    showToast,
+  ]);
+
+  // Keyboard Shortcuts (F2 search, F4 sale type, F8 payment, F9 submit, ESC close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        barcodeInputRef.current?.focus();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setSaleType((prev) => (prev === 'retail' ? 'wholesale' : 'retail'));
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        handleExactPayment();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        if (!isSubmitting) {
+          handleCheckout();
+        }
+      } else if (e.key === 'Escape') {
+        if (isCatalogOpen) setIsCatalogOpen(false);
+        if (isExternalModalOpen) setIsExternalModalOpen(false);
+        if (completedInvoice) setCompletedInvoice(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleExactPayment, isSubmitting, isCatalogOpen, isExternalModalOpen, completedInvoice, handleCheckout]);
 
   // Reset POS for New Sale
   const handleStartNewSale = () => {

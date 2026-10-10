@@ -92,20 +92,20 @@ class MasterDataTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'مطابخ', 'code' => 'M', 'is_active' => true]);
+        $category = Category::create(['name' => 'ملايات', 'code' => 'M', 'is_active' => true]);
         Product::create([
             'category_id' => $category->id,
-            'name' => 'مطبخ خشب زان',
+            'name' => 'طقم ملاية مطرز',
             'barcode' => 'M0001',
-            'purchase_cost' => Money::from(10000),
-            'wholesale_price' => Money::from(12000),
-            'retail_price' => Money::from(14000),
+            'purchase_cost' => Money::from(1000),
+            'wholesale_price' => Money::from(1200),
+            'retail_price' => Money::from(1400),
             'stock_quantity' => Quantity::from(1),
             'is_active' => true,
         ]);
 
         $response = $this->putJson("/api/v1/categories/{$category->id}", [
-            'name' => 'مطابخ خشبية',
+            'name' => 'ملايات قطنية',
             'code' => 'K',
         ]);
 
@@ -133,14 +133,14 @@ class MasterDataTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'أطقم صالون', 'code' => 'S', 'is_active' => true]);
+        $category = Category::create(['name' => 'أطقم لحاف', 'code' => 'S', 'is_active' => true]);
 
         $response = $this->postJson('/api/v1/products', [
             'category_id' => $category->id,
-            'name' => 'صالون كلاسيك فاخر',
-            'purchase_cost' => '12000.00',
-            'wholesale_price' => '14500.00',
-            'retail_price' => '17000.00',
+            'name' => 'طقم لحاف فاخر',
+            'purchase_cost' => '1200.00',
+            'wholesale_price' => '1450.00',
+            'retail_price' => '1700.00',
             'initial_stock' => 3,
         ]);
 
@@ -163,10 +163,10 @@ class MasterDataTest extends TestCase
     {
         Sanctum::actingAs($this->cashier);
 
-        $category = Category::create(['name' => 'كراسي', 'code' => 'C', 'is_active' => true]);
+        $category = Category::create(['name' => 'بشاكير', 'code' => 'C', 'is_active' => true]);
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'كرسي فوتيه',
+            'name' => 'بشكير قطن كبير',
             'barcode' => 'C0001',
             'purchase_cost' => Money::from(800),
             'wholesale_price' => Money::from(1000),
@@ -195,13 +195,13 @@ class MasterDataTest extends TestCase
 
         // 1. Create Customer
         $res = $this->postJson('/api/v1/customers', [
-            'name' => 'معرض الفردوس بالجيزة',
+            'name' => 'عميل تجريبي',
             'phone' => '01011122233',
-            'address' => 'شارع الهرم، الجيزة',
+            'address' => 'عنوان العميل',
         ]);
 
         $res->assertStatus(201)
-            ->assertJsonPath('data.name', 'معرض الفردوس بالجيزة')
+            ->assertJsonPath('data.name', 'عميل تجريبي')
             ->assertJsonPath('data.balance', '0.00')
             ->assertJsonPath('data.balance_status', 'settled');
 
@@ -229,13 +229,13 @@ class MasterDataTest extends TestCase
 
         // 1. Create Supplier
         $res = $this->postJson('/api/v1/suppliers', [
-            'name' => 'مصنع النور للأبواب والشبابيك',
+            'name' => 'مورد تجريبي',
             'phone' => '01222233344',
-            'address' => 'دمياط الجديدة',
+            'address' => 'عنوان المورد',
         ]);
 
         $res->assertStatus(201)
-            ->assertJsonPath('data.name', 'مصنع النور للأبواب والشبابيك')
+            ->assertJsonPath('data.name', 'مورد تجريبي')
             ->assertJsonPath('data.payable', '0.00');
 
         $supplier = Supplier::where('phone', '01222233344')->firstOrFail();
@@ -243,7 +243,7 @@ class MasterDataTest extends TestCase
         // 2. Add Supplier Balance operation (increases payable, no inventory mutation)
         $addRes = $this->postJson("/api/v1/suppliers/{$supplier->id}/add-balance", [
             'amount' => '15000.00',
-            'description' => 'فاتورة شراء 20 قطعة خشب زان مجفف',
+            'description' => 'فاتورة شراء 20 قطعة لحاف',
         ]);
 
         $addRes->assertStatus(201)
@@ -254,7 +254,7 @@ class MasterDataTest extends TestCase
 
         // Verify zero inventory movements created for this account-only operation
         $this->assertDatabaseMissing('inventory_movements', [
-            'reason' => 'فاتورة شراء 20 قطعة خشب زان مجفف',
+            'reason' => 'فاتورة شراء 20 قطعة لحاف',
         ]);
     }
 }

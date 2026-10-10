@@ -30,7 +30,7 @@ class BarcodeLabelResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        $showroomName = Setting::get('showroom_name', 'العالمية للأثاث والموبيليا');
+        $showroomName = Setting::get('showroom_name', 'معرض العالمية للمفروشات');
 
         return [
             'product_id' => $this->id,

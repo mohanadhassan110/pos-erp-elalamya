@@ -2,7 +2,7 @@
 
 ## 1. Purpose and Authority
 
-This file is the authoritative constitution for **العالمية ERP/POS — Al-Alamiya ERP/POS**, an Arabic RTL furniture-showroom ERP/POS built with Laravel/PHP backend, React frontend, and MySQL.
+This file is the authoritative constitution for **العالمية ERP/POS — Al-Alamiya ERP/POS**, an Arabic RTL home-textiles showroom ERP/POS (معرض مفروشات منزلية: لحف، بطاطين، فوط، أطقم ملايات) built with Laravel/PHP backend, React frontend, and MySQL.
 
 The system covers retail and wholesale sales, inventory, customers, suppliers, stock receiving, returns/exchanges, expenses, reports, barcode printing, invoice printing, authentication, and Owner/Cashier permissions.
 
@@ -604,7 +604,9 @@ Barcode labels are a separate workflow; Code 128 is preferred.
 
 ## 22. Reports
 
-Reports are Owner-only.
+Owner has full access to all reports without a password.
+Cashier cannot access reports (`/api/v1/reports/*`) by default, but MAY unlock reports using a server-side verified password gate (TTL 15 minutes, tied to the active session token).
+Unlocking reports grants access to `/reports/*` ONLY; it never leaks confidential purchase cost or profit on non-report operational endpoints.
 
 Required:
 - total sales;
@@ -637,29 +639,40 @@ It is not historical invoice profit.
 ## 23. Roles and Permissions
 
 Only two default roles:
-- Owner
-- Cashier
+- Owner (مالك)
+- Cashier (كاشير)
 
-Cashier may perform all operational work:
-- POS/sales;
-- invoice edit/cancel;
-- returns;
-- customers/payments;
-- suppliers/payments;
-- stock receiving/adjustment;
+Cashier may perform ALL operational work:
+- POS sales & retail/wholesale checkout;
+- invoice view, edit, cancel;
+- returns & exchanges;
+- customer management & ledger payments;
+- supplier management, ledger payments, and add-balance;
+- stock receiving & adjustments;
 - expenses;
-- products/categories;
-- barcode printing.
+- products (create, update prices, archive) and categories;
+- barcode printing & invoice printing;
+- inventory view.
 
-Cashier cannot view or enter Reports.
+Cashier Operational Cost Visibility Rule (Owner Decision):
+- Cashier MAY SEE purchase_cost on products and stock receiving screens (the cashier enters costs from physical supplier invoices).
+- Cashier still must NOT see profit, expense links, or external-product markers anywhere.
+- Cashier must NOT see purchase_cost/profit on invoices, returns, customer print outputs, or barcode labels.
 
-Owner has full access.
+Reports Password Gate:
+- Cashier may NOT view or enter Reports (`/api/v1/reports/*`) UNLESS unlocked with the reports password.
+- When locked, accessing reports returns `403` with code `REPORTS_LOCKED`.
+- Successful unlock via `POST /api/v1/reports/unlock` grants 15-minute temporary access tied to the session token.
+- Cashier may manually re-lock reports via `POST /api/v1/reports/lock`.
+- Logout, token revocation, or user deactivation immediately revokes unlock status.
 
-Backend must enforce permissions and return `403` when unauthorized.
+Owner has full access unconditionally without a password.
+
+Backend enforces all authorization rules.
 
 Owner-only by default:
-- reports;
-- users;
+- setting / changing reports password (`POST /api/v1/reports/password`);
+- user management;
 - system settings;
 - audit logs.
 

@@ -111,23 +111,38 @@ Route::prefix('v1')->group(function () {
         // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('api.v1.inventory.index');
 
-        // Reports (Phase 11 - Owner Only)
-        Route::middleware(['role:owner'])->prefix('reports')->group(function () {
-            Route::get('/overview', [ReportController::class, 'overview'])->name('api.v1.reports.overview');
-            Route::get('/sales', [ReportController::class, 'sales'])->name('api.v1.reports.sales');
-            Route::get('/profit', [ReportController::class, 'profit'])->name('api.v1.reports.profit');
-            Route::get('/expenses', [ReportController::class, 'expenses'])->name('api.v1.reports.expenses');
-            Route::get('/customers', [ReportController::class, 'customers'])->name('api.v1.reports.customers');
-            Route::get('/customer-balances', [ReportController::class, 'customerBalances'])->name('api.v1.reports.customer-balances');
-            Route::get('/suppliers', [ReportController::class, 'suppliers'])->name('api.v1.reports.suppliers');
-            Route::get('/supplier-payables', [ReportController::class, 'supplierPayables'])->name('api.v1.reports.supplier-payables');
-            Route::get('/inventory', [ReportController::class, 'inventory'])->name('api.v1.reports.inventory');
-            Route::get('/inventory-valuation', [ReportController::class, 'inventoryValuation'])->name('api.v1.reports.inventory-valuation');
-            Route::get('/payments', [ReportController::class, 'payments'])->name('api.v1.reports.payments');
-            Route::get('/payment-movements', [ReportController::class, 'paymentMovements'])->name('api.v1.reports.payment-movements');
-            Route::get('/documents', [ReportController::class, 'documents'])->name('api.v1.reports.documents');
-            Route::get('/history/invoices', [ReportController::class, 'invoicesHistory'])->name('api.v1.reports.history.invoices');
-            Route::get('/history/returns', [ReportController::class, 'returnsHistory'])->name('api.v1.reports.history.returns');
+        // Reports Section (Phase 11 & Phase 13-B Password Gate)
+        Route::prefix('reports')->group(function () {
+            // Password Gate Management & Session Unlock Endpoints
+            Route::post('/unlock', [ReportController::class, 'unlock'])
+                ->middleware('throttle:reports-unlock')
+                ->name('api.v1.reports.unlock');
+
+            Route::post('/lock', [ReportController::class, 'lock'])
+                ->name('api.v1.reports.lock');
+
+            Route::post('/password', [ReportController::class, 'setPassword'])
+                ->middleware('role:owner')
+                ->name('api.v1.reports.password');
+
+            // Protected Report Analytics (Owner or Cashier with active reports.access session)
+            Route::middleware('reports.access')->group(function () {
+                Route::get('/overview', [ReportController::class, 'overview'])->name('api.v1.reports.overview');
+                Route::get('/sales', [ReportController::class, 'sales'])->name('api.v1.reports.sales');
+                Route::get('/profit', [ReportController::class, 'profit'])->name('api.v1.reports.profit');
+                Route::get('/expenses', [ReportController::class, 'expenses'])->name('api.v1.reports.expenses');
+                Route::get('/customers', [ReportController::class, 'customers'])->name('api.v1.reports.customers');
+                Route::get('/customer-balances', [ReportController::class, 'customerBalances'])->name('api.v1.reports.customer-balances');
+                Route::get('/suppliers', [ReportController::class, 'suppliers'])->name('api.v1.reports.suppliers');
+                Route::get('/supplier-payables', [ReportController::class, 'supplierPayables'])->name('api.v1.reports.supplier-payables');
+                Route::get('/inventory', [ReportController::class, 'inventory'])->name('api.v1.reports.inventory');
+                Route::get('/inventory-valuation', [ReportController::class, 'inventoryValuation'])->name('api.v1.reports.inventory-valuation');
+                Route::get('/payments', [ReportController::class, 'payments'])->name('api.v1.reports.payments');
+                Route::get('/payment-movements', [ReportController::class, 'paymentMovements'])->name('api.v1.reports.payment-movements');
+                Route::get('/documents', [ReportController::class, 'documents'])->name('api.v1.reports.documents');
+                Route::get('/history/invoices', [ReportController::class, 'invoicesHistory'])->name('api.v1.reports.history.invoices');
+                Route::get('/history/returns', [ReportController::class, 'returnsHistory'])->name('api.v1.reports.history.returns');
+            });
         });
     });
 });

@@ -29,14 +29,14 @@ class HistoricalCostTest extends TestCase
     {
         // 1. Arrange: Create Category and Product with current purchase cost = 500.00
         $category = Category::create([
-            'name' => 'غرف سفرة',
+            'name' => 'مفروشات سرير',
             'code' => 'D',
             'is_active' => true,
         ]);
 
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => 'طاولة سفرة 6 كراسي',
+            'name' => 'طقم مفروشات سرير 6 قطع',
             'barcode' => 'D0001',
             'purchase_cost' => Money::from(500),
             'wholesale_price' => Money::from(600),

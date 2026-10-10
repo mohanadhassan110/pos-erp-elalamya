@@ -390,7 +390,7 @@ export const BarcodePrintingPage: React.FC = () => {
                   onChange={(e) => setShowShowroomName(e.target.checked)}
                   className="rounded text-amber-500"
                 />
-                <span className="text-slate-300">اسم المعرض (العالمية للأثاث والمفروشات)</span>
+                <span className="text-slate-300">اسم المعرض (معرض العالمية للمفروشات)</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -470,7 +470,7 @@ export const BarcodePrintingPage: React.FC = () => {
                   <div className="w-full flex justify-between items-center text-[9px] text-slate-600 border-b border-slate-200 pb-0.5 mb-1 px-0.5">
                     {showShowroomName ? (
                       <span className="font-bold text-slate-900 truncate">
-                        {lbl.showroom_name || 'العالمية للأثاث'}
+                        {lbl.showroom_name || 'معرض العالمية للمفروشات'}
                       </span>
                     ) : (
                       <span />

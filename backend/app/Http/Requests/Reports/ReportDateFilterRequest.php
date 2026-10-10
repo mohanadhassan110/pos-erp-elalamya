@@ -87,9 +87,13 @@ class ReportDateFilterRequest extends FormRequest
                 break;
         }
 
+        $storageTz = config('app.timezone', 'Africa/Cairo');
+        $startBoundary = $cairoStart->copy()->setTimezone($storageTz);
+        $endBoundary = $cairoEnd->copy()->setTimezone($storageTz);
+
         return [
-            'start_utc' => $cairoStart->copy()->utc(),
-            'end_utc' => $cairoEnd->copy()->utc(),
+            'start_utc' => $startBoundary,
+            'end_utc' => $endBoundary,
             'start_date' => $cairoStart->format('Y-m-d'),
             'end_date' => $cairoEnd->format('Y-m-d'),
             'period' => $period,
