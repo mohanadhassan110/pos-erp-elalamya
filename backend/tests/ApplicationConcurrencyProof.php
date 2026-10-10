@@ -13,7 +13,7 @@ declare(strict_types=1);
  *   and sending the same idempotency key concurrently produces exactly one invoice.
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 // Force database connection to mysql on test DB
 putenv('DB_CONNECTION=mysql');
@@ -24,13 +24,14 @@ putenv('DB_USERNAME=root');
 putenv('DB_PASSWORD=');
 putenv('APP_ENV=testing');
 
-$app = require __DIR__ . '/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app = require __DIR__.'/../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 use App\Models\Category;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -86,11 +87,11 @@ $negativeStockViolations = 0;
 $duplicateInvoices = 0;
 
 echo "[3] Executing {$rounds} concurrent rounds with 2 parallel PHP processes each...\n\n";
-echo sprintf("%-6s | %-12s | %-12s | %-15s | %-12s | %-10s\n", "Round", "Process 1", "Process 2", "Winner Invoice", "Final Stock", "Status");
-echo str_repeat("-", 80) . "\n";
+echo sprintf("%-6s | %-12s | %-12s | %-15s | %-12s | %-10s\n", 'Round', 'Process 1', 'Process 2', 'Winner Invoice', 'Final Stock', 'Status');
+echo str_repeat('-', 80)."\n";
 
 $phpBinary = PHP_BINARY;
-$workerScript = __DIR__ . '/ConcurrencyWorker.php';
+$workerScript = __DIR__.'/ConcurrencyWorker.php';
 
 for ($round = 1; $round <= $rounds; $round++) {
     // Reset stock to exactly 1
@@ -163,26 +164,26 @@ for ($round = 1; $round <= $rounds; $round++) {
         $successfulInvoices[] = $winnerInvoice;
     }
 
-    $statusStr = ($roundSuccess === 1 && $roundRejected === 1 && $finalStock === 0) ? "PASS" : "FAIL";
+    $statusStr = ($roundSuccess === 1 && $roundRejected === 1 && $finalStock === 0) ? 'PASS' : 'FAIL';
 
     echo sprintf(
         "%-6d | %-12s | %-12s | %-15s | %-12d | %-10s\n",
         $round,
-        "HTTP " . ($res1['status'] ?? 'ERR'),
-        "HTTP " . ($res2['status'] ?? 'ERR'),
-        $winnerInvoice ?? "None",
+        'HTTP '.($res1['status'] ?? 'ERR'),
+        'HTTP '.($res2['status'] ?? 'ERR'),
+        $winnerInvoice ?? 'None',
         $finalStock,
         $statusStr
     );
 }
 
-echo str_repeat("-", 80) . "\n";
+echo str_repeat('-', 80)."\n";
 echo "Rounds Completed: {$rounds}\n";
 echo "Total Successful (201 Created): {$totalSuccessCount} (Expected: {$rounds})\n";
 echo "Total Rejected (422 Insufficient Stock): {$totalRejectedCount} (Expected: {$rounds})\n";
 echo "Negative Stock Violations: {$negativeStockViolations} (Expected: 0)\n";
 echo "Duplicate Invoice Numbers: {$duplicateInvoices} (Expected: 0)\n";
-echo "Unique Invoices Created: " . count(array_unique($successfulInvoices)) . "\n\n";
+echo 'Unique Invoices Created: '.count(array_unique($successfulInvoices))."\n\n";
 
 // 4. Test Idempotency under concurrency
 echo "[4] Testing Concurrent Idempotency Key Reuse...\n";
@@ -196,11 +197,15 @@ $procIdem1 = proc_open($cmdIdem1, $descriptors, $pipesIdem1);
 $procIdem2 = proc_open($cmdIdem2, $descriptors, $pipesIdem2);
 
 $outIdem1 = stream_get_contents($pipesIdem1[1]);
-fclose($pipesIdem1[0]); fclose($pipesIdem1[1]); fclose($pipesIdem1[2]);
+fclose($pipesIdem1[0]);
+fclose($pipesIdem1[1]);
+fclose($pipesIdem1[2]);
 proc_close($procIdem1);
 
 $outIdem2 = stream_get_contents($pipesIdem2[1]);
-fclose($pipesIdem2[0]); fclose($pipesIdem2[1]); fclose($pipesIdem2[2]);
+fclose($pipesIdem2[0]);
+fclose($pipesIdem2[1]);
+fclose($pipesIdem2[2]);
 proc_close($procIdem2);
 
 $resIdem1 = json_decode($outIdem1, true);
@@ -229,5 +234,5 @@ $allPassed = ($totalSuccessCount === $rounds) &&
     ($duplicateInvoices === 0) &&
     $idempotencyPassed;
 
-echo "\nOVERALL CONCURRENCY PROOF RESULT: " . ($allPassed ? "PASSED (100% RELIABILITY)" : "FAILED") . "\n";
+echo "\nOVERALL CONCURRENCY PROOF RESULT: ".($allPassed ? 'PASSED (100% RELIABILITY)' : 'FAILED')."\n";
 exit($allPassed ? 0 : 1);

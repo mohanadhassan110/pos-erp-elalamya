@@ -9,7 +9,7 @@ declare(strict_types=1);
  * for POST /api/v1/invoices against MariaDB (production engine).
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 // Force database connection to mysql on test DB
 putenv('DB_CONNECTION=mysql');
@@ -20,10 +20,11 @@ putenv('DB_USERNAME=root');
 putenv('DB_PASSWORD=');
 putenv('APP_ENV=testing');
 
-$app = require __DIR__ . '/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app = require __DIR__.'/../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
 
 // Parse CLI arguments
@@ -76,7 +77,7 @@ $request = Request::create(
     [],
     [],
     [
-        'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
+        'HTTP_AUTHORIZATION' => 'Bearer '.$token,
         'HTTP_ACCEPT' => 'application/json',
         'CONTENT_TYPE' => 'application/json',
     ],
