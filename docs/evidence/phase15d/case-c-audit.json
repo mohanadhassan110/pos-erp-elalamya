@@ -1,0 +1,281 @@
+{
+    "audit_timestamp": "2026-10-11T13:22:16+03:00",
+    "finding_d_630_invoice": {
+        "id": 101,
+        "invoice_number": "INV-20261011-0002",
+        "sale_type": "retail",
+        "status": "posted",
+        "total": "630.00",
+        "paid_amount": "0.00",
+        "remaining_amount": "630.00",
+        "notes": null,
+        "items": [
+            {
+                "product_name": "طقم ملاية قطن مطرز 5 قطع",
+                "qty": 1,
+                "price": "350.00",
+                "subtotal": "350.00"
+            },
+            {
+                "product_name": "طقم فوط حمام قطن 4 قطع",
+                "qty": 1,
+                "price": "280.00",
+                "subtotal": "280.00"
+            }
+        ],
+        "payments": []
+    },
+    "case_c_records": {
+        "original_invoice": {
+            "id": 100,
+            "invoice_number": "INV-20261011-0001",
+            "status": "posted",
+            "sale_type": "retail",
+            "subtotal": "2000.00",
+            "total": "2000.00",
+            "paid_amount": "2000.00",
+            "remaining_amount": "0.00",
+            "items": [
+                {
+                    "id": 101,
+                    "product_name": "لحاف قطن كينج 3 قطع",
+                    "barcode": "L0001",
+                    "qty": 1,
+                    "unit_sale_price": "700.00",
+                    "unit_cost": "450.00",
+                    "profit": "250.00"
+                },
+                {
+                    "id": 102,
+                    "product_name": "بطانية مورانو حفر ليزر 6 كجم",
+                    "barcode": "B0001",
+                    "qty": 1,
+                    "unit_sale_price": "950.00",
+                    "unit_cost": "650.00",
+                    "profit": "300.00"
+                },
+                {
+                    "id": 103,
+                    "product_name": "طقم ملاية قطن مطرز 5 قطع",
+                    "barcode": "M0001",
+                    "qty": 1,
+                    "unit_sale_price": "350.00",
+                    "unit_cost": "200.00",
+                    "profit": "150.00"
+                }
+            ],
+            "payments": [
+                {
+                    "amount": "2000.00",
+                    "notes": null
+                }
+            ]
+        },
+        "sales_return": {
+            "id": 45,
+            "return_number": "RET-20261011-0001",
+            "resolution": "exchange_upgrade",
+            "total_return_amount": "700.00",
+            "difference_amount": "1200.00",
+            "difference_paid_amount": "",
+            "replacement_invoice_id": 102,
+            "items": [
+                {
+                    "original_invoice_item_id": null,
+                    "qty": 1,
+                    "unit_sale_price": "700.00",
+                    "unit_cost": "450.00",
+                    "subtotal": "700.00",
+                    "profit_reversal": "250.00"
+                }
+            ]
+        },
+        "replacement_invoice": {
+            "id": 102,
+            "invoice_number": "INV-20261011-0003",
+            "status": "posted",
+            "sale_type": "retail",
+            "total": "1900.00",
+            "paid_amount": "1900.00",
+            "remaining_amount": "0.00",
+            "notes": "فاتورة استبدال مرتبطة بمرتجع رقم RET-20261011-0001",
+            "items": [
+                {
+                    "product_name": "بطانية مورانو حفر ليزر 6 كجم",
+                    "qty": 2,
+                    "unit_sale_price": "950.00",
+                    "unit_cost": "650.00",
+                    "profit": "600.00"
+                }
+            ],
+            "payments": [
+                {
+                    "amount": "1200.00",
+                    "notes": "سداد فارق استبدال لمرتجع رقم RET-20261011-0001"
+                }
+            ]
+        },
+        "inventory_movements": [
+            {
+                "product": "لحاف قطن كينج 3 قطع",
+                "type": "sale",
+                "quantity": 1,
+                "resulting_stock": 11,
+                "reason": "مبيعات فاتورة رقم INV-20261011-0001"
+            },
+            {
+                "product": "بطانية مورانو حفر ليزر 6 كجم",
+                "type": "sale",
+                "quantity": 1,
+                "resulting_stock": 16,
+                "reason": "مبيعات فاتورة رقم INV-20261011-0001"
+            },
+            {
+                "product": "طقم ملاية قطن مطرز 5 قطع",
+                "type": "sale",
+                "quantity": 1,
+                "resulting_stock": 26,
+                "reason": "مبيعات فاتورة رقم INV-20261011-0001"
+            },
+            {
+                "product": "لحاف قطن كينج 3 قطع",
+                "type": "sales_return",
+                "quantity": 1,
+                "resulting_stock": 12,
+                "reason": "مرتجع مبيعات رقم RET-20261011-0001 من فاتورة INV-20261011-0001"
+            },
+            {
+                "product": "بطانية مورانو حفر ليزر 6 كجم",
+                "type": "sale",
+                "quantity": 2,
+                "resulting_stock": 14,
+                "reason": "صرف بضاعة استبدال فاتورة رقم INV-20261011-0003"
+            }
+        ]
+    },
+    "reports_output": {
+        "date_range": "2026-10-11 Cairo",
+        "sales_summary": {
+            "gross_sales": "4530.00",
+            "retail_sales": "4530.00",
+            "wholesale_sales": "0.00",
+            "replacement_sales": "1900.00",
+            "invoices_count": 3,
+            "items_sold_count": 7,
+            "total_returns": "700.00",
+            "returns_count": 1,
+            "cash_refunds_total": "0.00",
+            "account_credits_total": "0.00",
+            "exchanges_total": "700.00",
+            "difference_collected_total": "1200.00",
+            "items_returned_count": 1,
+            "net_sales": "3830.00",
+            "included_statuses": [
+                "posted"
+            ],
+            "excluded_statuses": [
+                "cancelled"
+            ]
+        },
+        "profit_summary": {
+            "gross_revenue": "4530.00",
+            "gross_cogs": "2950.00",
+            "gross_profit": "1580.00",
+            "returned_revenue": "700.00",
+            "returned_cogs_reversal": "450.00",
+            "profit_reversal": "250.00",
+            "net_revenue": "3830.00",
+            "net_cogs": "2500.00",
+            "net_profit": "1330.00",
+            "profit_margin_percentage": "34.72",
+            "categories_breakdown": [
+                {
+                    "category_name": "ألحفة وفيبر",
+                    "quantity_sold": 0,
+                    "revenue": "0.00",
+                    "cogs": "0.00",
+                    "profit": "0.00"
+                },
+                {
+                    "category_name": "بطاطين شتوية",
+                    "quantity_sold": 3,
+                    "revenue": "2850.00",
+                    "cogs": "1950.00",
+                    "profit": "900.00"
+                },
+                {
+                    "category_name": "ملايات ومفروشات سرير",
+                    "quantity_sold": 2,
+                    "revenue": "700.00",
+                    "cogs": "400.00",
+                    "profit": "300.00"
+                },
+                {
+                    "category_name": "فوط وبشاكير قطن",
+                    "quantity_sold": 1,
+                    "revenue": "280.00",
+                    "cogs": "150.00",
+                    "profit": "130.00"
+                }
+            ]
+        },
+        "payment_summary": {
+            "total_inflows": "3200.00",
+            "total_outflows": "0.00",
+            "net_movement": "3200.00",
+            "invoice_payments_total": "2000.00",
+            "exchange_payments_total": "1200.00",
+            "refunds_total": "0.00",
+            "cash_inflows": "3200.00",
+            "cash_outflows": "0.00",
+            "net_cash_movement": "3200.00",
+            "payment_methods": [
+                {
+                    "payment_method_name": "نقدي",
+                    "code": "cash",
+                    "is_cash": true,
+                    "inflows": "3200.00",
+                    "outflows": "0.00",
+                    "net": "3200.00",
+                    "transactions_count": 2
+                }
+            ],
+            "methods_breakdown": [
+                {
+                    "payment_method_name": "نقدي",
+                    "code": "cash",
+                    "is_cash": true,
+                    "inflows": "3200.00",
+                    "outflows": "0.00",
+                    "net": "3200.00",
+                    "transactions_count": 2
+                }
+            ],
+            "payments": [
+                {
+                    "id": 94,
+                    "payment_number": "PAY-20261011-0002",
+                    "payment_type": "exchange_payment",
+                    "payment_type_label": "سداد فارق استبدال",
+                    "payment_method_name": "نقدي",
+                    "amount": "1200.00",
+                    "is_outflow": false,
+                    "paid_at": "2026-10-11 12:58",
+                    "notes": "سداد فارق استبدال لمرتجع رقم RET-20261011-0001"
+                },
+                {
+                    "id": 93,
+                    "payment_number": "PAY-20261011-0001",
+                    "payment_type": "invoice_payment",
+                    "payment_type_label": "دفعة فاتورة مبيعات",
+                    "payment_method_name": "نقدي",
+                    "amount": "2000.00",
+                    "is_outflow": false,
+                    "paid_at": "2026-10-11 05:34",
+                    "notes": null
+                }
+            ],
+            "scope_notice": "تقرير حركة وطرق الدفع يعكس المقبوضات والمردودات الفعلية المسجلة خلال الفترة، ولا يمثل رصيد درج النقدية لعدم تتبع رصيد الافتتاح والخزينة التراكمية."
+        }
+    }
+}

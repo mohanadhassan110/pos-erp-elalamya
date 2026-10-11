@@ -63,6 +63,8 @@ export const PosPage: React.FC = () => {
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [isCatalogOpen, setIsCatalogOpen] = useState<boolean>(false);
   const [catalogSearch, setCatalogSearch] = useState<string>('');
+  const [highlightedCatalogIndex, setHighlightedCatalogIndex] = useState<number>(0);
+  const catalogSearchInputRef = useRef<HTMLInputElement>(null);
 
   // External Product Modal
   const [isExternalModalOpen, setIsExternalModalOpen] = useState<boolean>(false);
@@ -111,8 +113,11 @@ export const PosPage: React.FC = () => {
   useEffect(() => {
     if (isCatalogOpen) {
       const timer = setTimeout(() => {
-        productsApi.list({ search: catalogSearch, is_active: true, per_page: 20 })
-          .then((res) => setCatalogProducts(res.data))
+        productsApi.list({ search: catalogSearch, is_active: true, per_page: 50 })
+          .then((res) => {
+            setCatalogProducts(res.data);
+            setHighlightedCatalogIndex(0);
+          })
           .catch(() => {});
       }, 200);
       return () => clearTimeout(timer);
@@ -409,7 +414,7 @@ export const PosPage: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F2') {
         e.preventDefault();
-        barcodeInputRef.current?.focus();
+        setIsCatalogOpen((prev) => !prev);
       } else if (e.key === 'F4') {
         e.preventDefault();
         setSaleType((prev) => (prev === 'retail' ? 'wholesale' : 'retail'));
@@ -422,7 +427,10 @@ export const PosPage: React.FC = () => {
           handleCheckout();
         }
       } else if (e.key === 'Escape') {
-        if (isCatalogOpen) setIsCatalogOpen(false);
+        if (isCatalogOpen) {
+          setIsCatalogOpen(false);
+          barcodeInputRef.current?.focus();
+        }
         if (isExternalModalOpen) setIsExternalModalOpen(false);
         if (completedInvoice) setCompletedInvoice(null);
       }
@@ -961,47 +969,172 @@ export const PosPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Catalog Quick Picker Modal */}
+      {/* Product Catalog Quick Picker Modal (Task 1 Redesign) */}
       <Modal
         isOpen={isCatalogOpen}
-        onClose={() => setIsCatalogOpen(false)}
-        title="كتالوج الأصناف السريع"
-        maxWidth="48rem"
+        onClose={() => {
+          setIsCatalogOpen(false);
+          barcodeInputRef.current?.focus();
+        }}
+        title="كتالوج الأصناف (F2)"
+        maxWidth="50rem"
       >
-        <div className="space-y-3">
-          <Input
-            placeholder="ابحث بالاسم أو الباركود..."
-            value={catalogSearch}
-            onChange={(e) => setCatalogSearch(e.target.value)}
-            autoFocus
-          />
-          <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
-            {catalogProducts.length === 0 ? (
-              <div className="p-4 text-center text-gray-400 text-xs">لا توجد منتجات مطابقة</div>
-            ) : (
-              catalogProducts.map((p) => {
-                const currentPrice = saleType === 'wholesale' ? parseFloat(p.wholesale_price) : parseFloat(p.retail_price);
-                return (
-                  <div
-                    key={p.id}
-                    className="p-3 flex items-center justify-between hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-                    onClick={() => {
-                      addProductToCart(p);
+        <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '70vh', gap: '0.75rem' }}>
+          {/* Sticky Header with Search & Cart Summary */}
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              backgroundColor: '#FFFFFF',
+              paddingBottom: '0.5rem',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <Input
+                  ref={catalogSearchInputRef}
+                  placeholder="ابحث بالاسم، الكود، أو التصنيف... (الأسهم للتنقل، Enter للإضافة، Esc للإغلاق)"
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setHighlightedCatalogIndex((prev) => Math.min(catalogProducts.length - 1, prev + 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setHighlightedCatalogIndex((prev) => Math.max(0, prev - 1));
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (catalogProducts[highlightedCatalogIndex]) {
+                        const prod = catalogProducts[highlightedCatalogIndex];
+                        addProductToCart(prod);
+                        showToast(`تمت إضافة قطعة من '${prod.name}' للسلة`, 'success');
+                      }
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
                       setIsCatalogOpen(false);
-                    }}
-                  >
-                    <div>
-                      <div className="font-semibold text-sm text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500 font-mono">{p.barcode} | {p.category_name}</div>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-[#0B1220] text-sm font-mono">{formatCurrency(currentPrice)}</div>
-                      <div className="text-xs text-gray-500">متاح: {formatQuantity(p.stock_quantity)}</div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                      barcodeInputRef.current?.focus();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  backgroundColor: '#F1F5F9',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#0F172A',
+                  whiteSpace: 'nowrap',
+                  border: '1px solid #CBD5E1',
+                }}
+              >
+                السلة: {cart.reduce((s, it) => s + it.quantity, 0)} قطعة ({formatCurrency(total)})
+              </div>
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', gap: '1rem' }}>
+              <span><strong>الأسهم ↑ ↓:</strong> التنقل بين الأصناف</span>
+              <span><strong>Enter:</strong> إضافة قطعة للسلة</span>
+              <span><strong>Esc:</strong> إغلاق الكتالوج والعودة للباركود</span>
+            </div>
+          </div>
+
+          {/* Compact Table */}
+          <div style={{ overflowY: 'auto', flex: 1, minHeight: '260px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '13px' }}>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F8FAFC', zIndex: 5 }}>
+                <tr style={{ borderBottom: '2px solid #CBD5E1' }}>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>الصنف</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', whiteSpace: 'nowrap', width: '110px' }}>الكود</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', width: '120px' }}>التصنيف</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'left', whiteSpace: 'nowrap', width: '100px' }}>السعر</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center', width: '80px' }}>المتاح</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center', width: '75px' }}>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {catalogProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: '#94A3B8' }}>
+                      لا توجد أصناف مطابقة للبحث
+                    </td>
+                  </tr>
+                ) : (
+                  catalogProducts.map((p, idx) => {
+                    const currentPrice = saleType === 'wholesale' ? parseFloat(p.wholesale_price) : parseFloat(p.retail_price);
+                    const isHighlighted = idx === highlightedCatalogIndex;
+                    const isLowStock = p.stock_quantity <= 3;
+                    return (
+                      <tr
+                        key={p.id}
+                        onClick={() => {
+                          addProductToCart(p);
+                          showToast(`تمت إضافة قطعة من '${p.name}' للسلة`, 'success');
+                        }}
+                        style={{
+                          height: '44px',
+                          minHeight: '44px',
+                          borderBottom: '1px solid #E2E8F0',
+                          backgroundColor: isHighlighted ? '#EFF6FF' : idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.1s ease',
+                          outline: isHighlighted ? '2px solid #3B82F6' : undefined,
+                        }}
+                        onMouseEnter={() => setHighlightedCatalogIndex(idx)}
+                      >
+                        <td style={{ padding: '6px 10px', fontWeight: 600, color: '#0F172A' }}>
+                          {p.name}
+                        </td>
+                        <td style={{ padding: '6px 10px', fontFamily: 'monospace', whiteSpace: 'nowrap', color: '#475569' }}>
+                          {p.barcode}
+                        </td>
+                        <td style={{ padding: '6px 10px', color: '#64748B' }}>
+                          {p.category_name}
+                        </td>
+                        <td style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, fontFamily: 'monospace', whiteSpace: 'nowrap', color: '#0F172A' }}>
+                          {formatCurrency(currentPrice)}
+                        </td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600 }}>
+                          <span
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: isLowStock ? '#FEF2F2' : '#ECFDF5',
+                              color: isLowStock ? '#DC2626' : '#059669',
+                              fontSize: '12px',
+                            }}
+                          >
+                            {formatQuantity(p.stock_quantity)}
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addProductToCart(p);
+                              showToast(`تمت إضافة قطعة من '${p.name}' للسلة`, 'success');
+                            }}
+                            icon={<Plus size={13} />}
+                            style={{ padding: '3px 8px', fontSize: '11.5px', height: '28px' }}
+                          >
+                            إضافة
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </Modal>

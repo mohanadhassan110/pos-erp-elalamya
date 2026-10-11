@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -99,6 +100,11 @@ class Invoice extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(SalesReturn::class);
+    }
+
+    public function replacementForReturn(): HasOne
+    {
+        return $this->hasOne(SalesReturn::class, 'replacement_invoice_id');
     }
 
     public function scopePosted(Builder $query): Builder

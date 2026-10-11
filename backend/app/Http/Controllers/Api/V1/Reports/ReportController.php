@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Reports;
 
+use App\Domain\Sales\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportDateFilterRequest;
 use App\Http\Requests\Reports\SetReportsPasswordRequest;
@@ -236,8 +237,13 @@ class ReportController extends Controller
      */
     public function invoicesHistory(Request $request): JsonResponse
     {
-        $query = Invoice::with(['customer', 'items'])
-            ->orderBy('id', 'desc');
+        $query = Invoice::with([
+            'customer',
+            'items',
+            'returns.items.invoiceItem',
+            'replacementForReturn.invoice.items',
+            'replacementForReturn.items.invoiceItem',
+        ]);
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -247,6 +253,20 @@ class ReportController extends Controller
             $query->where('sale_type', $saleType);
         }
 
+        if ($documentType = $request->query('document_type')) {
+            if ($documentType === 'replacement') {
+                $query->whereHas('replacementForReturn');
+            } elseif ($documentType === 'sale') {
+                $query->whereDoesntHave('replacementForReturn');
+            }
+        }
+
+        if ($customerId = $request->query('customer_id')) {
+            $query->where('customer_id', $customerId);
+        }
+
+        $startBoundary = null;
+        $endBoundary = null;
         if ($fromDate = $request->query('from_date')) {
             $storageTz = config('app.timezone', 'Africa/Cairo');
             $startBoundary = Carbon::parse($fromDate, 'Africa/Cairo')->startOfDay()->setTimezone($storageTz);
@@ -268,10 +288,199 @@ class ReportController extends Controller
             });
         }
 
+        // Sorting
+        $sortBy = $request->query('sort_by', 'date');
+        $sortDirection = strtolower((string) $request->query('sort_direction', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sortBy === 'profit') {
+            $query->withSum('items as total_profit_sum', 'profit')->orderBy('total_profit_sum', $sortDirection);
+        } else {
+            $query->orderBy('created_at', $sortDirection)->orderBy('id', $sortDirection);
+        }
+
+        // Totals calculation across all matching posted invoices in the filtered set
+        $totalsQuery = (clone $query)->where('status', InvoiceStatus::POSTED);
+        $postedInvoicesForTotals = $totalsQuery->get();
+
+        $totGrossSales = '0.00';
+        $totCogs = '0.00';
+        $totGrossProfit = '0.00';
+        $totReturnedValue = '0.00';
+        $totProfitReversal = '0.00';
+        $totNetProfit = '0.00';
+
+        foreach ($postedInvoicesForTotals as $tInv) {
+            $invSales = '0.00';
+            $invCogs = '0.00';
+            $invProfit = '0.00';
+            foreach ($tInv->items as $it) {
+                $invSales = bcadd($invSales, $it->subtotal->toDecimal(), 2);
+                $invCogs = bcadd($invCogs, $it->total_cost->toDecimal(), 2);
+                $invProfit = bcadd($invProfit, $it->profit->toDecimal(), 2);
+            }
+
+            $invReturned = '0.00';
+            $invProfitRev = '0.00';
+            foreach ($tInv->returns as $ret) {
+                $retInPeriod = true;
+                if ($startBoundary && $ret->created_at < $startBoundary) {
+                    $retInPeriod = false;
+                }
+                if ($endBoundary && $ret->created_at > $endBoundary) {
+                    $retInPeriod = false;
+                }
+
+                if ($retInPeriod) {
+                    $invReturned = bcadd($invReturned, $ret->total_return_amount->toDecimal(), 2);
+                    foreach ($ret->items as $ri) {
+                        $isExt = ($ri->product_id === null || ($ri->invoiceItem && $ri->invoiceItem->isExternalProduct()));
+                        $invProfitRev = bcadd($invProfitRev, $isExt ? $ri->subtotal->toDecimal() : $ri->profit_reversal->toDecimal(), 2);
+                    }
+                }
+            }
+
+            $invNet = bcsub($invProfit, $invProfitRev, 2);
+
+            $totGrossSales = bcadd($totGrossSales, $invSales, 2);
+            $totCogs = bcadd($totCogs, $invCogs, 2);
+            $totGrossProfit = bcadd($totGrossProfit, $invProfit, 2);
+            $totReturnedValue = bcadd($totReturnedValue, $invReturned, 2);
+            $totProfitReversal = bcadd($totProfitReversal, $invProfitRev, 2);
+            $totNetProfit = bcadd($totNetProfit, $invNet, 2);
+        }
+
+        $avgMargin = (float) $totGrossSales > 0
+            ? round(((float) $totNetProfit / (float) $totGrossSales) * 100, 2)
+            : 0.0;
+
         $perPage = min(max((int) $request->query('per_page', 15), 5), 100);
         $paginated = $query->paginate($perPage);
 
-        $items = collect($paginated->items())->map(function (Invoice $inv) {
+        $items = collect($paginated->items())->map(function (Invoice $inv) use ($startBoundary, $endBoundary) {
+            $isPosted = ($inv->status === InvoiceStatus::POSTED);
+
+            $lineSales = '0.00';
+            $lineCogs = '0.00';
+            $lineGrossProfit = '0.00';
+            foreach ($inv->items as $item) {
+                $lineSales = bcadd($lineSales, $item->subtotal->toDecimal(), 2);
+                $lineCogs = bcadd($lineCogs, $item->total_cost->toDecimal(), 2);
+                $lineGrossProfit = bcadd($lineGrossProfit, $item->profit->toDecimal(), 2);
+            }
+
+            $invReturned = '0.00';
+            $invProfitRev = '0.00';
+            $returnsDrilldown = [];
+
+            foreach ($inv->returns as $ret) {
+                $retInPeriod = true;
+                if ($startBoundary && $ret->created_at < $startBoundary) {
+                    $retInPeriod = false;
+                }
+                if ($endBoundary && $ret->created_at > $endBoundary) {
+                    $retInPeriod = false;
+                }
+
+                if ($retInPeriod) {
+                    $invReturned = bcadd($invReturned, $ret->total_return_amount->toDecimal(), 2);
+                }
+
+                $retItemsList = [];
+                foreach ($ret->items as $ri) {
+                    $isExt = ($ri->product_id === null || ($ri->invoiceItem && $ri->invoiceItem->isExternalProduct()));
+                    $rev = $isExt ? $ri->subtotal->toDecimal() : $ri->profit_reversal->toDecimal();
+                    if ($retInPeriod) {
+                        $invProfitRev = bcadd($invProfitRev, $rev, 2);
+                    }
+                    $retItemsList[] = [
+                        'id' => $ri->id,
+                        'product_name' => $ri->invoiceItem?->product_name ?? 'صنف مرتجع',
+                        'quantity' => $ri->quantity->toInt(),
+                        'unit_sale_price' => $ri->unit_sale_price->toDecimal(),
+                        'subtotal' => $ri->subtotal->toDecimal(),
+                        'profit_reversal' => $rev,
+                        'is_external' => $isExt,
+                    ];
+                }
+
+                $returnsDrilldown[] = [
+                    'id' => $ret->id,
+                    'return_number' => $ret->return_number,
+                    'created_at' => $ret->created_at?->format('Y-m-d H:i'),
+                    'resolution' => $ret->resolution->value,
+                    'resolution_label' => $ret->resolution->label(),
+                    'total_return_amount' => $ret->total_return_amount->toDecimal(),
+                    'difference_amount' => $ret->difference_amount->toDecimal(),
+                    'items' => $retItemsList,
+                ];
+            }
+
+            $netProfit = $isPosted ? bcsub($lineGrossProfit, $invProfitRev, 2) : '0.00';
+            $salesTotal = $isPosted ? $lineSales : '0.00';
+            $cogsTotal = $isPosted ? $lineCogs : '0.00';
+            $grossProfitTotal = $isPosted ? $lineGrossProfit : '0.00';
+
+            $marginPercentage = ((float) $salesTotal > 0 && $isPosted)
+                ? round(((float) $netProfit / (float) $salesTotal) * 100, 2)
+                : 0.0;
+
+            $isReplacement = ($inv->replacementForReturn !== null);
+            $replacementDetails = null;
+            $exchangeDrilldown = null;
+
+            if ($isReplacement) {
+                $retRef = $inv->replacementForReturn;
+                $replacementDetails = [
+                    'return_id' => $retRef->id,
+                    'return_number' => $retRef->return_number,
+                    'original_invoice_id' => $retRef->invoice_id,
+                    'original_invoice_number' => $retRef->invoice?->invoice_number,
+                    'returned_value' => $retRef->total_return_amount->toDecimal(),
+                    'replacement_value' => $inv->total->toDecimal(),
+                    'difference_amount' => $retRef->difference_amount->toDecimal(),
+                    'difference_paid_amount' => $retRef->difference_amount->toDecimal(),
+                ];
+
+                if ($retRef->invoice) {
+                    $origInv = $retRef->invoice;
+                    $origGrossProfit = '0.00';
+                    foreach ($origInv->items as $oit) {
+                        $origGrossProfit = bcadd($origGrossProfit, $oit->profit->toDecimal(), 2);
+                    }
+                    $retItemRev = '0.00';
+                    foreach ($retRef->items as $rItem) {
+                        $isExt = ($rItem->product_id === null || ($rItem->invoiceItem && $rItem->invoiceItem->isExternalProduct()));
+                        $retItemRev = bcadd($retItemRev, $isExt ? $rItem->subtotal->toDecimal() : $rItem->profit_reversal->toDecimal(), 2);
+                    }
+                    $origNetAfterRet = bcsub($origGrossProfit, $retItemRev, 2);
+                    $combinedNet = bcadd($origNetAfterRet, $netProfit, 2);
+
+                    $exchangeDrilldown = [
+                        'original_invoice_number' => $origInv->invoice_number,
+                        'original_invoice_profit' => $origGrossProfit,
+                        'return_profit_reversal' => $retItemRev,
+                        'original_net_profit' => $origNetAfterRet,
+                        'replacement_invoice_profit' => $netProfit,
+                        'combined_net_profit' => $combinedNet,
+                    ];
+                }
+            }
+
+            $itemsDrilldown = $inv->items->map(function ($it) {
+                return [
+                    'id' => $it->id,
+                    'product_name' => $it->product_name,
+                    'barcode' => $it->barcode,
+                    'quantity' => $it->quantity->toInt(),
+                    'unit_sale_price' => $it->unit_sale_price->toDecimal(),
+                    'unit_cost' => $it->unit_cost->toDecimal(),
+                    'subtotal' => $it->subtotal->toDecimal(),
+                    'total_cost' => $it->total_cost->toDecimal(),
+                    'profit' => $it->profit->toDecimal(),
+                    'is_external' => $it->isExternalProduct(),
+                ];
+            });
+
             return [
                 'id' => $inv->id,
                 'invoice_number' => $inv->invoice_number,
@@ -281,22 +490,47 @@ class ReportController extends Controller
                 'sale_type_label' => $inv->sale_type->label(),
                 'status' => $inv->status->value,
                 'status_label' => $inv->status->label(),
-                'total' => $inv->total->toDecimal(),
+                'document_type' => $isReplacement ? 'replacement' : 'sale',
+                'document_type_label' => $isReplacement ? 'بديلة عن استبدال' : 'فاتورة بيع',
+                'is_replacement' => $isReplacement,
+                'replacement_details' => $replacementDetails,
+                'has_returns' => $inv->returns->isNotEmpty(),
+                'total_sales' => $salesTotal,
+                'stored_total' => $inv->total->toDecimal(),
+                'cost_of_goods' => $cogsTotal,
+                'gross_profit' => $grossProfitTotal,
+                'profit_margin_percentage' => $marginPercentage,
+                'returned_value' => $invReturned,
+                'profit_reversal' => $invProfitRev,
+                'net_profit' => $netProfit,
                 'paid_amount' => $inv->paid_amount->toDecimal(),
                 'remaining_amount' => $inv->remaining_amount->toDecimal(),
                 'items_count' => $inv->items->count(),
+                'items_drilldown' => $itemsDrilldown,
+                'returns_drilldown' => $returnsDrilldown,
+                'exchange_drilldown' => $exchangeDrilldown,
             ];
         });
 
         return ApiResponse::success([
             'items' => $items,
+            'totals' => [
+                'total_sales' => $totGrossSales,
+                'cost_of_goods' => $totCogs,
+                'gross_profit' => $totGrossProfit,
+                'returned_value' => $totReturnedValue,
+                'profit_reversal' => $totProfitReversal,
+                'net_profit' => $totNetProfit,
+                'average_margin_percentage' => $avgMargin,
+            ],
+            'note' => 'الربح بحسب تكلفة الشراء وقت البيع (لا يعاد احتسابه بأسعار الشراء اللاحقة)',
             'pagination' => [
                 'current_page' => $paginated->currentPage(),
                 'last_page' => $paginated->lastPage(),
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
             ],
-        ], 'تم جلب سجل الفواتير بنجاح');
+        ], 'تم جلب سجل الفواتير وتحليل الأرباح بنجاح');
     }
 
     /**
@@ -304,7 +538,7 @@ class ReportController extends Controller
      */
     public function returnsHistory(Request $request): JsonResponse
     {
-        $query = SalesReturn::with(['customer', 'invoice', 'items'])
+        $query = SalesReturn::with(['customer', 'invoice', 'replacementInvoice', 'items.invoiceItem'])
             ->orderBy('id', 'desc');
 
         if ($resolution = $request->query('resolution')) {
@@ -336,16 +570,29 @@ class ReportController extends Controller
         $paginated = $query->paginate($perPage);
 
         $items = collect($paginated->items())->map(function (SalesReturn $ret) {
+            $profitReversal = '0.00';
+            foreach ($ret->items as $ri) {
+                $isExt = ($ri->product_id === null || ($ri->invoiceItem && $ri->invoiceItem->isExternalProduct()));
+                $rev = $isExt ? $ri->subtotal->toDecimal() : $ri->profit_reversal->toDecimal();
+                $profitReversal = bcadd($profitReversal, $rev, 2);
+            }
+
             return [
                 'id' => $ret->id,
                 'return_number' => $ret->return_number,
                 'created_at' => $ret->created_at?->format('Y-m-d H:i'),
+                'invoice_id' => $ret->invoice_id,
                 'invoice_number' => $ret->invoice?->invoice_number,
+                'replacement_invoice_id' => $ret->replacement_invoice_id,
+                'replacement_invoice_number' => $ret->replacementInvoice?->invoice_number,
+                'replacement_value' => $ret->replacementInvoice ? $ret->replacementInvoice->total->toDecimal() : null,
                 'customer_name' => $ret->customer?->name ?? 'عميل نقدي / عام',
                 'resolution' => $ret->resolution->value,
                 'resolution_label' => $ret->resolution->label(),
                 'total_return_amount' => $ret->total_return_amount->toDecimal(),
                 'difference_amount' => $ret->difference_amount->toDecimal(),
+                'difference_paid_amount' => $ret->difference_amount->toDecimal(),
+                'profit_reversal' => $profitReversal,
                 'items_count' => $ret->items->count(),
             ];
         });

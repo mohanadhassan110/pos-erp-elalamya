@@ -1,0 +1,21 @@
+﻿
+   PASS  Tests\Feature\Api\V1\InvoicePrintTest
+  ✓ external product appears as ordinary line without leaking cost or markers                                    0.73s  
+
+   PASS  Tests\Feature\Api\V1\InvoiceTest
+  ✓ external product creates expense and does not mutate normal inventory                                        0.08s  
+
+   PASS  Tests\Feature\Api\V1\ReportTest
+  ✓ policy c external product expenses and no double counting                                                    0.07s  
+  ✓ concrete external product return scenario produces exact loss of 600                                         0.06s  
+
+   PASS  Tests\Feature\Api\V1\SalesReturnTest
+  ✓ external product return does not create inventory movement                                                   0.07s  
+  ✓ external product return preserves original purchase expense without supplier reimbursement                   0.06s  
+
+   PASS  Tests\Feature\DatabaseIntegrityTest
+  ✓ external product invoice item supports polymorphic linked expense                                            0.03s  
+
+  Tests:    7 passed (77 assertions)
+  Duration: 1.40s
+

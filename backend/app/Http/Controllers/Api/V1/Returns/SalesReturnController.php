@@ -20,7 +20,7 @@ class SalesReturnController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = SalesReturn::with(['customer', 'creator', 'invoice', 'replacementInvoice']);
+        $query = SalesReturn::with(['customer', 'creator', 'invoice', 'replacementInvoice.items', 'items']);
 
         if ($request->filled('search')) {
             $search = trim($request->query('search'));

@@ -17,10 +17,14 @@ export interface HistoryFilterParams {
   [key: string]: string | number | undefined;
   status?: string;
   sale_type?: string;
+  document_type?: string;
   resolution?: string;
   from_date?: string;
   to_date?: string;
+  customer_id?: number;
   search?: string;
+  sort_by?: string;
+  sort_direction?: string;
   page?: number;
   per_page?: number;
 }

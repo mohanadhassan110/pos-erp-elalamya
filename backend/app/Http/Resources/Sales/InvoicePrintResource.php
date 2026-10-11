@@ -97,6 +97,31 @@ class InvoicePrintResource extends JsonResource
             'is_wholesale' => $this->sale_type === SaleType::WHOLESALE,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
+            'is_replacement' => $this->replacementForReturn !== null,
+            'replacement_details' => $this->replacementForReturn ? [
+                'return_id' => $this->replacementForReturn->id,
+                'return_number' => $this->replacementForReturn->return_number,
+                'original_invoice_id' => $this->replacementForReturn->invoice_id,
+                'original_invoice_number' => $this->replacementForReturn->invoice?->invoice_number,
+                'returned_value' => $this->replacementForReturn->total_return_amount->toDecimal(),
+                'returned_value_formatted' => $this->replacementForReturn->total_return_amount->formattedArabic(),
+                'replacement_value' => $this->total->toDecimal(),
+                'replacement_value_formatted' => $this->total->formattedArabic(),
+                'difference_amount' => $this->replacementForReturn->difference_amount->toDecimal(),
+                'difference_paid_amount' => $this->replacementForReturn->difference_amount->toDecimal(),
+                'difference_paid_formatted' => $this->replacementForReturn->difference_amount->formattedArabic(),
+            ] : null,
+            'has_returns' => $this->relationLoaded('returns') ? $this->returns->isNotEmpty() : $this->returns()->exists(),
+            'returned_value' => $this->relationLoaded('returns')
+                ? (string) $this->returns->sum(fn ($r) => (float) $r->total_return_amount->toDecimal())
+                : (string) $this->returns()->sum('total_return_amount'),
+            'net_after_returns' => bcsub(
+                $this->total->toDecimal(),
+                $this->relationLoaded('returns')
+                    ? (string) $this->returns->sum(fn ($r) => (float) $r->total_return_amount->toDecimal())
+                    : (string) $this->returns()->sum('total_return_amount'),
+                2
+            ),
             'customer' => $customerData,
             'items' => $printableItems,
             'items_count' => $this->items->count(),

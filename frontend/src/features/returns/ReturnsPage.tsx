@@ -74,6 +74,7 @@ export const ReturnsPage: React.FC = () => {
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isCashConfirmed, setIsCashConfirmed] = useState<boolean>(false);
 
   // History Tab State
   const [historyList, setHistoryList] = useState<SalesReturn[]>([]);
@@ -922,12 +923,100 @@ export const ReturnsPage: React.FC = () => {
                 </div>
               </Card>
 
+              {/* Live Financial Summary & Cashier Confirmation Card */}
+              <Card>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    الملخص المالي النهائي لعملية المرتجع / الاستبدال
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '0.75rem',
+                      padding: '0.85rem',
+                      backgroundColor: 'var(--bg-surface-subtle)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>إجمالي قيمة المرتجع: </span>
+                      <strong style={{ fontFamily: 'monospace', color: '#B45309' }}>
+                        {totalReturnAmount.toFixed(2)} ج.م
+                      </strong>
+                    </div>
+
+                    {(resolution === 'exchange_equal' || resolution === 'exchange_upgrade') && (
+                      <div>
+                        <span style={{ color: 'var(--text-muted)' }}>إجمالي قيمة البدائل: </span>
+                        <strong style={{ fontFamily: 'monospace', color: 'var(--color-primary-700)' }}>
+                          {totalReplacementAmount.toFixed(2)} ج.م
+                        </strong>
+                      </div>
+                    )}
+
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>الأثر المالي الصافي: </span>
+                      {resolution === 'refund_cash' && (
+                        <strong style={{ color: 'var(--color-danger)', fontFamily: 'monospace' }}>
+                          صرف نقدي للعميل: {totalReturnAmount.toFixed(2)} ج.م
+                        </strong>
+                      )}
+                      {resolution === 'exchange_equal' && (
+                        <strong style={{ color: 'var(--color-success)', fontFamily: 'monospace' }}>
+                          استبدال متطابق (الفرق 0.00 ج.م)
+                        </strong>
+                      )}
+                      {resolution === 'exchange_upgrade' && (
+                        <strong style={{ color: 'var(--color-success)', fontFamily: 'monospace' }}>
+                          تحصيل فارق من العميل: {differenceAmount.toFixed(2)} ج.م
+                        </strong>
+                      )}
+                      {resolution === 'customer_account_credit' && (
+                        <strong style={{ color: 'var(--color-primary-700)', fontFamily: 'monospace' }}>
+                          إيداع رصيد دائن للعميل: {totalReturnAmount.toFixed(2)} ج.م
+                        </strong>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cashier confirmation checkbox */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      padding: '0.6rem 0.8rem',
+                      backgroundColor: isCashConfirmed ? '#ECFDF5' : '#FFFBEB',
+                      border: isCashConfirmed ? '1px solid #10B981' : '1px solid #F59E0B',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: isCashConfirmed ? '#065F46' : '#92400E',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      id="cashier-confirm-checkbox"
+                      checked={isCashConfirmed}
+                      onChange={(e) => setIsCashConfirmed(e.target.checked)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>
+                      أؤكد مراجعة الأصناف المرتجعة والبدائل والمبالغ المالية (صرف أو تحصيل نقدي) واستلام/تسليم البضاعة فعلياً
+                    </span>
+                  </label>
+                </div>
+              </Card>
+
               {/* Action Confirmation Button */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                 <Button
                   variant="primary"
                   size="lg"
-                  disabled={!isResolutionValid() || isSubmitting}
+                  disabled={!isResolutionValid() || !isCashConfirmed || isSubmitting}
                   isLoading={isSubmitting}
                   onClick={handleSubmitReturn}
                 >
@@ -1087,7 +1176,7 @@ export const ReturnsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {selectedReturnDetails.items.map((it) => (
+                {(selectedReturnDetails.items || []).map((it) => (
                   <tr key={it.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '0.4rem' }}>{it.product_name}</td>
                     <td style={{ padding: '0.4rem', fontFamily: 'monospace' }}>{it.quantity}</td>
@@ -1099,6 +1188,64 @@ export const ReturnsPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Exchange Replacement Section (if applicable) */}
+            {selectedReturnDetails.replacement_invoice_id && (
+              <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    padding: '0.65rem 0.85rem',
+                    backgroundColor: '#EFF6FF',
+                    border: '1px solid #BFDBFE',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#1E40AF', marginBottom: '0.35rem' }}>
+                    تفاصيل الاستبدال والفاتورة البديلة ({selectedReturnDetails.replacement_invoice_number || `#${selectedReturnDetails.replacement_invoice_id}`})
+                  </div>
+                  <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+                    <div>قيمة المرتجع: <strong>{parseFloat(selectedReturnDetails.total_return_amount).toFixed(2)} ج.م</strong></div>
+                    {selectedReturnDetails.replacement_value && (
+                      <div>قيمة البدائل: <strong>{parseFloat(selectedReturnDetails.replacement_value).toFixed(2)} ج.م</strong></div>
+                    )}
+                    <div>
+                      الفرق المسدد: <strong style={{ color: '#059669' }}>
+                        {parseFloat(selectedReturnDetails.difference_paid_amount || selectedReturnDetails.difference_amount || '0').toFixed(2)} ج.م
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedReturnDetails.replacement_items && selectedReturnDetails.replacement_items.length > 0 && (
+                  <div>
+                    <h4 style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', fontWeight: 'bold' }}>الأصناف البديلة المسلمة</h4>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: 'var(--bg-subtle)' }}>
+                          <th style={{ padding: '0.4rem' }}>الصنف</th>
+                          <th style={{ padding: '0.4rem' }}>الكمية</th>
+                          <th style={{ padding: '0.4rem' }}>السعر</th>
+                          <th style={{ padding: '0.4rem' }}>الإجمالي</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedReturnDetails.replacement_items.map((rit) => (
+                          <tr key={rit.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                            <td style={{ padding: '0.4rem' }}>{rit.product_name}</td>
+                            <td style={{ padding: '0.4rem', fontFamily: 'monospace' }}>{rit.quantity}</td>
+                            <td style={{ padding: '0.4rem', fontFamily: 'monospace' }}>{parseFloat(rit.unit_sale_price).toFixed(2)} ج.م</td>
+                            <td style={{ padding: '0.4rem', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                              {parseFloat(rit.subtotal).toFixed(2)} ج.م
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
             {selectedReturnDetails.notes && (
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

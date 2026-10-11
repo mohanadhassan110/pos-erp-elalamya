@@ -1,0 +1,3 @@
+# Emoji grep verification in frontend/src
+# Pattern: (🔄|⚠️|ℹ️|⌨️|↵|⎋)
+# Result: 0 matches found across frontend/src

@@ -98,6 +98,51 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
         {/* Separator */}
         <div style={{ borderBottom: '1px solid #000000', margin: '5px 0 3px' }} />
 
+        {/* Exchange Replacement Banner (Thermal) */}
+        {invoice.is_replacement && invoice.replacement_details && (
+          <div
+            style={{
+              margin: '4px 0',
+              padding: '4px',
+              border: '1px solid #000000',
+              borderRadius: '2px',
+              backgroundColor: '#f5f5f5',
+              fontSize: '10px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontWeight: 800, fontSize: '10.5px' }}>
+              فاتورة بديلة عن #{invoice.replacement_details.original_invoice_number}
+            </div>
+            <div style={{ fontSize: '9px', color: '#333' }}>
+              (رقم المرتجع: {invoice.replacement_details.return_number})
+            </div>
+            <div style={{ borderTop: '1px dashed #666', marginTop: '3px', paddingTop: '3px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>قيمة المرتجع:</span>
+                <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.replacement_details.returned_value)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>قيمة البدائل:</span>
+                <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.replacement_details.replacement_value)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                <span>الفرق المدفوع:</span>
+                <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.replacement_details.difference_paid_amount || invoice.replacement_details.difference_amount)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Partial Return Warning (Thermal) */}
+        {invoice.has_returns && !invoice.is_replacement && (
+          <div style={{ margin: '4px 0', padding: '3px 4px', border: '1px dashed #D97706', backgroundColor: '#FEF3C7', fontSize: '9.5px', textAlign: 'center' }}>
+            <div style={{ fontWeight: 700, color: '#B45309' }}>تنبيه: تم عمل مرتجع جزئي</div>
+            <div>قيمة المرتجع: {formatCurrency(invoice.returned_value)}</div>
+            <div>الصافي بعد المرتجع: {formatCurrency(invoice.net_after_returns)}</div>
+          </div>
+        )}
+
         {/* Items Table */}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10.5px' }}>
           <thead>
@@ -161,10 +206,19 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
             <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.total)}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>المدفوع نقداً:</span>
-            <span style={{ fontWeight: 700, direction: 'ltr' }}>{formatCurrency(invoice.paid_amount)}</span>
-          </div>
+          {invoice.is_replacement && invoice.replacement_details ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+              <span>المدفوع الفعلي للفرق:</span>
+              <span style={{ direction: 'ltr' }}>
+                {formatCurrency(invoice.replacement_details.difference_paid_amount || invoice.replacement_details.difference_amount)}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>المدفوع نقداً:</span>
+              <span style={{ fontWeight: 700, direction: 'ltr' }}>{formatCurrency(invoice.paid_amount)}</span>
+            </div>
+          )}
 
           {parseFloat(invoice.remaining_amount || '0') > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
@@ -325,6 +379,41 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
         </div>
       </div>
 
+      {/* Exchange Replacement Banner in A4 */}
+      {invoice.is_replacement && invoice.replacement_details && (
+        <div
+          style={{
+            marginBottom: '14px',
+            padding: '10px 14px',
+            border: '2px solid #000000',
+            borderRadius: '4px',
+            backgroundColor: '#F8FAFC',
+            fontSize: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontWeight: 800, fontSize: '14px' }}>
+              فاتورة بديلة عن الفاتورة #{invoice.replacement_details.original_invoice_number} (رقم المرتجع: {invoice.replacement_details.return_number})
+            </span>
+            <span style={{ padding: '2px 8px', backgroundColor: '#000', color: '#fff', borderRadius: '3px', fontWeight: 700, fontSize: '11px' }}>
+              فاتورة استبدال
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid #CBD5E1', paddingTop: '6px' }}>
+            <div>قيمة المرتجع: <strong>{formatCurrency(invoice.replacement_details.returned_value)}</strong></div>
+            <div>قيمة البدائل: <strong>{formatCurrency(invoice.replacement_details.replacement_value)}</strong></div>
+            <div>الفرق المدفوع الفعلي: <strong style={{ color: '#059669' }}>{formatCurrency(invoice.replacement_details.difference_paid_amount || invoice.replacement_details.difference_amount)}</strong></div>
+          </div>
+        </div>
+      )}
+
+      {/* Partial Return Warning in A4 */}
+      {invoice.has_returns && !invoice.is_replacement && (
+        <div style={{ marginBottom: '12px', padding: '8px 12px', border: '1px dashed #D97706', backgroundColor: '#FEF3C7', borderRadius: '4px', fontSize: '12px' }}>
+          <strong>تنبيه: تم عمل مرتجع جزئي على هذه الفاتورة</strong> — قيمة المرتجع: <strong>{formatCurrency(invoice.returned_value)}</strong> | الصافي بعد المرتجع: <strong>{formatCurrency(invoice.net_after_returns)}</strong>
+        </div>
+      )}
+
       {/* Items Table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '14px', fontSize: '12px' }}>
         <thead>
@@ -401,10 +490,19 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
             <span>الصافي المطلوب:</span>
             <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.total)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', borderBottom: '1px solid #E2E8F0' }}>
-            <span>المدفوع:</span>
-            <span style={{ fontWeight: 700, direction: 'ltr' }}>{formatCurrency(invoice.paid_amount)}</span>
-          </div>
+          {invoice.is_replacement && invoice.replacement_details ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 700 }}>
+              <span>المدفوع الفعلي للفرق:</span>
+              <span style={{ direction: 'ltr', color: '#059669' }}>
+                {formatCurrency(invoice.replacement_details.difference_paid_amount || invoice.replacement_details.difference_amount)}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', borderBottom: '1px solid #E2E8F0' }}>
+              <span>المدفوع:</span>
+              <span style={{ fontWeight: 700, direction: 'ltr' }}>{formatCurrency(invoice.paid_amount)}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', fontWeight: 700 }}>
             <span>المتبقي:</span>
             <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.remaining_amount)}</span>

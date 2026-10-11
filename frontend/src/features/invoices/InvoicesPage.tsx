@@ -58,8 +58,36 @@ export const InvoicesPage: React.FC = () => {
   }, [currentPage, debouncedSearch, saleTypeFilter, statusFilter]);
 
   useEffect(() => {
-    void fetchInvoices();
-  }, [fetchInvoices]);
+    let isMounted = true;
+
+    const filters: InvoiceFilters = {
+      page: currentPage,
+      per_page: 20,
+      search: debouncedSearch.trim() || undefined,
+      sale_type: saleTypeFilter || undefined,
+      status: statusFilter || undefined,
+    };
+
+    invoicesApi.list(filters)
+      .then((res) => {
+        if (isMounted) {
+          setInvoices(res.data);
+          setTotalCount(res.meta?.total ?? res.data.length);
+        }
+      })
+      .catch(() => {
+        // Handled cleanly
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, debouncedSearch, saleTypeFilter, statusFilter]);
 
   const handleOpenDetails = async (invoiceId: number) => {
     setIsLoadingDetails(true);
@@ -212,15 +240,15 @@ export const InvoicesPage: React.FC = () => {
                     height: '46px',
                   }}
                 >
-                  <th style={{ padding: '0.625rem 0.875rem', width: '185px', minWidth: '185px', whiteSpace: 'nowrap' }}>رقم الفاتورة</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '160px', minWidth: '160px', whiteSpace: 'nowrap' }}>التاريخ والوقت</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>النوع</th>
-                  <th style={{ padding: '0.625rem 0.875rem', minWidth: '180px', maxWidth: '240px' }}>العميل</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>الإجمالي</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>المدفوع</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>المتبقي</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '90px', minWidth: '90px', textAlign: 'center', whiteSpace: 'nowrap' }}>الحالة</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '180px', minWidth: '180px', textAlign: 'center', whiteSpace: 'nowrap' }}>إجراءات</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '165px', minWidth: '165px', whiteSpace: 'nowrap' }}>رقم الفاتورة</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '110px', minWidth: '110px', whiteSpace: 'nowrap' }}>التاريخ</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '110px', minWidth: '110px', whiteSpace: 'nowrap' }}>النوع والوثيقة</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '130px', minWidth: '110px', maxWidth: '140px', whiteSpace: 'nowrap' }}>العميل</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '90px', minWidth: '85px', textAlign: 'left', whiteSpace: 'nowrap' }}>الإجمالي</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '90px', minWidth: '85px', textAlign: 'left', whiteSpace: 'nowrap' }}>المدفوع</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '85px', minWidth: '80px', textAlign: 'left', whiteSpace: 'nowrap' }}>المتبقي</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '80px', minWidth: '75px', textAlign: 'center', whiteSpace: 'nowrap' }}>الحالة</th>
+                  <th style={{ padding: '0.625rem 0.75rem', width: '140px', minWidth: '135px', textAlign: 'center', whiteSpace: 'nowrap' }}>إجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,32 +265,42 @@ export const InvoicesPage: React.FC = () => {
                       }}
                     >
                       {/* Invoice Number */}
-                      <td style={{ padding: '0.625rem 0.875rem', fontWeight: 700, direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '185px', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', fontWeight: 700, direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap', width: '165px', minWidth: '165px', fontFamily: 'monospace' }}>
                         <span style={{ color: 'var(--color-navy-950)' }}>{inv.invoice_number}</span>
                       </td>
 
                       {/* Date */}
-                      <td style={{ padding: '0.625rem 0.875rem', color: 'var(--text-secondary)', fontSize: '13px', direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', color: 'var(--text-secondary)', fontSize: '12px', direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {formatDateTime(inv.created_at)}
                       </td>
 
-                      {/* Sale Type */}
-                      <td style={{ padding: '0.625rem 0.875rem', whiteSpace: 'nowrap' }}>
-                        <Badge variant={inv.sale_type === 'wholesale' ? 'primary' : 'warning'} size="sm">
-                          {inv.sale_type_label || (inv.sale_type === 'wholesale' ? 'جملة' : 'قطاعي')}
-                        </Badge>
+                      {/* Document Type & Sale Type */}
+                      <td style={{ padding: '0.625rem 0.75rem', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                          {inv.is_replacement ? (
+                            <Badge variant="primary" size="sm">بديلة (استبدال)</Badge>
+                          ) : (
+                            <Badge variant={inv.sale_type === 'wholesale' ? 'primary' : 'neutral'} size="sm">
+                              {inv.sale_type_label || (inv.sale_type === 'wholesale' ? 'جملة' : 'قطاعي')}
+                            </Badge>
+                          )}
+                          {inv.has_returns && (
+                            <Badge variant="warning" size="sm">مرتجع</Badge>
+                          )}
+                        </div>
                       </td>
 
                       {/* Customer */}
                       <td
                         style={{
-                          padding: '0.625rem 0.875rem',
+                          padding: '0.625rem 0.75rem',
                           color: 'var(--text-primary)',
                           fontWeight: 500,
-                          maxWidth: '220px',
+                          maxWidth: '140px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          fontSize: '13px',
                         }}
                         title={inv.customer?.name || 'زبون نقدي'}
                       >
@@ -270,17 +308,17 @@ export const InvoicesPage: React.FC = () => {
                       </td>
 
                       {/* Total */}
-                      <td style={{ padding: '0.625rem 0.875rem', textAlign: 'left', fontWeight: 700, direction: 'ltr' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'left', fontWeight: 700, direction: 'ltr', fontSize: '13px' }}>
                         {formatCurrency(inv.total)}
                       </td>
 
                       {/* Paid */}
-                      <td style={{ padding: '0.625rem 0.875rem', textAlign: 'left', color: 'var(--color-success)', fontWeight: 600, direction: 'ltr' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'left', color: 'var(--color-success)', fontWeight: 600, direction: 'ltr', fontSize: '13px' }}>
                         {formatCurrency(inv.paid_amount)}
                       </td>
 
                       {/* Remaining */}
-                      <td style={{ padding: '0.625rem 0.875rem', textAlign: 'left', direction: 'ltr' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'left', direction: 'ltr', fontSize: '13px' }}>
                         {remainingNum > 0 ? (
                           <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>
                             {formatCurrency(inv.remaining_amount)}
@@ -291,20 +329,20 @@ export const InvoicesPage: React.FC = () => {
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'center' }}>
                         <Badge variant={inv.status === 'posted' ? 'success' : 'danger'} size="sm">
                           {inv.status_label || (inv.status === 'posted' ? 'مرحلة' : 'ملغاة')}
                         </Badge>
                       </td>
 
                       {/* Actions */}
-                      <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
                           <Button
                             size="sm"
                             variant="secondary"
                             onClick={() => handleOpenDetails(inv.id)}
-                            icon={<Eye size={14} />}
+                            icon={<Eye size={13} />}
                           >
                             التفاصيل
                           </Button>
@@ -312,7 +350,7 @@ export const InvoicesPage: React.FC = () => {
                             size="sm"
                             variant="primary"
                             onClick={() => handleOpenPrint(inv.id)}
-                            icon={<Printer size={14} />}
+                            icon={<Printer size={13} />}
                           >
                             طباعة
                           </Button>
@@ -341,6 +379,49 @@ export const InvoicesPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Replacement Banner if Exchange Invoice */}
+              {selectedInvoice.is_replacement && selectedInvoice.replacement_details && (
+                <div
+                  style={{
+                    backgroundColor: '#F0F9FF',
+                    border: '1px solid #BAE6FD',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#0369A1', marginBottom: '0.35rem' }}>
+                    فاتورة بديلة عن استبدال (الفاتورة الأصلية: {selectedInvoice.replacement_details.original_invoice_number || `INV-${selectedInvoice.replacement_details.original_invoice_id}`} — مرتجع: {selectedInvoice.replacement_details.return_number})
+                  </div>
+                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#0F172A' }}>
+                    <div>قيمة المرتجع: <strong>{formatCurrency(selectedInvoice.replacement_details.returned_value)}</strong></div>
+                    <div>قيمة الأصناف البديلة: <strong>{formatCurrency(selectedInvoice.replacement_details.replacement_value)}</strong></div>
+                    <div>المدفوع الفعلي للفرق: <strong style={{ color: 'var(--color-success)' }}>{formatCurrency(selectedInvoice.replacement_details.difference_paid_amount || selectedInvoice.replacement_details.difference_amount)}</strong></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Partial Return Banner on Original Invoice */}
+              {selectedInvoice.has_returns && (
+                <div
+                  style={{
+                    backgroundColor: '#FFFBEB',
+                    border: '1px solid #FDE68A',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#B45309', marginBottom: '0.35rem' }}>
+                    تنبيه: تم عمل مرتجع جزئي على هذه الفاتورة
+                  </div>
+                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#0F172A' }}>
+                    <div>قيمة المرتجع: <strong>{formatCurrency(selectedInvoice.returned_value)}</strong></div>
+                    <div>الصافي بعد المرتجع: <strong style={{ color: 'var(--color-primary-700)' }}>{formatCurrency(selectedInvoice.net_after_returns)}</strong></div>
+                  </div>
+                </div>
+              )}
+
               {/* Top Summary */}
               <div
                 style={{
@@ -396,12 +477,19 @@ export const InvoicesPage: React.FC = () => {
                   fontSize: '15px',
                 }}
               >
-                <span>صافي القيمة: {formatCurrency(selectedInvoice.total)}</span>
-                <span style={{ color: 'var(--color-success)' }}>المدفوع: {formatCurrency(selectedInvoice.paid_amount)}</span>
+                <span>صافي الفاتورة: {formatCurrency(selectedInvoice.total)}</span>
+                {selectedInvoice.is_replacement && selectedInvoice.replacement_details ? (
+                  <span style={{ color: 'var(--color-success)' }}>
+                    المدفوع الفعلي للفرق: {formatCurrency(selectedInvoice.replacement_details.difference_paid_amount || selectedInvoice.replacement_details.difference_amount)}
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--color-success)' }}>المدفوع: {formatCurrency(selectedInvoice.paid_amount)}</span>
+                )}
                 {parseFloat(selectedInvoice.remaining_amount) > 0 && (
                   <span style={{ color: 'var(--color-danger)' }}>المتبقي: {formatCurrency(selectedInvoice.remaining_amount)}</span>
                 )}
               </div>
+
 
               {/* Modal Actions */}
               <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.75rem', marginTop: '0.5rem' }}>

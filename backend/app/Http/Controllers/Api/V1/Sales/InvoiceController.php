@@ -16,7 +16,7 @@ class InvoiceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Invoice::with(['customer', 'creator', 'payments.paymentMethod']);
+        $query = Invoice::with(['customer', 'creator', 'payments.paymentMethod', 'replacementForReturn.invoice', 'returns']);
 
         if ($request->filled('search')) {
             $search = trim($request->query('search'));
@@ -57,14 +57,14 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice): InvoiceResource
     {
-        $invoice->load(['items.product.category', 'payments.paymentMethod', 'customer', 'creator']);
+        $invoice->load(['items.product.category', 'payments.paymentMethod', 'customer', 'creator', 'replacementForReturn.invoice', 'returns']);
 
         return new InvoiceResource($invoice);
     }
 
     public function print(Invoice $invoice): InvoicePrintResource
     {
-        $invoice->load(['items', 'payments.paymentMethod', 'customer', 'creator']);
+        $invoice->load(['items', 'payments.paymentMethod', 'customer', 'creator', 'replacementForReturn.invoice', 'returns']);
 
         return new InvoicePrintResource($invoice);
     }

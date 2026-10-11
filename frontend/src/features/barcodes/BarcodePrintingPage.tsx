@@ -116,9 +116,15 @@ export const BarcodePrintingPage: React.FC = () => {
 
   // Whenever queue changes, generate preview via previewBarcodes API endpoint
   useEffect(() => {
+    let isMounted = true;
     if (queue.length === 0) {
-      setPreparedLabels([]);
-      return;
+      const resetTimer = setTimeout(() => {
+        if (isMounted) setPreparedLabels([]);
+      }, 0);
+      return () => {
+        isMounted = false;
+        clearTimeout(resetTimer);
+      };
     }
 
     const itemsPayload = queue.map((q) => ({
@@ -126,7 +132,6 @@ export const BarcodePrintingPage: React.FC = () => {
       quantity: q.quantity,
     }));
 
-    let isMounted = true;
     const timer = setTimeout(() => {
       setIsPreparingLabels(true);
       setError(null);

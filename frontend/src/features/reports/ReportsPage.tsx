@@ -10,6 +10,7 @@ import type {
   InventoryReportData,
   PaymentsReportData,
   ReportInvoicesHistoryData,
+  ReportInvoiceHistoryItem,
   ReportReturnsHistoryData,
 } from '../../types/domain';
 import { Card } from '../../components/ui/Card';
@@ -17,6 +18,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
 import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
@@ -64,6 +66,11 @@ export const ReportsPage: React.FC = () => {
   const [historySubTab, setHistorySubTab] = useState<'invoices' | 'returns'>('invoices');
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<string>('');
   const [invoiceSaleTypeFilter, setInvoiceSaleTypeFilter] = useState<string>('');
+  const [invoiceDocumentTypeFilter, setInvoiceDocumentTypeFilter] = useState<string>('');
+  const [invoiceSearch, setInvoiceSearch] = useState<string>('');
+  const [invoiceSortBy, setInvoiceSortBy] = useState<string>('created_at');
+  const [invoiceSortDir, setInvoiceSortDir] = useState<'desc' | 'asc'>('desc');
+  const [selectedInvoiceDrilldown, setSelectedInvoiceDrilldown] = useState<ReportInvoiceHistoryItem | null>(null);
   const [invoiceHistoryPage, setInvoiceHistoryPage] = useState<number>(1);
   const [returnResolutionFilter, setReturnResolutionFilter] = useState<string>('');
   const [returnHistoryPage, setReturnHistoryPage] = useState<number>(1);
@@ -136,6 +143,11 @@ export const ReportsPage: React.FC = () => {
           const data = await reportsApi.invoicesHistory({
             status: invoiceStatusFilter || undefined,
             sale_type: invoiceSaleTypeFilter || undefined,
+            document_type: invoiceDocumentTypeFilter || undefined,
+            search: invoiceSearch.trim() || undefined,
+            sort_by: invoiceSortBy || undefined,
+            sort_direction: invoiceSortDir || undefined,
+            range_preset: periodPreset === 'custom' ? undefined : periodPreset,
             from_date: periodPreset === 'custom' ? customStartDate : undefined,
             to_date: periodPreset === 'custom' ? customEndDate : undefined,
             page: invoiceHistoryPage,
@@ -145,6 +157,7 @@ export const ReportsPage: React.FC = () => {
         } else {
           const data = await reportsApi.returnsHistory({
             resolution: returnResolutionFilter || undefined,
+            range_preset: periodPreset === 'custom' ? undefined : periodPreset,
             from_date: periodPreset === 'custom' ? customStartDate : undefined,
             to_date: periodPreset === 'custom' ? customEndDate : undefined,
             page: returnHistoryPage,
@@ -188,6 +201,10 @@ export const ReportsPage: React.FC = () => {
     historySubTab,
     invoiceStatusFilter,
     invoiceSaleTypeFilter,
+    invoiceDocumentTypeFilter,
+    invoiceSearch,
+    invoiceSortBy,
+    invoiceSortDir,
     invoiceHistoryPage,
     returnResolutionFilter,
     returnHistoryPage,
@@ -276,6 +293,11 @@ export const ReportsPage: React.FC = () => {
           setInvoicesHistory(await reportsApi.invoicesHistory({
             status: invoiceStatusFilter || undefined,
             sale_type: invoiceSaleTypeFilter || undefined,
+            document_type: invoiceDocumentTypeFilter || undefined,
+            search: invoiceSearch.trim() || undefined,
+            sort_by: invoiceSortBy || undefined,
+            sort_direction: invoiceSortDir || undefined,
+            range_preset: periodPreset === 'custom' ? undefined : periodPreset,
             from_date: periodPreset === 'custom' ? customStartDate : undefined,
             to_date: periodPreset === 'custom' ? customEndDate : undefined,
             page: invoiceHistoryPage,
@@ -284,6 +306,7 @@ export const ReportsPage: React.FC = () => {
         } else {
           setReturnsHistory(await reportsApi.returnsHistory({
             resolution: returnResolutionFilter || undefined,
+            range_preset: periodPreset === 'custom' ? undefined : periodPreset,
             from_date: periodPreset === 'custom' ? customStartDate : undefined,
             to_date: periodPreset === 'custom' ? customEndDate : undefined,
             page: returnHistoryPage,
@@ -1605,12 +1628,43 @@ export const ReportsPage: React.FC = () => {
 
               {historySubTab === 'invoices' && invoicesHistory && (
                 <Card
-                  title="سجل فواتير المبيعات"
+                  title="تقرير أرباح فواتير المبيعات (حسب التكلفة التاريخية)"
                   actions={
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        placeholder="بحث برقم الفاتورة أو العميل..."
+                        value={invoiceSearch}
+                        onChange={(e) => {
+                          setInvoiceSearch(e.target.value);
+                          setInvoiceHistoryPage(1);
+                        }}
+                        style={{
+                          padding: '0.375rem 0.6rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: 'var(--font-size-xs)',
+                          minWidth: '180px',
+                        }}
+                      />
+                      <select
+                        value={invoiceDocumentTypeFilter}
+                        onChange={(e) => {
+                          setInvoiceDocumentTypeFilter(e.target.value);
+                          setInvoiceHistoryPage(1);
+                        }}
+                        style={{ padding: '0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: 'var(--font-size-xs)' }}
+                      >
+                        <option value="">كل الوثائق</option>
+                        <option value="sale">بيع عادي</option>
+                        <option value="replacement">فاتورة بديلة (استبدال)</option>
+                      </select>
                       <select
                         value={invoiceSaleTypeFilter}
-                        onChange={(e) => setInvoiceSaleTypeFilter(e.target.value)}
+                        onChange={(e) => {
+                          setInvoiceSaleTypeFilter(e.target.value);
+                          setInvoiceHistoryPage(1);
+                        }}
                         style={{ padding: '0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: 'var(--font-size-xs)' }}
                       >
                         <option value="">كل الأنواع</option>
@@ -1619,57 +1673,182 @@ export const ReportsPage: React.FC = () => {
                       </select>
                       <select
                         value={invoiceStatusFilter}
-                        onChange={(e) => setInvoiceStatusFilter(e.target.value)}
+                        onChange={(e) => {
+                          setInvoiceStatusFilter(e.target.value);
+                          setInvoiceHistoryPage(1);
+                        }}
                         style={{ padding: '0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: 'var(--font-size-xs)' }}
                       >
                         <option value="">كل الحالات</option>
-                        <option value="posted">مرحلة</option>
+                        <option value="posted">معتمدة ومرحلة</option>
                         <option value="cancelled">ملغاة</option>
+                      </select>
+                      <select
+                        value={`${invoiceSortBy}:${invoiceSortDir}`}
+                        onChange={(e) => {
+                          const [sb, sd] = e.target.value.split(':');
+                          setInvoiceSortBy(sb);
+                          setInvoiceSortDir(sd as 'desc' | 'asc');
+                          setInvoiceHistoryPage(1);
+                        }}
+                        style={{ padding: '0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: 'var(--font-size-xs)' }}
+                      >
+                        <option value="created_at:desc">التاريخ (الأحدث أولاً)</option>
+                        <option value="created_at:asc">التاريخ (الأقدم أولاً)</option>
+                        <option value="net_profit:desc">الأرباح (الأعلى ربحاً)</option>
+                        <option value="net_profit:asc">الأرباح (الأقل ربحاً)</option>
+                        <option value="total:desc">المبيعات (الأعلى مبيعاً)</option>
                       </select>
                     </div>
                   }
                 >
+                  {/* Historical Cost Audit Notice Banner */}
+                  <div
+                    style={{
+                      padding: '0.6rem 0.85rem',
+                      backgroundColor: '#EFF6FF',
+                      border: '1px solid #BFDBFE',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.825rem',
+                      color: '#1E40AF',
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span>
+                      <strong>الربح بحسب تكلفة الشراء وقت البيع:</strong> يتم احتساب أرباح البنود بناءً على اللقطة التاريخية لتكلفة الشراء عند اعتماد الفاتورة. تغيير تكاليف الأصناف مستقبلاً لا يؤثر على أرباح الفواتير السابقة.
+                    </span>
+                  </div>
+
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12.5px' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-app)' }}>
-                          <th style={{ padding: '0.75rem' }}>رقم الفاتورة</th>
-                          <th style={{ padding: '0.75rem' }}>التاريخ</th>
-                          <th style={{ padding: '0.75rem' }}>العميل</th>
-                          <th style={{ padding: '0.75rem' }}>النوع</th>
-                          <th style={{ padding: '0.75rem' }}>الحالة</th>
-                          <th style={{ padding: '0.75rem' }}>الإجمالي</th>
-                          <th style={{ padding: '0.75rem' }}>المدفوع</th>
-                          <th style={{ padding: '0.75rem' }}>المتبقي</th>
-                          <th style={{ padding: '0.75rem' }}>عدد البنود</th>
+                        <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-app)' }}>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>رقم الفاتورة</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>التاريخ والوقت</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>العميل</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>نوع الوثيقة</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>إجمالي المبيعات</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>تكلفة البضاعة</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>إجمالي الربح</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>هامش الربح</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>قيمة المرتجع</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>أرباح مستردة</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>صافي الربح</th>
+                          <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>إجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {invoicesHistory.items.map((inv) => (
-                          <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '0.75rem', fontWeight: 'bold', fontFamily: 'var(--font-family-mono)' }}>{inv.invoice_number}</td>
-                            <td style={{ padding: '0.75rem' }}>{inv.created_at}</td>
-                            <td style={{ padding: '0.75rem' }}>{inv.customer_name}</td>
-                            <td style={{ padding: '0.75rem' }}><Badge variant="neutral" size="sm">{inv.sale_type_label}</Badge></td>
-                            <td style={{ padding: '0.75rem' }}>
-                              {inv.status === 'posted' ? <Badge variant="success" size="sm">مرحلة</Badge> : <Badge variant="danger" size="sm">ملغاة</Badge>}
+                        {invoicesHistory.items.length === 0 ? (
+                          <tr>
+                            <td colSpan={12} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                              لا توجد فواتير مطابقة للبحث والفترة المحددة
                             </td>
-                            <td style={{ padding: '0.75rem', fontWeight: 'bold' }}><MoneyDisplay amount={inv.total} /></td>
-                            <td style={{ padding: '0.75rem' }}><MoneyDisplay amount={inv.paid_amount} /></td>
-                            <td style={{ padding: '0.75rem', color: Number(inv.remaining_amount) > 0 ? 'var(--color-danger-700)' : 'inherit' }}>
-                              <MoneyDisplay amount={inv.remaining_amount} />
-                            </td>
-                            <td style={{ padding: '0.75rem' }}>{inv.items_count}</td>
                           </tr>
-                        ))}
+                        ) : (
+                          invoicesHistory.items.map((inv) => (
+                            <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: inv.is_replacement ? '#F8FAFC' : undefined }}>
+                              <td style={{ padding: '0.6rem 0.5rem', fontWeight: 'bold', fontFamily: 'var(--font-family-mono)', whiteSpace: 'nowrap' }}>
+                                <div>{inv.invoice_number}</div>
+                                {inv.status === 'cancelled' && <Badge variant="danger" size="sm">ملغاة</Badge>}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', whiteSpace: 'nowrap', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                                {inv.created_at}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <span title={inv.customer_name}>{inv.customer_name}</span>
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', whiteSpace: 'nowrap' }}>
+                                {inv.is_replacement ? (
+                                  <Badge variant="primary" size="sm">فاتورة بديلة</Badge>
+                                ) : (
+                                  <Badge variant="neutral" size="sm">{inv.sale_type_label}</Badge>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', fontWeight: 600 }}>
+                                <MoneyDisplay amount={inv.total_sales ?? inv.stored_total} />
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                <MoneyDisplay amount={inv.cost_of_goods ?? '0.00'} />
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', fontWeight: 600 }}>
+                                <MoneyDisplay amount={inv.gross_profit ?? '0.00'} colored />
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', fontFamily: 'monospace', fontSize: '12px' }}>
+                                {inv.profit_margin_percentage ? `${inv.profit_margin_percentage}%` : '—'}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', color: parseFloat(inv.returned_value ?? '0') > 0 ? '#B45309' : 'inherit' }}>
+                                {parseFloat(inv.returned_value ?? '0') > 0 ? (
+                                  <MoneyDisplay amount={inv.returned_value ?? '0.00'} />
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', color: parseFloat(inv.profit_reversal ?? '0') > 0 ? '#DC2626' : 'inherit' }}>
+                                {parseFloat(inv.profit_reversal ?? '0') > 0 ? (
+                                  `-${Number(inv.profit_reversal).toFixed(2)}`
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', fontWeight: 700, fontSize: '13px' }}>
+                                <MoneyDisplay amount={inv.net_profit ?? inv.gross_profit ?? '0.00'} colored />
+                              </td>
+                              <td style={{ padding: '0.6rem 0.5rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => setSelectedInvoiceDrilldown(inv)}
+                                >
+                                  تفاصيل الربح
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
+
+                      {/* Filtered Period Totals Row */}
+                      {invoicesHistory.totals && (
+                        <tfoot>
+                          <tr style={{ backgroundColor: '#0B1220', color: '#FFFFFF', fontWeight: 700, borderTop: '2px solid #000' }}>
+                            <td colSpan={4} style={{ padding: '0.75rem 0.5rem' }}>
+                              إجمالي الفترة المحددة ({invoicesHistory.pagination.total} فاتورة):
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }}>
+                              <span style={{ color: '#FFFFFF' }}>{Number(invoicesHistory.totals.total_sales).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }}>
+                              <span style={{ color: '#E2E8F0' }}>{Number(invoicesHistory.totals.cost_of_goods).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }}>
+                              <span style={{ color: '#34D399' }}>{Number(invoicesHistory.totals.gross_profit).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace' }}>
+                              {invoicesHistory.totals.average_margin_percentage}%
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }}>
+                              <span style={{ color: '#FBBF24' }}>{Number(invoicesHistory.totals.returned_value).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }}>
+                              <span style={{ color: '#F87171' }}>-{Number(invoicesHistory.totals.profit_reversal).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem', fontSize: '14px' }}>
+                              <span style={{ color: '#10B981', fontWeight: 800 }}>{Number(invoicesHistory.totals.net_profit).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.5rem' }} />
+                          </tr>
+                        </tfoot>
+                      )}
                     </table>
                   </div>
 
                   {/* Pagination */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
-                      صفحة {invoicesHistory.pagination.current_page} من {invoicesHistory.pagination.last_page} (إجمالي: {invoicesHistory.pagination.total})
+                      صفحة {invoicesHistory.pagination.current_page} من {invoicesHistory.pagination.last_page} (إجمالي: {invoicesHistory.pagination.total} فاتورة)
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <Button
@@ -1693,13 +1872,215 @@ export const ReportsPage: React.FC = () => {
                 </Card>
               )}
 
+              {/* Owner Invoice Profit Drill-Down Modal */}
+              {selectedInvoiceDrilldown && (
+                <Modal
+                  isOpen={true}
+                  onClose={() => setSelectedInvoiceDrilldown(null)}
+                  title={`تحليل أرباح الفاتورة: ${selectedInvoiceDrilldown.invoice_number}`}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Invoice Metadata Header */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                        gap: '0.75rem',
+                        backgroundColor: 'var(--bg-surface-subtle)',
+                        padding: '0.85rem',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <div>رقم الفاتورة: <strong>{selectedInvoiceDrilldown.invoice_number}</strong></div>
+                      <div>التاريخ: <strong>{selectedInvoiceDrilldown.created_at}</strong></div>
+                      <div>العميل: <strong>{selectedInvoiceDrilldown.customer_name}</strong></div>
+                      <div>نوع البيع: <strong>{selectedInvoiceDrilldown.sale_type_label}</strong></div>
+                      <div>الحالة: <strong>{selectedInvoiceDrilldown.status_label}</strong></div>
+                      <div>نوع الوثيقة: <strong>{selectedInvoiceDrilldown.document_type_label || (selectedInvoiceDrilldown.is_replacement ? 'فاتورة بديلة' : 'فاتورة بيع')}</strong></div>
+                    </div>
+
+                    {/* Replacement Case Banner */}
+                    {selectedInvoiceDrilldown.is_replacement && selectedInvoiceDrilldown.replacement_details && (
+                      <div
+                        style={{
+                          padding: '0.75rem 1rem',
+                          backgroundColor: '#EFF6FF',
+                          border: '1px solid #BFDBFE',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: '#1E40AF', marginBottom: '0.25rem' }}>
+                          فاتورة استبدال بديلة عن #{selectedInvoiceDrilldown.replacement_details.original_invoice_number} (رقم المرتجع: {selectedInvoiceDrilldown.replacement_details.return_number})
+                        </div>
+                        <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+                          <div>قيمة المرتجع: <strong>{parseFloat(selectedInvoiceDrilldown.replacement_details.returned_value).toFixed(2)} ج.م</strong></div>
+                          <div>قيمة البدائل: <strong>{parseFloat(selectedInvoiceDrilldown.replacement_details.replacement_value).toFixed(2)} ج.م</strong></div>
+                          <div>الفرق المدفوع: <strong style={{ color: '#059669' }}>{parseFloat(selectedInvoiceDrilldown.replacement_details.difference_paid_amount || selectedInvoiceDrilldown.replacement_details.difference_amount).toFixed(2)} ج.م</strong></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Exchange Profit Combined Net Card */}
+                    {selectedInvoiceDrilldown.exchange_drilldown && (
+                      <div
+                        style={{
+                          padding: '0.75rem 1rem',
+                          backgroundColor: '#F0FDF4',
+                          border: '1px solid #BBF7D0',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: '#166534', marginBottom: '0.35rem' }}>
+                          صافي أرباح عملية الاستبدال الموحدة (الفاتورة الأصلية + المرتجع + الفاتورة البديلة)
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem' }}>
+                          <div>ربح الفاتورة الأصلية ({selectedInvoiceDrilldown.exchange_drilldown.original_invoice_number}): <strong>+{selectedInvoiceDrilldown.exchange_drilldown.original_invoice_profit} ج.م</strong></div>
+                          <div>استرداد أرباح المرتجع: <strong style={{ color: '#DC2626' }}>-{selectedInvoiceDrilldown.exchange_drilldown.return_profit_reversal} ج.م</strong></div>
+                          <div>ربح الفاتورة البديلة: <strong>+{selectedInvoiceDrilldown.exchange_drilldown.replacement_invoice_profit} ج.م</strong></div>
+                          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #86EFAC', paddingTop: '0.35rem', fontWeight: 800, color: '#15803D' }}>
+                            صافي الربح الموحد لعملية الاستبدال: {selectedInvoiceDrilldown.exchange_drilldown.combined_net_profit} ج.م
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Per-Item Cost and Profit Lines */}
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', fontWeight: 'bold' }}>
+                        تفاصيل بنود الفاتورة والتكلفة التاريخية
+                      </h4>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12px' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: 'var(--bg-app)', borderBottom: '1px solid var(--border-color)' }}>
+                            <th style={{ padding: '0.4rem 0.5rem' }}>الصنف</th>
+                            <th style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>النوع</th>
+                            <th style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>الكمية</th>
+                            <th style={{ padding: '0.4rem 0.5rem' }}>سعر البيع</th>
+                            <th style={{ padding: '0.4rem 0.5rem' }}>التكلفة التاريخية</th>
+                            <th style={{ padding: '0.4rem 0.5rem' }}>الإجمالي</th>
+                            <th style={{ padding: '0.4rem 0.5rem' }}>ربح البند</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedInvoiceDrilldown.items_drilldown?.map((it: NonNullable<ReportInvoiceHistoryItem['items_drilldown']>[number]) => (
+                            <tr key={it.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                              <td style={{ padding: '0.45rem 0.5rem' }}>
+                                <div style={{ fontWeight: 600 }}>{it.product_name}</div>
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem', textAlign: 'center' }}>
+                                {it.is_external ? (
+                                  <Badge variant="warning" size="sm">خارجي</Badge>
+                                ) : (
+                                  <Badge variant="neutral" size="sm">مخزني</Badge>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem', textAlign: 'center', fontFamily: 'monospace' }}>
+                                {it.quantity}
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem' }}>
+                                <MoneyDisplay amount={it.unit_sale_price} />
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                <MoneyDisplay amount={it.unit_cost} />
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem', fontWeight: 600 }}>
+                                <MoneyDisplay amount={it.subtotal} />
+                              </td>
+                              <td style={{ padding: '0.45rem 0.5rem', fontWeight: 700 }}>
+                                <MoneyDisplay amount={it.profit} colored />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Returned Items Drilldown (if any) */}
+                    {selectedInvoiceDrilldown.returns_drilldown && selectedInvoiceDrilldown.returns_drilldown.length > 0 && (
+                      <div>
+                        <h4 style={{ margin: '0.5rem 0 0.4rem', fontSize: '0.95rem', fontWeight: 'bold', color: '#B45309' }}>
+                          الأصناف المرتجعة واسترداد الأرباح
+                        </h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#FEF3C7', borderBottom: '1px solid #FCD34D' }}>
+                              <th style={{ padding: '0.4rem 0.5rem' }}>رقم المرتجع</th>
+                              <th style={{ padding: '0.4rem 0.5rem' }}>الصنف</th>
+                              <th style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>الكمية</th>
+                              <th style={{ padding: '0.4rem 0.5rem' }}>القيمة المرتجعة</th>
+                              <th style={{ padding: '0.4rem 0.5rem' }}>أرباح مستردة</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedInvoiceDrilldown.returns_drilldown.flatMap((ret) =>
+                              ret.items.map((rit, idx) => (
+                                <tr key={`${ret.id}-${rit.id}-${idx}`} style={{ borderBottom: '1px solid #FDE68A' }}>
+                                  <td style={{ padding: '0.4rem 0.5rem', fontFamily: 'monospace', fontWeight: 600 }}>{ret.return_number}</td>
+                                  <td style={{ padding: '0.4rem 0.5rem' }}>{rit.product_name}</td>
+                                  <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center', fontFamily: 'monospace' }}>{rit.quantity}</td>
+                                  <td style={{ padding: '0.4rem 0.5rem' }}><MoneyDisplay amount={rit.subtotal} /></td>
+                                  <td style={{ padding: '0.4rem 0.5rem', color: '#DC2626', fontWeight: 700 }}>
+                                    -{parseFloat(rit.profit_reversal).toFixed(2)} ج.م
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Net Profit Summary Box */}
+                    <div
+                      style={{
+                        padding: '0.85rem',
+                        backgroundColor: '#0B1220',
+                        color: '#FFFFFF',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '0.5rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem' }}>
+                        <div>إجمالي المبيعات: <strong>{Number(selectedInvoiceDrilldown.total_sales ?? selectedInvoiceDrilldown.stored_total).toFixed(2)} ج.م</strong></div>
+                        <div>تكلفة البضاعة: <strong>{Number(selectedInvoiceDrilldown.cost_of_goods ?? '0').toFixed(2)} ج.م</strong></div>
+                        <div>إجمالي الربح: <strong>{Number(selectedInvoiceDrilldown.gross_profit ?? '0').toFixed(2)} ج.م</strong></div>
+                        {parseFloat(selectedInvoiceDrilldown.profit_reversal ?? '0') > 0 && (
+                          <div style={{ color: '#F87171' }}>أرباح مستردة: <strong>-{Number(selectedInvoiceDrilldown.profit_reversal).toFixed(2)} ج.م</strong></div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>صافي الربح النهائي للفاتورة:</div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#34D399' }}>
+                          {Number(selectedInvoiceDrilldown.net_profit ?? selectedInvoiceDrilldown.gross_profit ?? '0').toFixed(2)} ج.م
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                      <Button variant="secondary" onClick={() => setSelectedInvoiceDrilldown(null)}>
+                        إغلاق
+                      </Button>
+                    </div>
+                  </div>
+                </Modal>
+              )}
+
               {historySubTab === 'returns' && returnsHistory && (
                 <Card
-                  title="سجل عمليات المرتجع والاستبدال"
+                  title="سجل عمليات المرتجع والاستبدال (مع تفاصيل الأثر المالي وأرباح المرتجع)"
                   actions={
                     <select
                       value={returnResolutionFilter}
-                      onChange={(e) => setReturnResolutionFilter(e.target.value)}
+                      onChange={(e) => {
+                        setReturnResolutionFilter(e.target.value);
+                        setReturnHistoryPage(1);
+                      }}
                       style={{ padding: '0.375rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: 'var(--font-size-xs)' }}
                     >
                       <option value="">كل القرارات</option>
@@ -1711,34 +2092,58 @@ export const ReportsPage: React.FC = () => {
                   }
                 >
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12.5px' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-app)' }}>
-                          <th style={{ padding: '0.75rem' }}>رقم المرتجع</th>
-                          <th style={{ padding: '0.75rem' }}>التاريخ</th>
-                          <th style={{ padding: '0.75rem' }}>رقم الفاتورة الأصلية</th>
-                          <th style={{ padding: '0.75rem' }}>العميل</th>
-                          <th style={{ padding: '0.75rem' }}>قرار التسوية</th>
-                          <th style={{ padding: '0.75rem' }}>قيمة المرتجع</th>
-                          <th style={{ padding: '0.75rem' }}>فارق محصل</th>
-                          <th style={{ padding: '0.75rem' }}>عدد البنود</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>رقم المرتجع</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>التاريخ</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>رقم الفاتورة الأصلية</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>العميل</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>قرار التسوية</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>قيمة المرتجع</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>قيمة البدائل</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>الفارق المسدد</th>
+                          <th style={{ padding: '0.65rem 0.5rem' }}>استرداد أرباح المرتجع</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {returnsHistory.items.map((ret) => (
-                          <tr key={ret.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '0.75rem', fontWeight: 'bold', fontFamily: 'var(--font-family-mono)' }}>{ret.return_number}</td>
-                            <td style={{ padding: '0.75rem' }}>{ret.created_at}</td>
-                            <td style={{ padding: '0.75rem', fontFamily: 'var(--font-family-mono)' }}>{ret.invoice_number || '-'}</td>
-                            <td style={{ padding: '0.75rem' }}>{ret.customer_name}</td>
-                            <td style={{ padding: '0.75rem' }}><Badge variant="neutral" size="sm">{ret.resolution_label}</Badge></td>
-                            <td style={{ padding: '0.75rem', fontWeight: 'bold', color: 'var(--color-danger-700)' }}>
-                              <MoneyDisplay amount={ret.total_return_amount} />
+                        {returnsHistory.items.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                              لا توجد عمليات مرتجع مسجلة خلال الفترة المختارة
                             </td>
-                            <td style={{ padding: '0.75rem' }}><MoneyDisplay amount={ret.difference_amount} /></td>
-                            <td style={{ padding: '0.75rem' }}>{ret.items_count}</td>
                           </tr>
-                        ))}
+                        ) : (
+                          returnsHistory.items.map((ret) => (
+                            <tr key={ret.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                              <td style={{ padding: '0.65rem 0.5rem', fontWeight: 'bold', fontFamily: 'var(--font-family-mono)' }}>{ret.return_number}</td>
+                              <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap', fontSize: '11.5px', color: 'var(--text-secondary)' }}>{ret.created_at}</td>
+                              <td style={{ padding: '0.65rem 0.5rem', fontFamily: 'var(--font-family-mono)' }}>{ret.invoice_number || '-'}</td>
+                              <td style={{ padding: '0.65rem 0.5rem' }}>{ret.customer_name}</td>
+                              <td style={{ padding: '0.65rem 0.5rem' }}><Badge variant="neutral" size="sm">{ret.resolution_label}</Badge></td>
+                              <td style={{ padding: '0.65rem 0.5rem', fontWeight: 'bold', color: '#B45309' }}>
+                                <MoneyDisplay amount={ret.total_return_amount} />
+                              </td>
+                              <td style={{ padding: '0.65rem 0.5rem' }}>
+                                {ret.replacement_value ? <MoneyDisplay amount={ret.replacement_value} /> : '—'}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.5rem', fontWeight: 600 }}>
+                                {parseFloat(ret.difference_paid_amount || ret.difference_amount || '0') > 0 ? (
+                                  <MoneyDisplay amount={ret.difference_paid_amount || ret.difference_amount} />
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.5rem', color: '#DC2626', fontWeight: 700 }}>
+                                {ret.profit_reversal && parseFloat(ret.profit_reversal) > 0 ? (
+                                  `-${Number(ret.profit_reversal).toFixed(2)} ج.م`
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>

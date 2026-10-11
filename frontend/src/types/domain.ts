@@ -195,6 +195,22 @@ export interface Invoice {
   total_profit?: string;
   created_at?: string;
   creator: { id: number; name: string } | null;
+  document_type?: 'sale' | 'replacement';
+  document_type_label?: string;
+  is_replacement?: boolean;
+  replacement_details?: {
+    return_id: number;
+    return_number: string;
+    original_invoice_id: number;
+    original_invoice_number?: string;
+    returned_value: string;
+    replacement_value: string;
+    difference_amount: string;
+    difference_paid_amount: string;
+  } | null;
+  has_returns?: boolean;
+  returned_value?: string;
+  net_after_returns?: string;
 }
 
 export interface PrintableInvoiceItem {
@@ -240,6 +256,23 @@ export interface PrintableInvoice {
   is_wholesale: boolean;
   status: 'posted' | 'cancelled';
   status_label: string;
+  is_replacement?: boolean;
+  replacement_details?: {
+    return_id: number;
+    return_number: string;
+    original_invoice_id: number;
+    original_invoice_number?: string;
+    returned_value: string;
+    returned_value_formatted?: string;
+    replacement_value: string;
+    replacement_value_formatted?: string;
+    difference_amount: string;
+    difference_paid_amount: string;
+    difference_paid_formatted?: string;
+  } | null;
+  has_returns?: boolean;
+  returned_value?: string;
+  net_after_returns?: string;
   customer: PrintableInvoiceCustomer | null;
   items: PrintableInvoiceItem[];
   items_count: number;
@@ -383,6 +416,16 @@ export interface SalesReturn {
   resolution_label: string;
   total_return_amount: string;
   replacement_invoice_id: number | null;
+  replacement_invoice_number?: string | null;
+  replacement_value?: string | null;
+  difference_paid_amount?: string | null;
+  replacement_items?: Array<{
+    id: number;
+    product_name: string;
+    quantity: number;
+    unit_sale_price: string;
+    subtotal: string;
+  }>;
   difference_amount: string;
   notes: string | null;
   items: SalesReturnItem[];
@@ -699,14 +742,85 @@ export interface ReportInvoiceHistoryItem {
   sale_type_label: string;
   status: 'posted' | 'cancelled';
   status_label: string;
-  total: string;
+  document_type: 'sale' | 'replacement';
+  document_type_label: string;
+  is_replacement: boolean;
+  replacement_details?: {
+    return_id: number;
+    return_number: string;
+    original_invoice_id: number;
+    original_invoice_number?: string;
+    returned_value: string;
+    replacement_value: string;
+    difference_amount: string;
+    difference_paid_amount: string;
+  } | null;
+  has_returns: boolean;
+  total_sales: string;
+  stored_total: string;
+  cost_of_goods: string;
+  gross_profit: string;
+  profit_margin_percentage: number;
+  returned_value: string;
+  profit_reversal: string;
+  net_profit: string;
   paid_amount: string;
   remaining_amount: string;
   items_count: number;
+  items_drilldown?: Array<{
+    id: number;
+    product_name: string;
+    barcode: string | null;
+    quantity: number;
+    unit_sale_price: string;
+    unit_cost: string;
+    subtotal: string;
+    total_cost: string;
+    profit: string;
+    is_external: boolean;
+  }>;
+  returns_drilldown?: Array<{
+    id: number;
+    return_number: string;
+    created_at: string;
+    resolution: string;
+    resolution_label: string;
+    total_return_amount: string;
+    difference_amount: string;
+    items: Array<{
+      id: number;
+      product_name: string;
+      quantity: number;
+      unit_sale_price: string;
+      subtotal: string;
+      profit_reversal: string;
+      is_external: boolean;
+    }>;
+  }>;
+  exchange_drilldown?: {
+    original_invoice_number: string;
+    original_invoice_profit: string;
+    return_profit_reversal: string;
+    original_net_profit: string;
+    replacement_invoice_profit: string;
+    combined_net_profit: string;
+  } | null;
+}
+
+export interface ReportInvoicesTotals {
+  total_sales: string;
+  cost_of_goods: string;
+  gross_profit: string;
+  returned_value: string;
+  profit_reversal: string;
+  net_profit: string;
+  average_margin_percentage: number;
 }
 
 export interface ReportInvoicesHistoryData {
   items: ReportInvoiceHistoryItem[];
+  totals?: ReportInvoicesTotals;
+  note?: string;
   pagination: {
     current_page: number;
     last_page: number;
@@ -719,12 +833,18 @@ export interface ReportReturnHistoryItem {
   id: number;
   return_number: string;
   created_at: string;
+  invoice_id?: number;
   invoice_number: string;
+  replacement_invoice_id?: number | null;
+  replacement_invoice_number?: string | null;
+  replacement_value?: string | null;
   customer_name: string;
   resolution: string;
   resolution_label: string;
   total_return_amount: string;
   difference_amount: string;
+  difference_paid_amount?: string;
+  profit_reversal?: string;
   items_count: number;
 }
 

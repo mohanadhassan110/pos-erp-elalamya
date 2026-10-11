@@ -33,6 +33,18 @@ class SalesReturnResource extends JsonResource
             'resolution_label' => $this->resolution->label(),
             'total_return_amount' => $this->total_return_amount->toDecimal(),
             'replacement_invoice_id' => $this->replacement_invoice_id,
+            'replacement_invoice_number' => $this->replacementInvoice?->invoice_number,
+            'replacement_value' => $this->replacementInvoice?->total?->toDecimal(),
+            'difference_paid_amount' => $this->replacementInvoice?->paid_amount?->toDecimal(),
+            'replacement_items' => $this->replacementInvoice && $this->replacementInvoice->relationLoaded('items')
+                ? $this->replacementInvoice->items->map(fn ($it) => [
+                    'id' => $it->id,
+                    'product_name' => $it->product_name,
+                    'quantity' => $it->quantity,
+                    'unit_sale_price' => $it->unit_sale_price->toDecimal(),
+                    'subtotal' => $it->subtotal->toDecimal(),
+                ])->values()->all()
+                : [],
             'replacement_invoice' => new InvoiceResource($this->whenLoaded('replacementInvoice')),
             'difference_amount' => $this->difference_amount->toDecimal(),
             'notes' => $this->notes,
