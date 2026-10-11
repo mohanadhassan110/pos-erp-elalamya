@@ -24,62 +24,65 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       <div
         style={{
           position: 'fixed',
-          bottom: '1.25rem',
-          left: '1.25rem',
+          bottom: '1.5rem',
+          right: '1.5rem',
           zIndex: 'var(--z-toast, 1080)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem',
+          gap: '0.625rem',
           maxWidth: '24rem',
-          width: '100%',
+          width: 'calc(100% - 3rem)',
           pointerEvents: 'none',
         }}
         role="region"
         aria-label="الإشعارات"
       >
         {toasts.map((toast) => {
-          const bg =
+          const accentColor =
             toast.type === 'success'
-              ? 'var(--color-success-700)'
+              ? '#16A34A'
               : toast.type === 'error'
-              ? 'var(--color-danger-700)'
+              ? '#DC2626'
               : toast.type === 'warning'
-              ? 'var(--color-warning-700)'
-              : 'var(--color-slate-800)';
+              ? '#D97706'
+              : '#0B1220';
 
           return (
             <div
               key={toast.id}
               style={{
-                backgroundColor: bg,
-                color: '#ffffff',
-                padding: '0.625rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-lg)',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)',
+                backgroundColor: '#FFFFFF',
+                color: '#0F172A',
+                border: '1px solid #CBD5E1',
+                borderRight: `5px solid ${accentColor}`,
+                padding: '0.875rem 1.125rem',
+                borderRadius: 'var(--radius-md, 6px)',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                fontSize: '14px',
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '0.75rem',
                 pointerEvents: 'auto',
+                direction: 'rtl',
               }}
               role="status"
             >
-              <span>{toast.message}</span>
+              <span style={{ lineHeight: 1.4 }}>{toast.message}</span>
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'inherit',
+                  color: '#64748B',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: '0.25rem',
-                  opacity: 0.8,
+                  flexShrink: 0,
                 }}
                 aria-label="إغلاق الإشعار"
               >

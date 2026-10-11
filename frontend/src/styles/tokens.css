@@ -45,8 +45,20 @@
   --color-navy-900: #101B2E;
   --color-navy-800: #1B2D4B;
   --color-navy-700: #28426C;
+  --color-navy-600: #3B5B8E;
+  --color-navy-500: #4B6EAA;
   --color-navy-100: #E6EBF4;
   --color-navy-50: #F1F4F9;
+
+  /* Primary Brand Aliases (Map to Deep Navy) */
+  --color-primary-950: var(--color-navy-950);
+  --color-primary-900: var(--color-navy-900);
+  --color-primary-800: var(--color-navy-800);
+  --color-primary-700: var(--color-navy-700);
+  --color-primary-600: var(--color-navy-950); /* Primary buttons must use solid navy #0B1220 */
+  --color-primary-500: var(--color-navy-700);
+  --color-primary-100: var(--color-navy-100);
+  --color-primary-50: var(--color-navy-50);
 
   /* Surfaces & Neutrals (Slate) */
   --bg-app: #F8FAFC;
@@ -54,11 +66,23 @@
   --bg-surface-subtle: #F1F5F9;
   --bg-surface-hover: #F8FAFC;
 
+  --color-slate-900: #0F172A;
+  --color-slate-800: #1E293B;
+  --color-slate-700: #334155;
+  --color-slate-600: #475569;
+  --color-slate-500: #64748B;
+  --color-slate-400: #94A3B8;
+  --color-slate-300: #CBD5E1;
+  --color-slate-200: #E2E8F0;
+  --color-slate-100: #F1F5F9;
+  --color-slate-50: #F8FAFC;
+
   --text-primary: #0F172A;
   --text-secondary: #334155;
   --text-muted: #64748B;
   --text-inverse: #FFFFFF;
 
+  --border-default: #CBD5E1;
   --border-subtle: #E2E8F0;
   --border-medium: #CBD5E1;
   --border-strong: #94A3B8;
@@ -69,18 +93,31 @@
   --color-success-bg: #DCFCE7;
   --color-success-border: #BBF7D0;
   --color-success-text: #166534;
+  --color-success-700: #15803D;
+  --color-success-600: #16A34A;
+  --color-success-500: #22C55E;
 
   /* Partial / Low Stock / Attention (Amber) */
   --color-warning: #B45309;
   --color-warning-bg: #FEF3C7;
   --color-warning-border: #FDE68A;
   --color-warning-text: #92400E;
+  --color-warning-700: #B45309;
+  --color-warning-600: #D97706;
+  --color-warning-500: #F59E0B;
 
   /* Debt / Due / Cancelled / Destructive (Red) */
   --color-danger: #B91C1C;
   --color-danger-bg: #FEE2E2;
   --color-danger-border: #FECACA;
   --color-danger-text: #991B1B;
+  --color-danger-700: #B91C1C;
+  --color-danger-600: #DC2626;
+  --color-danger-500: #EF4444;
+
+  /* Z-Indices */
+  --z-modal: 1050;
+  --z-toast: 1080;
 
   /* Radius (Crisp Operational Minimal) */
   --radius-xs: 2px;

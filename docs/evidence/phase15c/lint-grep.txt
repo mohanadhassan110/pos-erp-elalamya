@@ -1,0 +1,5 @@
+EMOJI AUDIT:
+0 emojis found in frontend/src
+
+CANNOT READ AUDIT:
+0 occurrences of "Cannot read" found in frontend/src

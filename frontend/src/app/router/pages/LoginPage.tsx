@@ -6,7 +6,7 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
 import { ApiError } from '../../../types/api';
-import logoWhite from '../../../assets/brand/logo-white.png';
+import { getFriendlyErrorMessage } from '../../../utils/errorMapper';
 import { LogIn } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -47,12 +47,12 @@ export const LoginPage: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err));
         if (err.errors) {
           setFieldErrors(err.errors);
         }
       } else {
-        setError('حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة ثانية');
+        setError(getFriendlyErrorMessage(err));
       }
     } finally {
       setIsSubmitting(false);
@@ -72,22 +72,12 @@ export const LoginPage: React.FC = () => {
       dir="rtl"
     >
       <div style={{ width: '100%', maxWidth: '26rem' }}>
-        {/* Brand Header */}
+        {/* Brand Header — Text Only */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img
-            src={logoWhite}
-            alt="معرض العالمية للمفروشات"
-            style={{
-              maxWidth: '240px',
-              height: 'auto',
-              margin: '0 auto 1rem',
-              display: 'block',
-            }}
-          />
-          <h1 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, margin: 0 }}>
+          <h1 style={{ color: '#ffffff', fontSize: '24px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
             معرض العالمية للمفروشات
           </h1>
-          <p style={{ color: '#94A3B8', fontSize: '13px', marginTop: '0.25rem' }}>
+          <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '0.5rem', fontWeight: 500 }}>
             نظام إدارة المبيعات ونقاط البيع والمخزون
           </p>
         </div>

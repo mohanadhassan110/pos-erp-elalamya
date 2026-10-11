@@ -34,59 +34,73 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       fontWeight: 'var(--font-weight-semibold)',
       borderRadius: 'var(--radius-md)',
       cursor: disabled || isLoading ? 'not-allowed' : 'pointer',
-      opacity: disabled || isLoading ? 0.65 : 1,
-      transition: 'background-color var(--transition-fast), border-color var(--transition-fast)',
+      transition: 'all var(--transition-fast)',
       border: '1px solid transparent',
       whiteSpace: 'nowrap',
       lineHeight: 1,
+      userSelect: 'none',
       ...style,
     };
 
     const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
       sm: {
-        padding: '0.375rem 0.625rem',
-        fontSize: 'var(--font-size-xs)',
-        height: '1.875rem',
+        padding: '0.375rem 0.75rem',
+        fontSize: 'var(--font-size-xs, 12px)',
+        minHeight: '36px',
+        height: '36px',
       },
       md: {
-        padding: '0.5rem 0.875rem',
-        fontSize: 'var(--font-size-base)',
-        height: '2.25rem',
+        padding: '0.5rem 1rem',
+        fontSize: 'var(--font-size-base, 14px)',
+        minHeight: '44px',
+        height: '44px',
       },
       lg: {
-        padding: '0.625rem 1.125rem',
-        fontSize: 'var(--font-size-lg)',
-        height: '2.625rem',
+        padding: '0.75rem 1.5rem',
+        fontSize: 'var(--font-size-lg, 16px)',
+        minHeight: '56px',
+        height: '56px',
+        fontWeight: 'var(--font-weight-bold, 700)',
       },
     };
 
     const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
       primary: {
-        backgroundColor: 'var(--color-primary-600)',
-        color: '#ffffff',
-        borderColor: 'var(--color-primary-700)',
+        backgroundColor: '#0B1220',
+        color: '#FFFFFF',
+        borderColor: '#0B1220',
       },
       secondary: {
-        backgroundColor: 'var(--color-slate-100)',
-        color: 'var(--color-slate-800)',
-        borderColor: 'var(--color-slate-300)',
+        backgroundColor: '#FFFFFF',
+        color: '#0B1220',
+        borderColor: '#CBD5E1',
       },
       danger: {
-        backgroundColor: 'var(--color-danger-600)',
-        color: '#ffffff',
-        borderColor: 'var(--color-danger-700)',
+        backgroundColor: '#DC2626',
+        color: '#FFFFFF',
+        borderColor: '#B91C1C',
       },
       outline: {
         backgroundColor: 'transparent',
-        color: 'var(--color-primary-600)',
-        borderColor: 'var(--color-primary-500)',
+        color: '#0B1220',
+        borderColor: '#0B1220',
       },
       ghost: {
         backgroundColor: 'transparent',
-        color: 'var(--color-slate-700)',
+        color: '#334155',
         borderColor: 'transparent',
       },
     };
+
+    const disabledStyle: React.CSSProperties = (disabled || isLoading)
+      ? {
+          backgroundColor: '#E2E8F0',
+          color: '#64748B',
+          borderColor: '#CBD5E1',
+          cursor: 'not-allowed',
+          opacity: 1,
+        }
+      : {};
 
     return (
       <button
@@ -96,6 +110,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ...baseStyle,
           ...sizeStyles[size],
           ...variantStyles[variant],
+          ...disabledStyle,
         }}
         className={className}
         {...props}

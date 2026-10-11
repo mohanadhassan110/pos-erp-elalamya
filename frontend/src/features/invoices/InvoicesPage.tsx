@@ -202,7 +202,7 @@ export const InvoicesPage: React.FC = () => {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '14px' }}>
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr
                   style={{
                     backgroundColor: 'var(--bg-surface-subtle, #F1F5F9)',
@@ -212,15 +212,15 @@ export const InvoicesPage: React.FC = () => {
                     height: '46px',
                   }}
                 >
-                  <th style={{ padding: '0.625rem 0.875rem', width: '140px' }}>رقم الفاتورة</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '150px' }}>التاريخ والوقت</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '90px' }}>النوع</th>
-                  <th style={{ padding: '0.625rem 0.875rem' }}>العميل</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', textAlign: 'left' }}>الإجمالي</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', textAlign: 'left' }}>المدفوع</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', textAlign: 'left' }}>المتبقي</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '90px', textAlign: 'center' }}>الحالة</th>
-                  <th style={{ padding: '0.625rem 0.875rem', width: '180px', textAlign: 'center' }}>إجراءات</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '185px', minWidth: '185px', whiteSpace: 'nowrap' }}>رقم الفاتورة</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '160px', minWidth: '160px', whiteSpace: 'nowrap' }}>التاريخ والوقت</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '90px', minWidth: '90px', whiteSpace: 'nowrap' }}>النوع</th>
+                  <th style={{ padding: '0.625rem 0.875rem', minWidth: '180px', maxWidth: '240px' }}>العميل</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>الإجمالي</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>المدفوع</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '120px', minWidth: '120px', textAlign: 'left', whiteSpace: 'nowrap' }}>المتبقي</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '90px', minWidth: '90px', textAlign: 'center', whiteSpace: 'nowrap' }}>الحالة</th>
+                  <th style={{ padding: '0.625rem 0.875rem', width: '180px', minWidth: '180px', textAlign: 'center', whiteSpace: 'nowrap' }}>إجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,24 +237,35 @@ export const InvoicesPage: React.FC = () => {
                       }}
                     >
                       {/* Invoice Number */}
-                      <td style={{ padding: '0.625rem 0.875rem', fontWeight: 700, direction: 'ltr', textAlign: 'right' }}>
+                      <td style={{ padding: '0.625rem 0.875rem', fontWeight: 700, direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '185px', fontFamily: 'monospace' }}>
                         <span style={{ color: 'var(--color-navy-950)' }}>{inv.invoice_number}</span>
                       </td>
 
                       {/* Date */}
-                      <td style={{ padding: '0.625rem 0.875rem', color: 'var(--text-secondary)', fontSize: '13px', direction: 'ltr', textAlign: 'right' }}>
+                      <td style={{ padding: '0.625rem 0.875rem', color: 'var(--text-secondary)', fontSize: '13px', direction: 'ltr', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {formatDateTime(inv.created_at)}
                       </td>
 
                       {/* Sale Type */}
-                      <td style={{ padding: '0.625rem 0.875rem' }}>
+                      <td style={{ padding: '0.625rem 0.875rem', whiteSpace: 'nowrap' }}>
                         <Badge variant={inv.sale_type === 'wholesale' ? 'primary' : 'warning'} size="sm">
                           {inv.sale_type_label || (inv.sale_type === 'wholesale' ? 'جملة' : 'قطاعي')}
                         </Badge>
                       </td>
 
                       {/* Customer */}
-                      <td style={{ padding: '0.625rem 0.875rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                      <td
+                        style={{
+                          padding: '0.625rem 0.875rem',
+                          color: 'var(--text-primary)',
+                          fontWeight: 500,
+                          maxWidth: '220px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={inv.customer?.name || 'زبون نقدي'}
+                      >
                         {inv.customer?.name || 'زبون نقدي'}
                       </td>
 

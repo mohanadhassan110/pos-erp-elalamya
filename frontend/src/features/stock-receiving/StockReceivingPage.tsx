@@ -400,7 +400,7 @@ export const StockReceivingPage: React.FC = () => {
               1. بيانات الإذن والمورد
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
               <Select
                 label="المورد / المصنع (اختياري)"
                 value={supplierId}
@@ -447,17 +447,17 @@ export const StockReceivingPage: React.FC = () => {
               2. إضافة المنتجات المستلمة
             </h2>
 
-            <form onSubmit={handleAddLine} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'flex-end' }}>
+            <form onSubmit={handleAddLine} style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 2.5fr) minmax(110px, 1fr) minmax(130px, 1fr) auto', gap: '0.875rem', alignItems: 'flex-end' }}>
               <div>
                 <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)', marginBottom: '0.375rem', color: 'var(--text-secondary)' }}>
                   اختر المنتج (ابحث بالاسم أو الباركود)
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Input
-                    placeholder="بحث في المنتجات..."
+                    placeholder="بحث بالاسم/الباركود..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
-                    style={{ maxWidth: '12rem' }}
+                    style={{ maxWidth: '11rem' }}
                   />
                   <div style={{ flex: 1 }}>
                     <Select
@@ -467,7 +467,7 @@ export const StockReceivingPage: React.FC = () => {
                         { value: '', label: '-- اضغط لاختيار المنتج --' },
                         ...productsList.map((p) => ({
                           value: String(p.id),
-                          label: `${p.name} [${p.barcode}] - (رصيده حالياً: ${p.stock_quantity})`,
+                          label: `${p.name} [${p.barcode}] - (متاح: ${p.stock_quantity})`,
                         })),
                       ]}
                     />
@@ -496,7 +496,7 @@ export const StockReceivingPage: React.FC = () => {
                 required
               />
 
-              <Button type="submit" variant="secondary" style={{ height: '2.5rem' }}>
+              <Button type="submit" variant="primary" style={{ height: '44px', minHeight: '44px', padding: '0 1.25rem', whiteSpace: 'nowrap' }}>
                 + إضافة للإذن
               </Button>
             </form>

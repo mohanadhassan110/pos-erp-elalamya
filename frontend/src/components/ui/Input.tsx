@@ -68,20 +68,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             required={required}
             style={{
               width: '100%',
-              height: '2.25rem',
-              padding: '0.375rem 0.75rem',
-              paddingRight: rightIcon ? '2.25rem' : '0.75rem',
-              paddingLeft: leftIcon ? '2.25rem' : '0.75rem',
-              backgroundColor: disabled ? 'var(--bg-surface-subtle)' : 'var(--bg-surface)',
-              border: `1px solid ${error ? 'var(--color-danger-500)' : 'var(--border-default)'}`,
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-primary)',
-              fontSize: 'var(--font-size-base)',
+              minHeight: '44px',
+              height: '44px',
+              padding: '0.5rem 0.875rem',
+              paddingRight: rightIcon ? '2.5rem' : '0.875rem',
+              paddingLeft: leftIcon ? '2.5rem' : '0.875rem',
+              backgroundColor: disabled ? '#F1F5F9' : '#FFFFFF',
+              border: `1px solid ${error ? '#DC2626' : '#CBD5E1'}`,
+              borderRadius: 'var(--radius-md, 6px)',
+              color: 'var(--text-primary, #0F172A)',
+              fontSize: '15px',
               direction: 'inherit',
               outline: 'none',
-              transition: 'border-color var(--transition-fast)',
+              transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
             }}
-            className={className}
+            className={`al-input ${className}`}
             {...props}
           />
 

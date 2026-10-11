@@ -1,0 +1,252 @@
+
+   PASS  Tests\Unit\Domain\BarcodeGeneratorTest
+  ✓ generates first sequential barcode for category                                                              0.59s  
+  ✓ increments sequential barcode correctly                                                                      0.03s  
+  ✓ different categories maintain independent sequences                                                          0.03s  
+  ✓ soft deleted product preserves barcode sequence without collision                                            0.03s  
+  ✓ rejects invalid category letter                                                                              0.03s  
+  ✓ throws exception when category reaches maximum capacity                                                      0.03s  
+
+   PASS  Tests\Unit\Domain\CustomerLedgerTest
+  ✓ customer balance is correctly derived from debit and credit ledger movements                                 0.07s  
+  ✓ customer ledger entries preserve audit traceability                                                          0.04s  
+
+   PASS  Tests\Unit\Domain\HistoricalCostTest
+  ✓ invoice item preserves historical cost and profit when product cost changes                                  0.05s  
+
+   PASS  Tests\Unit\Domain\MoneyTest
+  ✓ can create from decimal string and minor units
+  ✓ addition and subtraction maintain fixed precision
+  ✓ multiplication and division
+  ✓ arabic formatting
+  ✓ invalid decimal throws exception
+
+   PASS  Tests\Unit\Domain\QuantityTest
+  ✓ can create from integer
+  ✓ can create from integer string
+  ✓ rejects decimal quantities
+  ✓ addition and subtraction
+
+   PASS  Tests\Unit\Domain\SupplierLedgerTest
+  ✓ supplier payable is correctly derived from ledger movements                                                  0.04s  
+  ✓ supplier ledger entries preserve audit traceability                                                          0.05s  
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\Api\V1\AuthTest
+  ✓ user can login with valid username and password                                                              0.11s  
+  ✓ user can login with valid email                                                                              0.04s  
+  ✓ login fails with invalid credentials                                                                         0.04s  
+  ✓ login fails when user is inactive                                                                            0.04s  
+  ✓ authenticated user can retrieve profile                                                                      0.05s  
+  ✓ unauthenticated user cannot access protected endpoint                                                        0.05s  
+  ✓ user can logout                                                                                              0.06s  
+
+   PASS  Tests\Feature\Api\V1\AuthorizationTest
+  ✓ owner can access owner only endpoint                                                                         0.05s  
+  ✓ cashier is forbidden from owner only endpoint                                                                0.04s  
+  ✓ both owner and cashier can access operational endpoint                                                       0.04s  
+
+   PASS  Tests\Feature\Api\V1\BarcodePrintTest
+  ✓ cashier and owner can access barcode preview                                                                 0.06s  
+  ✓ unauthenticated request is rejected                                                                          0.06s  
+  ✓ barcode values are preserved and never regenerated                                                           0.06s  
+  ✓ confidentiality purchase cost is strictly omitted from labels                                                0.05s  
+  ✓ validation rejects empty items or invalid quantity                                                           0.07s  
+  ✓ serialized barcode label response contains exact intended fields only                                        0.04s  
+
+   PASS  Tests\Feature\Api\V1\HealthTest
+  ✓ health check returns operational status                                                                      0.04s  
+
+   PASS  Tests\Feature\Api\V1\InvoicePrintTest
+  ✓ anonymous retail invoice printing                                                                            0.07s  
+  ✓ wholesale invoice with outstanding debt shows prior and resulting balance                                    0.05s  
+  ✓ wholesale invoice with overpayment creates credit balance                                                    0.05s  
+  ✓ external product appears as ordinary line without leaking cost or markers                                    0.05s  
+  ✓ confidentiality cost and profit are never exposed on customer printable resource                             0.05s  
+  ✓ wholesale invoice retains historical prior and resulting balances regardless of later transactions           0.07s  
+  ✓ back dated payment with higher id is included in previous balance                                            0.05s  
+  ✓ late created transaction with lower id but future date is not included in previous balance                   0.05s  
+  ✓ same timestamp transactions use id as deterministic tiebreaker                                               0.06s  
+  ✓ walk in invoice without customer has no balance section and no errors                                        0.04s  
+  ✓ fully paid wholesale invoice and invoice with zero customer transactions                                     0.06s  
+  ✓ reprinting same invoice twice returns identical balance numbers                                              0.05s  
+  ✓ customer returns before vs after invoice are properly sequenced                                              0.05s  
+  ✓ unauthenticated request is rejected                                                                          0.03s  
+  ✓ empty showroom settings yield null detail blocks                                                             0.04s  
+
+   PASS  Tests\Feature\Api\V1\InvoiceTest
+  ✓ can search product by barcode                                                                                0.05s  
+  ✓ can list active payment methods                                                                              0.03s  
+  ✓ create retail invoice without customer uses retail price default                                             0.05s  
+  ✓ retail sale allows manual price override without changing product master                                     0.05s  
+  ✓ wholesale sale strictly requires customer                                                                    0.04s  
+  ✓ wholesale sale defaults to wholesale price and integrates customer ledger                                    0.05s  
+  ✓ wholesale exact payment leaves zero balance                                                                  0.05s  
+  ✓ wholesale overpayment creates customer credit on account                                                     0.05s  
+  ✓ insufficient stock rejects sale and rolls back everything                                                    0.04s  
+  ✓ historical cost and profit remain immutable when product cost changes                                        0.04s  
+  ✓ external product creates expense and does not mutate normal inventory                                        0.05s  
+  ✓ customer facing representation hides cost and profit from cashier                                            0.05s  
+  ✓ checkout idempotency prevents duplicate invoices and mutations                                               0.05s  
+  ✓ invoice numbers are unique and sequential                                                                    0.06s  
+  ✓ unauthenticated cannot create or view invoices                                                               0.03s  
+  ✓ wholesale underpayment creates exact debt and customer ledger entries                                        0.05s  
+  ✓ concurrent sales cannot oversell available stock                                                             0.05s  
+  ✓ atomic rollback on failure leaves no external expense or invoice                                             0.07s  
+  ✓ multi payment creates multiple records and rejects inactive methods                                          0.06s  
+  ✓ concurrent sale of last unit row level locking prevents negative stock                                       0.05s  
+  ✓ wholesale overpayment creates customer credit balance                                                        0.09s  
+  ✓ retail overpayment records change due without customer ledger                                                0.08s  
+
+   PASS  Tests\Feature\Api\V1\MasterDataTest
+  ✓ cashier can create category with valid letter                                                                0.08s  
+  ✓ duplicate category code is rejected                                                                          0.03s  
+  ✓ invalid category code is rejected                                                                            0.04s  
+  ✓ category code cannot be changed if products exist                                                            0.04s  
+  ✓ can toggle category status                                                                                   0.03s  
+  ✓ cashier can create product with initial stock movement                                                       0.04s  
+  ✓ product price and cost editing updates current cost cleanly                                                  0.04s  
+  ✓ customer crud and balance reporting                                                                          0.04s  
+  ✓ supplier crud payable and add balance                                                                        0.04s  
+
+   PASS  Tests\Feature\Api\V1\ReportTest
+  ✓ unauthenticated requests are denied with 401                                                                 0.06s  
+  ✓ cashier requests are denied with 403 on all report endpoints                                                 0.05s  
+  ✓ owner can access all report endpoints                                                                        0.08s  
+  ✓ empty datasets return valid zero results                                                                     0.04s  
+  ✓ sales and realized profit calculation with cancellation and returns                                          0.05s  
+  ✓ policy c external product expenses and no double counting                                                    0.06s  
+  ✓ customer balances are authoritatively derived from ledger                                                    0.04s  
+  ✓ supplier payables are authoritatively derived from ledger                                                    0.04s  
+  ✓ inventory valuation uses current stock and current purchase cost                                             0.03s  
+  ✓ payment breakdown and cash flow summary                                                                      0.04s  
+  ✓ date filters boundary behavior in cairo timezone                                                             0.05s  
+  ✓ dedicated profit endpoint and reconciliation                                                                 0.04s  
+  ✓ customer balances search and pagination                                                                      0.04s  
+  ✓ supplier payables search and pagination                                                                      0.04s  
+  ✓ inventory valuation with inactive products and search                                                        0.04s  
+  ✓ payment movements inflows and refunds distinction                                                            0.04s  
+  ✓ documents unified endpoint for invoices and returns                                                          0.04s  
+  ✓ date filters validation errors                                                                               0.04s  
+  ✓ cashier confidentiality on invoice cost and profit                                                           0.04s  
+  ✓ concrete external product return scenario produces exact loss of 600                                         0.07s  
+  ✓ normal product return regression and current cost change invariance                                          0.05s  
+  ✓ comprehensive sales returns replacement and cancelled invoices reconciliation                                0.05s  
+  ✓ cairo timezone midnight boundaries inclusion and exclusion                                                   0.06s  
+  ✓ cairo dst boundary and documents history date filtering                                                      0.04s  
+  ✓ cairo day boundary coverage across all date filtered report endpoints                                        0.07s  
+
+   PASS  Tests\Feature\Api\V1\SalesReturnTest
+  ✓ full retail return with cash refund                                                                          0.07s  
+  ✓ partial retail return                                                                                        0.06s  
+  ✓ full wholesale return with customer account credit                                                           0.07s  
+  ✓ partial wholesale return against unpaid invoice                                                              0.06s  
+  ✓ return exceeding remaining quantity is rejected                                                              0.05s  
+  ✓ return against cancelled invoice is rejected                                                                 0.05s  
+  ✓ return against non existent invoice is rejected                                                              0.04s  
+  ✓ multiple returns against same invoice                                                                        0.08s  
+  ✓ historical cost is preserved during return when product cost changes                                         0.06s  
+  ✓ inventory is restored correctly with sales return movement                                                   0.06s  
+  ✓ external product return does not create inventory movement                                                   0.05s  
+  ✓ external product return preserves original purchase expense without supplier reimbursement                   0.06s  
+  ✓ cash refund creates payment record                                                                           0.06s  
+  ✓ equal value exchange                                                                                         0.06s  
+  ✓ higher value exchange with difference payment                                                                0.07s  
+  ✓ exchange difference with inactive payment method is rejected                                                 0.05s  
+  ✓ wholesale customer account credit reduces debt                                                               0.06s  
+  ✓ return creating customer credit beyond zero                                                                  0.06s  
+  ✓ wholesale cash refund preserves customer balance                                                             0.06s  
+  ✓ inactive payment method rejected for cash refund                                                             0.05s  
+  ✓ idempotency prevents duplicate returns                                                                       0.08s  
+  ✓ return numbers are unique and sequential                                                                     0.07s  
+  ✓ concurrent returns cannot over return                                                                        0.07s  
+  ✓ atomic rollback on failure leaves no return records                                                          0.05s  
+  ✓ return creates audit log record                                                                              0.06s  
+  ✓ cashier cannot access owner only financial information                                                       0.06s  
+  ✓ wholesale cash refund when invoice is unpaid asserting exact ledger entries                                  0.06s  
+  ✓ wholesale cash refund when invoice is partially paid asserting exact ledger entries                          0.06s  
+  ✓ wholesale cash refund when invoice is fully paid asserting exact ledger entries                              0.06s  
+  ✓ wholesale cash refund when customer already has credit balance                                               0.06s  
+  ✓ wholesale exchange upgrade end to end ledger and inventory equilibrium                                       0.08s  
+  ✓ equal exchange requires zero additional payment                                                              0.06s  
+  ✓ exchange with lower value replacement is strictly rejected                                                   0.05s  
+  ✓ idempotency key reuse across different invoices is rejected                                                  0.07s  
+  ✓ idempotency retry on exchange does not duplicate stock or payments                                           0.07s  
+  ✓ exchange atomic rollback on failure leaves no traces                                                         0.06s  
+  ✓ cashier cannot access cost metrics on replacement invoice                                                    0.07s  
+
+   PASS  Tests\Feature\Api\V1\SecurityTest
+  ✓ unauthenticated requests receive 401 across all route groups                                                 0.09s  
+  ✓ cashier is locked out of reports by default and forbidden from owner endpoints                               0.06s  
+  ✓ inactive user is forbidden even with valid token                                                             0.04s  
+  ✓ cashier cannot see cost or profit on invoices and returns                                                    0.05s  
+  ✓ idor non existent entity ids return 404                                                                      0.05s  
+  ✓ mass assignment tampering on invoices is ignored                                                             0.05s  
+  ✓ print and barcode outputs are strictly free of confidential markers                                          0.05s  
+  ✓ login rate limiting protects against brute force                                                             0.05s  
+  ✓ security headers are present on api responses                                                                0.04s  
+  ✓ reports password gate unlock and lock lifecycle                                                              0.06s  
+  ✓ reports unlock expires after ttl                                                                             0.05s  
+  ✓ reports unlock does not survive logout                                                                       0.06s  
+  ✓ unlocking reports does not leak cost on non report endpoints                                                 0.05s  
+  ✓ reports unlock rate limiting                                                                                 0.06s  
+  ✓ owner does not require password for reports                                                                  0.08s  
+  ✓ cashier cannot change reports password                                                                       0.04s  
+  ✓ login rate limiter allows correct login after fewer than limit failures                                      0.05s  
+  ✓ cashier post invoice and post return responses do not leak cost or profit                                    0.06s  
+  ✓ customer and supplier endpoints do not leak cost or profit                                                   0.05s  
+  ✓ cross entity idor prevention on returns                                                                      0.04s  
+  ✓ app debug false does not leak stack traces or sql                                                            0.04s  
+  ✓ reports password not configured rejects cashier unlock while owner retains access                            0.05s  
+  ✓ failed unlock attempts of user a do not affect user b                                                        0.07s  
+  ✓ deactivated user is immediately locked out even with previously active unlock                                0.07s  
+  ✓ cashier operational cost visibility on inventory products and stock receipts                                 0.09s  
+
+   PASS  Tests\Feature\Api\V1\Settings\ShowroomSettingsTest
+  ✓ owner can view showroom settings                                                                             0.06s  
+  ✓ owner can update showroom settings                                                                           0.04s  
+  ✓ cashier cannot view showroom settings                                                                        0.03s  
+  ✓ cashier cannot update showroom settings                                                                      0.03s  
+  ✓ unauthenticated cannot access showroom settings                                                              0.03s  
+  ✓ update validates field lengths                                                                               0.03s  
+
+   PASS  Tests\Feature\Api\V1\StockReceivingTest
+  ✓ can receive single product and update stock cost movement and supplier payable                               0.04s  
+  ✓ can receive multiple products with different costs atomically                                                0.04s  
+  ✓ stock receiving rolls back everything if any item is invalid                                                 0.04s  
+  ✓ stock receiving does not mutate historical invoice costs                                                     0.04s  
+  ✓ inventory visibility endpoint returns accurate stock and valuation                                           0.04s  
+  ✓ duplicate product lines within single receipt are rejected                                                   0.04s  
+  ✓ idempotency key prevents duplicate stock receipt creation and double mutations                               0.04s  
+  ✓ receipt number generation handles concurrency and recovers from collisions                                   0.05s  
+
+   PASS  Tests\Feature\Console\UserManagementCommandTest
+  ✓ make cashier command creates active cashier with min 8 password                                              0.04s  
+  ✓ make cashier command rejects password shorter than 8 chars                                                   0.03s  
+  ✓ user reset password command updates password and enforces length                                             0.03s  
+  ✓ user toggle status deactivates user and revokes tokens                                                       0.04s  
+  ✓ reports set password command stores hash and allows unlock                                                   0.05s  
+
+   PASS  Tests\Feature\DatabaseIntegrityTest
+  ✓ category code must be unique at database level                                                               0.04s  
+  ✓ product barcode must be unique at database level                                                             0.03s  
+  ✓ product is independent from supplier                                                                         0.03s  
+  ✓ retail invoice can exist without customer                                                                    0.03s  
+  ✓ cannot delete category when products exist due to restrict on delete                                         0.03s  
+  ✓ inventory movement tracks quantity and resulting stock                                                       0.03s  
+  ✓ audit log records polymorphic action with json metadata                                                      0.03s  
+  ✓ setting store and retrieve helper                                                                            0.03s  
+  ✓ wholesale invoice associates with registered customer                                                        0.03s  
+  ✓ external product invoice item supports polymorphic linked expense                                            0.03s  
+  ✓ stock receipt records items and links to supplier                                                            0.03s  
+  ✓ sales return and return items preserve historical profit reversal                                            0.03s  
+  ✓ cannot force delete product when inventory movements exist                                                   0.03s  
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                                                                0.06s  
+
+  Tests:    204 passed (1441 assertions)
+  Duration: 10.66s
+

@@ -56,7 +56,6 @@ export function formatCurrency(
   if (!includeSymbol) {
     return formattedNum;
   }
-  // \u200E (LRM) isolates the number while keeping the Arabic symbol intact
   return `${formattedNum} ${CURRENCY_SYMBOL}`;
 }
 

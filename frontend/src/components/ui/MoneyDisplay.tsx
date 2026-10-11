@@ -61,11 +61,10 @@ export const MoneyDisplay: React.FC<MoneyDisplayProps> = ({
       {showCurrency && (
         <span
           style={{
-            fontSize: '0.75em',
+            fontSize: '0.85em',
             fontFamily: 'var(--font-family-base)',
-            color: 'var(--text-muted)',
+            color: 'var(--text-muted, #64748B)',
             fontWeight: 'var(--font-weight-normal)',
-            direction: 'rtl',
           }}
         >
           {currency}

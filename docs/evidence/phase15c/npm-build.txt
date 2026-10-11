@@ -1,0 +1,22 @@
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+[36mvite v8.3.3 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 1960 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                       0.79 kB │ gzip:   0.48 kB
+dist/assets/cairo-arabic-400-normal-DN15VWMM.woff2   13.29 kB
+dist/assets/cairo-arabic-500-normal-DDl0i4Xv.woff2   13.89 kB
+dist/assets/cairo-arabic-600-normal-rkrvveqO.woff2   13.89 kB
+dist/assets/cairo-arabic-700-normal-D3nDedWX.woff2   13.95 kB
+dist/assets/cairo-arabic-400-normal-CAYwymWN.woff    16.80 kB
+dist/assets/cairo-arabic-700-normal-CyOqhaeK.woff    17.26 kB
+dist/assets/cairo-arabic-600-normal-B3EOalmC.woff    17.33 kB
+dist/assets/cairo-arabic-500-normal-BADfnM6v.woff    17.34 kB
+dist/assets/index-DsGuPD8f.css                        7.74 kB │ gzip:   2.38 kB
+dist/assets/index-BWfPwhjd.js                       537.73 kB │ gzip: 136.81 kB
+
+[32m✓ built in 918ms[39m

@@ -1,0 +1,7 @@
+
+   PASS  Tests\Feature\Api\V1\ReportTest
+  ✓ concrete external product return scenario produces exact loss of 600                                         0.68s  
+
+  Tests:    1 passed (27 assertions)
+  Duration: 0.93s
+

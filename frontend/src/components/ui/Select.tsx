@@ -32,32 +32,56 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </label>
         )}
 
-        <select
-          ref={ref}
-          id={selectId}
-          disabled={disabled}
-          required={required}
-          style={{
-            width: '100%',
-            height: '2.25rem',
-            padding: '0.375rem 0.75rem',
-            backgroundColor: disabled ? 'var(--bg-surface-subtle)' : 'var(--bg-surface)',
-            border: `1px solid ${error ? 'var(--color-danger-500)' : 'var(--border-default)'}`,
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-primary)',
-            fontSize: 'var(--font-size-base)',
-            outline: 'none',
-            cursor: disabled ? 'not-allowed' : 'pointer',
-          }}
-          className={className}
-          {...props}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <div style={{ position: 'relative', width: '100%' }}>
+          <select
+            ref={ref}
+            id={selectId}
+            disabled={disabled}
+            required={required}
+            style={{
+              width: '100%',
+              minHeight: '44px',
+              height: '44px',
+              padding: '0.5rem 0.875rem',
+              paddingLeft: '2rem',
+              backgroundColor: disabled ? '#F1F5F9' : '#FFFFFF',
+              border: `1px solid ${error ? '#DC2626' : '#CBD5E1'}`,
+              borderRadius: 'var(--radius-md, 6px)',
+              color: 'var(--text-primary, #0F172A)',
+              fontSize: '15px',
+              outline: 'none',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              transition: 'border-color var(--transition-fast)',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+            }}
+            className={`al-select ${className}`}
+            {...props}
+          >
+            {options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {/* Custom SVG dropdown chevron */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              color: '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
+        </div>
 
         {error && (
           <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger-600)' }} role="alert">

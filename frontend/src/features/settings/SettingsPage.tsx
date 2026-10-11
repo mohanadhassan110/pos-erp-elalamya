@@ -7,6 +7,7 @@ import { Alert } from '../../components/ui/Alert';
 import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../app/providers/useToast';
+import { mapErrorMessage } from '../../utils/errorMapper';
 import { Store, KeyRound, Activity } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -48,15 +49,23 @@ export const SettingsPage: React.FC = () => {
       .getShowroom()
       .then((data) => {
         if (!active) return;
-        setShowroom(data);
-        setPhones(data.phones || '');
-        setAddress(data.address || '');
-        setTagline(data.tagline || '');
-        setReturnPolicy(data.return_policy || '');
-        setThankYouLine(data.thank_you_line || '');
+        const safeData = data || {
+          showroom_name: 'معرض العالمية للمفروشات',
+          phones: null,
+          address: null,
+          tagline: null,
+          return_policy: null,
+          thank_you_line: null,
+        };
+        setShowroom(safeData);
+        setPhones(safeData.phones || '');
+        setAddress(safeData.address || '');
+        setTagline(safeData.tagline || '');
+        setReturnPolicy(safeData.return_policy || '');
+        setThankYouLine(safeData.thank_you_line || '');
       })
       .catch((err) => {
-        if (active) setShowroomError(err?.message || 'تعذر تحميل إعدادات المعرض');
+        if (active) setShowroomError(mapErrorMessage(err, 'تعذر تحميل إعدادات المعرض'));
       })
       .finally(() => {
         if (active) setIsLoadingShowroom(false);
@@ -95,7 +104,7 @@ export const SettingsPage: React.FC = () => {
       setShowroom(res.data);
       showToast('تم حفظ بيانات المعرض بنجاح', 'success');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء حفظ البيانات';
+      const msg = mapErrorMessage(err, 'حدث خطأ أثناء حفظ بيانات المعرض');
       setShowroomError(msg);
       showToast(msg, 'error');
     } finally {
@@ -125,7 +134,7 @@ export const SettingsPage: React.FC = () => {
       setReportsPasswordConfirm('');
       showToast('تم تحديث كلمة سر التقارير بنجاح', 'success');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'تعذر تعيين كلمة السر';
+      const msg = mapErrorMessage(err, 'تعذر تعيين كلمة السر');
       setPasswordError(msg);
       showToast(msg, 'error');
     } finally {

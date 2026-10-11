@@ -2,7 +2,6 @@ import React from 'react';
 import type { PrintableInvoice } from '../../types/domain';
 import { Code128Barcode } from '../barcode/Code128Barcode';
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
-import logoBlack from '../../assets/brand/logo-black.png';
 
 export interface PrintableInvoiceDocumentProps {
   invoice: PrintableInvoice;
@@ -37,20 +36,9 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
           boxSizing: 'border-box',
         }}
       >
-        {/* Brand Header */}
+        {/* Brand Header — Text Only */}
         <div style={{ textAlign: 'center', marginBottom: '6px' }}>
-          <img
-            src={logoBlack}
-            alt="شعار المعرض"
-            style={{
-              maxWidth: '44mm',
-              height: 'auto',
-              margin: '0 auto 4px',
-              display: 'block',
-              filter: 'grayscale(100%) contrast(150%)',
-            }}
-          />
-          <div style={{ fontWeight: 700, fontSize: '13px', color: '#000000' }}>
+          <div style={{ fontWeight: 800, fontSize: '15px', color: '#000000', letterSpacing: '-0.01em', marginBottom: '2px' }}>
             {invoice.showroom?.name || 'معرض العالمية للمفروشات'}
           </div>
 
@@ -130,10 +118,10 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
                   {formatQuantity(item.quantity)}
                 </td>
                 <td style={{ padding: '3px 0', textAlign: 'left', verticalAlign: 'top', direction: 'ltr' }}>
-                  {item.unit_price}
+                  {formatCurrency(item.unit_price)}
                 </td>
                 <td style={{ padding: '3px 0', textAlign: 'left', verticalAlign: 'top', fontWeight: 700, direction: 'ltr' }}>
-                  {item.subtotal}
+                  {formatCurrency(item.subtotal)}
                 </td>
               </tr>
             ))}
@@ -147,13 +135,13 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
         <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>إجمالي الأصناف ({invoice.total_units} قطعة):</span>
-            <span style={{ direction: 'ltr' }}>{invoice.subtotal}</span>
+            <span style={{ direction: 'ltr' }}>{formatCurrency(invoice.subtotal)}</span>
           </div>
 
           {parseFloat(invoice.discount_amount || '0') > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#c00' }}>
               <span>قيمة الخصم:</span>
-              <span style={{ direction: 'ltr' }}>-{invoice.discount_amount}</span>
+              <span style={{ direction: 'ltr' }}>-{formatCurrency(invoice.discount_amount)}</span>
             </div>
           )}
 
@@ -308,11 +296,6 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
         </div>
 
         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <img
-            src={logoBlack}
-            alt="شعار المعرض"
-            style={{ width: '60mm', height: 'auto', marginBottom: '4px' }}
-          />
           <div style={{ fontSize: '16px', fontWeight: 800 }}>
             فاتورة مبيعات {invoice.is_wholesale ? 'جملة' : 'قطاعي'}
           </div>
@@ -362,8 +345,8 @@ export const PrintableInvoiceDocument: React.FC<PrintableInvoiceDocumentProps> =
                 {item.barcode && <div style={{ fontSize: '10px', color: '#666', direction: 'ltr', textAlign: 'right' }}>{item.barcode}</div>}
               </td>
               <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{formatQuantity(item.quantity)}</td>
-              <td style={{ padding: '6px 8px', textAlign: 'left', direction: 'ltr' }}>{formatCurrency(item.unit_price, false)}</td>
-              <td style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, direction: 'ltr' }}>{formatCurrency(item.subtotal, false)}</td>
+              <td style={{ padding: '6px 8px', textAlign: 'left', direction: 'ltr' }}>{formatCurrency(item.unit_price)}</td>
+              <td style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 700, direction: 'ltr' }}>{formatCurrency(item.subtotal)}</td>
             </tr>
           ))}
         </tbody>

@@ -85,6 +85,115 @@ button, input, select, textarea {
   display: inline-block;
 }
 
+/* POS Workspace Architecture */
+.pos-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 3.75rem);
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
+  gap: 1rem;
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pos-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 1.25rem;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .pos-workspace-grid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .pos-container {
+    height: auto;
+  }
+  .pos-workspace-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+.pos-cart-column {
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.pos-payment-column {
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem;
+  gap: 1rem;
+  height: fit-content;
+  max-height: 100%;
+  overflow-y: auto;
+  position: sticky;
+  top: 1rem;
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background-color: #F1F5F9;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 4px;
+  border: 1px solid #CBD5E1;
+}
+
+.segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 120ms ease;
+  min-height: 38px;
+  color: #334155;
+  background-color: transparent;
+}
+
+.segmented-btn.active {
+  background-color: #0B1220;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Controls Focus & States */
+.al-input:focus,
+.al-select:focus,
+input:focus-visible,
+select:focus-visible {
+  border-color: #0B1220 !important;
+  box-shadow: 0 0 0 1px #0B1220 !important;
+}
+
 /* Utility for screen readers */
 .sr-only {
   position: absolute;

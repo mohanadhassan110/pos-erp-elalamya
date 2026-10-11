@@ -4,7 +4,6 @@ import { useAuth } from '../providers/useAuth';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { formatLiveTime } from '../../utils/formatters';
-import logoWhite from '../../assets/brand/logo-white.png';
 import {
   ShoppingCart,
   FileText,
@@ -137,24 +136,13 @@ export const AppLayout: React.FC = () => {
             <Menu size={22} />
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img
-              src={logoWhite}
-              alt="معرض العالمية للمفروشات"
-              style={{
-                height: '34px',
-                width: 'auto',
-                display: 'block',
-              }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontWeight: 700, fontSize: '15px', color: '#ffffff', lineHeight: 1.2 }}>
-                معرض العالمية للمفروشات
-              </span>
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: 1.2 }}>
-                نظام إدارة المبيعات ونقاط البيع والمخزون
-              </span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: 800, fontSize: '16px', color: '#ffffff', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+              معرض العالمية للمفروشات
+            </span>
+            <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.2 }}>
+              نظام إدارة المبيعات ونقاط البيع والمخزون
+            </span>
           </div>
         </div>
 

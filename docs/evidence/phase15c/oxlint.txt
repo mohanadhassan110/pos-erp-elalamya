@@ -1,0 +1,32 @@
+
+  ! react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders
+    ,-[src/features/invoices/InvoicesPage.tsx:61:10]
+ 59 | 
+ 60 |   useEffect(() => {
+    :   ^^^^|^^^^
+    :       `-- This is the containing effect
+ 61 |     void fetchInvoices();
+    :          ^^^^^^|^^^^^^
+    :                `-- Avoid calling setState() directly within an effect
+ 62 |   }, [fetchInvoices]);
+    `----
+  help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect
+
+  ! react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders
+     ,-[src/features/barcodes/BarcodePrintingPage.tsx:120:7]
+ 117 |   // Whenever queue changes, generate preview via previewBarcodes API endpoint
+ 118 |   useEffect(() => {
+     :   ^^^^|^^^^
+     :       `-- This is the containing effect
+ 119 |     if (queue.length === 0) {
+ 120 |       setPreparedLabels([]);
+     :       ^^^^^^^^|^^^^^^^^
+     :               `-- Avoid calling setState() directly within an effect
+ 121 |       return;
+     `----
+  help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect
+
+Found 2 warnings and 0 errors.
+Finished in 141ms on 71 files with 116 rules using 8 threads.

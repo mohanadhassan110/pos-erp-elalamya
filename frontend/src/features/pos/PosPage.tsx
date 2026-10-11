@@ -12,7 +12,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../app/providers/useToast';
 import { InvoicePrintModal } from '../../components/invoice/InvoicePrintModal';
-import { formatCurrency, formatQuantity } from '../../utils/formatters';
+import { formatCurrency, formatQuantity, formatNumber } from '../../utils/formatters';
 import {
   ShoppingCart,
   Trash2,
@@ -448,126 +448,163 @@ export const PosPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] p-3 md:p-4 gap-3 bg-gray-50 text-gray-900 font-sans" dir="rtl">
-      {/* Top Bar: Mode Selector & Customer & Fast Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
-        {/* Sale Type Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-600">نوع البيع:</span>
-          <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
-            <button
-              type="button"
-              onClick={() => handleSaleTypeChange('retail')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[38px] ${
-                saleType === 'retail'
-                  ? 'bg-[#0B1220] text-white font-bold shadow'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              بيع قطاعي (F4)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSaleTypeChange('wholesale')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[38px] ${
-                saleType === 'wholesale'
-                  ? 'bg-[#0B1220] text-white font-bold shadow'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              بيع جملة (F4)
-            </button>
-          </div>
-        </div>
-
-        {/* Customer Selector */}
-        <div className="flex items-center gap-2 min-w-[280px]">
-          <span className="text-xs font-semibold text-gray-600">
-            العميل {saleType === 'wholesale' && <span className="text-rose-600">*</span>}:
-          </span>
-          <div className="flex-1">
-            <select
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-              className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-2.5 py-2 text-xs focus:ring-1 focus:ring-navy-600 focus:border-navy-600 min-h-[44px]"
-            >
-              <option value="">{saleType === 'wholesale' ? '-- اختر عميل جملة مسجل --' : 'زبون نقدي عام (اختياري)'}</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.phone ? `(${c.phone})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Customer Balance Quick Display */}
-        {currentCustomer && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs">
-            <span className="text-gray-600">رصيد العميل الحالي:</span>
-            <span
-              className={`font-bold font-mono ${
-                currentCustomer.balance_status === 'debt'
-                  ? 'text-rose-600'
-                  : currentCustomer.balance_status === 'credit'
-                  ? 'text-emerald-600'
-                  : 'text-gray-700'
-              }`}
-            >
-              {currentCustomer.balance_formatted}
-            </span>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            size="md"
-            variant="outline"
-            onClick={() => setIsCatalogOpen(true)}
-            className="text-xs min-h-[44px] flex items-center gap-1.5"
+    <div className="pos-container" dir="rtl">
+      {/* Main Workspace: 2-Column Responsive Layout */}
+      <div className="pos-workspace-grid">
+        {/* RIGHT COLUMN (65%): Work Area, Barcode Scan & Cart */}
+        <div className="pos-cart-column">
+          {/* Top Bar of Work Area: Segmented Sale Type, Customer Picker & Action Buttons */}
+          <div
+            style={{
+              padding: '0.875rem 1.25rem',
+              borderBottom: '1px solid var(--border-subtle, #E2E8F0)',
+              backgroundColor: '#FFFFFF',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+            }}
           >
-            <Layers size={16} />
-            كتالوج الأصناف
-          </Button>
-          <Button
-            size="md"
-            variant="secondary"
-            onClick={() => setIsExternalModalOpen(true)}
-            className="text-xs min-h-[44px] flex items-center gap-1.5"
-          >
-            <PlusCircle size={16} />
-            صنف خارجي
-          </Button>
-        </div>
-      </div>
+            {/* Sale Type Segmented Control */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>نوع البيع:</span>
+              <div className="segmented-control">
+                <button
+                  type="button"
+                  onClick={() => handleSaleTypeChange('retail')}
+                  className={`segmented-btn ${saleType === 'retail' ? 'active' : ''}`}
+                >
+                  بيع قطاعي (F4)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaleTypeChange('wholesale')}
+                  className={`segmented-btn ${saleType === 'wholesale' ? 'active' : ''}`}
+                >
+                  بيع جملة (F4)
+                </button>
+              </div>
+            </div>
 
-      {/* Main Workspace: Left Cart (65%) & Right Payment/Summary (35%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 overflow-hidden">
-        {/* Left Column: Barcode Scan & Cart Items Table */}
-        <div className="lg:col-span-8 flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          {/* Barcode Search Header */}
-          <div className="p-3 border-b border-gray-200 bg-gray-50">
-            <form onSubmit={handleBarcodeSubmit} className="flex gap-2">
-              <div className="relative flex-1">
+            {/* Customer Picker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '260px', maxWidth: '380px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>
+                العميل {saleType === 'wholesale' && <span style={{ color: '#DC2626' }}>*</span>}:
+              </span>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    minHeight: '44px',
+                    padding: '0 0.875rem 0 2rem',
+                    backgroundColor: saleType === 'wholesale' && !selectedCustomerId ? '#FEF2F2' : '#FFFFFF',
+                    border: `1px solid ${saleType === 'wholesale' && !selectedCustomerId ? '#F87171' : '#CBD5E1'}`,
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#0F172A',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                  }}
+                  className="al-select"
+                >
+                  <option value="">{saleType === 'wholesale' ? '-- اختر عميل جملة مسجل (مطلوب) --' : 'زبون نقدي (افتراضي)'}</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: '#64748B',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
+              </div>
+              {currentCustomer && (
+                <div style={{ fontSize: '12px', padding: '0.35rem 0.5rem', backgroundColor: '#F1F5F9', borderRadius: '4px', whiteSpace: 'nowrap', border: '1px solid #CBD5E1' }}>
+                  <span style={{ color: '#64748B' }}>الرصيد: </span>
+                  <span style={{ fontWeight: 700, fontFamily: 'monospace', color: currentCustomer.balance_status === 'debt' ? '#DC2626' : currentCustomer.balance_status === 'credit' ? '#059669' : '#334155' }}>
+                    {currentCustomer.balance_formatted}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Catalog & External Item Buttons (Min 12px gap) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Button
+                size="md"
+                variant="secondary"
+                onClick={() => setIsCatalogOpen(true)}
+                icon={<Layers size={16} />}
+                style={{ fontSize: '13px' }}
+              >
+                كتالوج الأصناف (F2)
+              </Button>
+              <Button
+                size="md"
+                variant="secondary"
+                onClick={() => setIsExternalModalOpen(true)}
+                icon={<PlusCircle size={16} />}
+                style={{ fontSize: '13px' }}
+              >
+                صنف خارجي
+              </Button>
+            </div>
+          </div>
+
+          {/* Barcode Search Header (Min 52px Input, Auto-Focused, Always Visible) */}
+          <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
+            <form onSubmit={handleBarcodeSubmit} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   ref={barcodeInputRef}
                   type="text"
                   value={barcodeQuery}
                   onChange={(e) => setBarcodeQuery(e.target.value)}
                   placeholder="امسح الباركود بجهاز القراءة أو اكتب اسم الصنف ثم اضغط Enter (F2)..."
-                  className="w-full bg-white border border-gray-300 focus:border-[#0B1220] rounded-lg pr-10 pl-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#0B1220] min-h-[44px]"
+                  style={{
+                    width: '100%',
+                    height: '52px',
+                    minHeight: '52px',
+                    padding: '0 2.75rem 0 1rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '2px solid #CBD5E1',
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#0F172A',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  className="al-input"
                   disabled={isSearchingBarcode}
                 />
-                <span className="absolute right-3 top-3 text-gray-400">
-                  {isSearchingBarcode ? <Spinner size="sm" /> : <BarcodeIcon size={18} />}
+                <span style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                  {isSearchingBarcode ? <Spinner size="sm" /> : <BarcodeIcon size={20} />}
                 </span>
               </div>
               <Button
                 type="submit"
                 variant="primary"
                 disabled={isSearchingBarcode || !barcodeQuery.trim()}
-                className="min-h-[44px] px-5"
+                style={{ height: '52px', minHeight: '52px', padding: '0 1.5rem', fontSize: '14px', fontWeight: 700 }}
               >
                 إضافة
               </Button>
@@ -575,30 +612,30 @@ export const PosPage: React.FC = () => {
           </div>
 
           {/* Cart Table Container */}
-          <div className="flex-1 overflow-y-auto p-2">
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.5rem' }}>
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                <div className="text-gray-300 mb-3">
+              <div style={{ height: '100%', minHeight: '320px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: '2rem', textAlign: 'center' }}>
+                <div style={{ color: '#CBD5E1', marginBottom: '0.75rem' }}>
                   <ShoppingCart size={48} strokeWidth={1.5} />
                 </div>
-                <div className="text-base font-semibold text-gray-600">السلة فارغة</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  قم بمسح الباركود، أو اختر أصنافاً من الكتالوج، أو أضف صنفاً خارجياً
+                <div style={{ fontSize: '16px', fontWeight: 600, color: '#475569' }}>السلة فارغة</div>
+                <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '0.25rem' }}>
+                  قم بمسح الباركود، أو اختر أصنافاً من الكتالوج (F2)، أو أضف صنفاً خارجياً
                 </div>
               </div>
             ) : (
-              <table className="w-full text-right text-xs border-collapse">
-                <thead className="bg-gray-100 text-gray-700 sticky top-0 border-b border-gray-200">
+              <table style={{ width: '100%', textAlign: 'right', fontSize: '13px', borderCollapse: 'collapse' }}>
+                <thead style={{ backgroundColor: '#F1F5F9', color: '#334155', position: 'sticky', top: 0, zIndex: 2, borderBottom: '2px solid #E2E8F0' }}>
                   <tr>
-                    <th className="py-3 px-3 font-semibold">الصنف</th>
-                    <th className="py-3 px-2 font-semibold text-center w-20">المخزون</th>
-                    <th className="py-3 px-3 font-semibold text-center w-32">الكمية</th>
-                    <th className="py-3 px-3 font-semibold text-center w-28">السعر</th>
-                    <th className="py-3 px-3 font-semibold text-center w-28">الإجمالي</th>
-                    <th className="py-3 px-2 font-semibold text-center w-12">حذف</th>
+                    <th style={{ padding: '0.75rem 0.875rem', fontWeight: 700 }}>الصنف</th>
+                    <th style={{ padding: '0.75rem 0.5rem', fontWeight: 700, textAlign: 'center', width: '80px' }}>المخزون</th>
+                    <th style={{ padding: '0.75rem 0.75rem', fontWeight: 700, textAlign: 'center', width: '130px' }}>الكمية</th>
+                    <th style={{ padding: '0.75rem 0.75rem', fontWeight: 700, textAlign: 'center', width: '110px' }}>السعر</th>
+                    <th style={{ padding: '0.75rem 0.75rem', fontWeight: 700, textAlign: 'center', width: '110px' }}>الإجمالي</th>
+                    <th style={{ padding: '0.75rem 0.5rem', fontWeight: 700, textAlign: 'center', width: '50px' }}>حذف</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {cart.map((line) => {
                     const isPriceOverridden = line.unitPrice !== line.originalPrice;
                     const lineSubtotal = line.quantity * line.unitPrice;
@@ -607,9 +644,13 @@ export const PosPage: React.FC = () => {
                     return (
                       <tr
                         key={line.id}
-                        className={`transition-colors min-h-[48px] ${
-                          isHighlighted ? 'bg-amber-50' : 'hover:bg-gray-50'
-                        }`}
+                        style={{
+                          height: '48px',
+                          minHeight: '48px',
+                          borderBottom: '1px solid #E2E8F0',
+                          backgroundColor: isHighlighted ? '#FFFBEB' : '#FFFFFF',
+                          transition: 'background-color 0.15s ease',
+                        }}
                       >
                         <td className="py-3 px-3">
                           <div className="font-semibold text-gray-900 text-sm">{line.productName}</div>
@@ -732,33 +773,53 @@ export const PosPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Totals, Payment & Final Action */}
-        <div className="lg:col-span-4 flex flex-col bg-white border border-gray-200 rounded-xl p-4 shadow-sm justify-between">
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">
+        {/* LEFT COLUMN (35% in RTL): Sticky Payment Panel Card */}
+        <div className="pos-payment-column">
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
               ملخص الفاتورة والدفع
             </h2>
 
-            {/* Financial Summary */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-2">
-              <div className="flex justify-between text-xs text-gray-600">
+            {/* Financial Summary Card with Prominent Grand Total (>= 36px bold) */}
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B', marginBottom: '0.5rem' }}>
                 <span>المجموع الفرعي:</span>
-                <span className="font-semibold text-gray-900 font-mono">{formatCurrency(subtotal)}</span>
+                <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '14px', direction: 'ltr' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(subtotal)}</span> ج.م
+                </span>
               </div>
-              <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-900">إجمالي الفاتورة:</span>
-                <span className="text-2xl font-extrabold text-[#0B1220] font-mono">{formatCurrency(total)}</span>
+              <div style={{ borderTop: '2px solid #E2E8F0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>إجمالي الفاتورة:</span>
+                <span style={{ fontSize: '38px', fontWeight: 900, color: '#0B1220', lineHeight: 1, direction: 'ltr' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(total)}</span> <span style={{ fontSize: '20px', fontWeight: 700 }}>ج.م</span>
+                </span>
               </div>
             </div>
 
             {/* Payment Details */}
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">طريقة الدفع:</label>
+            <div style={{ marginBottom: '0.875rem' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '0.375rem' }}>طريقة الدفع:</label>
+              <div style={{ position: 'relative' }}>
                 <select
                   value={selectedPaymentMethodId}
                   onChange={(e) => setSelectedPaymentMethodId(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:ring-1 focus:ring-navy-600 min-h-[44px]"
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    minHeight: '44px',
+                    padding: '0 0.875rem 0 2rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#0F172A',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                  }}
+                  className="al-select"
                 >
                   {paymentMethods.map((pm) => (
                     <option key={pm.id} value={pm.id}>
@@ -766,99 +827,136 @@ export const PosPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-semibold text-gray-700">المبلغ المدفوع:</label>
-                  <button
-                    type="button"
-                    onClick={handleExactPayment}
-                    className="text-xs text-navy-800 hover:text-navy-900 underline font-semibold"
-                  >
-                    سداد كامل المبلغ (F8)
-                  </button>
+                <div style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748B' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={paidAmountInput}
-                  onChange={(e) => setPaidAmountInput(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-white border border-gray-300 focus:border-[#0B1220] rounded-lg px-3 py-2 text-lg font-bold text-emerald-700 focus:outline-none min-h-[44px] font-mono"
-                />
-              </div>
-
-              {/* Balance & Debt Status Breakdown */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs space-y-2">
-                <div className="flex justify-between text-gray-600">
-                  <span>المدفوع المستلم:</span>
-                  <span className="font-semibold text-emerald-700 font-mono">{formatCurrency(paidAmountNumber)}</span>
-                </div>
-
-                {saleType === 'wholesale' ? (
-                  <>
-                    <div className="flex justify-between text-gray-600">
-                      <span>المتبقي ديناً على العميل:</span>
-                      <span className={`font-bold font-mono ${remainingDebt > 0 ? 'text-rose-600' : 'text-gray-700'}`}>
-                        {formatCurrency(remainingDebt)}
-                      </span>
-                    </div>
-                    {customerCredit > 0 && (
-                      <div className="flex justify-between text-sky-700 font-semibold">
-                        <span>رصيد دائن إضافي للعميل:</span>
-                        <span className="font-mono">{formatCurrency(customerCredit)}</span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  remainingDebt > 0 && (
-                    <div className="flex justify-between text-amber-700">
-                      <span>متبقي غير مسدد:</span>
-                      <span className="font-mono font-bold">{formatCurrency(remainingDebt)}</span>
-                    </div>
-                  )
-                )}
-              </div>
-
-              {/* Prominent Change Due Display (Retail Cash Overpayment - Display Only) */}
-              {changeDue > 0 && (
-                <div className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-3 text-center shadow-sm">
-                  <div className="text-xs font-semibold text-emerald-800">باقي النقدية للعميل (فكة):</div>
-                  <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
-                    {formatCurrency(changeDue)}
-                  </div>
-                </div>
-              )}
-
-              {/* Notes */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">ملاحظات الفاتورة:</label>
-                <input
-                  type="text"
-                  value={invoiceNotes}
-                  onChange={(e) => setInvoiceNotes(e.target.value)}
-                  placeholder="ملاحظات اختيارية..."
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 min-h-[40px]"
-                />
               </div>
             </div>
-          </div>
 
-          {/* Checkout Button & Error Box */}
-          <div className="pt-4 space-y-2">
-            {checkoutError && <Alert type="error" message={checkoutError} />}
+            <div style={{ marginBottom: '0.875rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>المبلغ المدفوع:</label>
+                <button
+                  type="button"
+                  onClick={handleExactPayment}
+                  style={{ fontSize: '12px', color: '#0B1220', fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  سداد كامل المبلغ (F8)
+                </button>
+              </div>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={paidAmountInput}
+                onChange={(e) => setPaidAmountInput(e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '100%',
+                  height: '48px',
+                  minHeight: '48px',
+                  padding: '0 1rem',
+                  backgroundColor: '#FFFFFF',
+                  border: '2px solid #CBD5E1',
+                  borderRadius: '6px',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#059669',
+                  fontFamily: 'monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                className="al-input"
+              />
+            </div>
 
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleCheckout}
-              disabled={isSubmitting || cart.length === 0}
-              className="w-full min-h-[56px] text-base font-bold bg-[#0B1220] hover:bg-[#182338] text-white shadow-md justify-center"
-            >
-              {isSubmitting ? <Spinner size="sm" /> : 'إتمام البيع وحفظ الفاتورة (F9)'}
-            </Button>
+            {/* Balance & Debt Status Breakdown */}
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.75rem', fontSize: '13px', marginBottom: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                <span>المدفوع المستلم:</span>
+                <span style={{ fontWeight: 700, color: '#059669', direction: 'ltr' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(paidAmountNumber)}</span> ج.م
+                </span>
+              </div>
+
+              {saleType === 'wholesale' ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                    <span>المتبقي ديناً على العميل:</span>
+                    <span style={{ fontWeight: 700, color: remainingDebt > 0 ? '#DC2626' : '#334155', direction: 'ltr' }}>
+                      <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(remainingDebt)}</span> ج.م
+                    </span>
+                  </div>
+                  {customerCredit > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0284C7', fontWeight: 600 }}>
+                      <span>رصيد دائن إضافي للعميل:</span>
+                      <span style={{ direction: 'ltr' }}><span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(customerCredit)}</span> ج.م</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                remainingDebt > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#D97706', fontWeight: 600 }}>
+                    <span>متبقي غير مسدد:</span>
+                    <span style={{ fontWeight: 700, direction: 'ltr' }}><span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(remainingDebt)}</span> ج.م</span>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Prominent Change Due Display (Retail Cash Overpayment - Display Only) */}
+            {changeDue > 0 && (
+              <div style={{ backgroundColor: '#ECFDF5', border: '2px solid #6EE7B7', borderRadius: '8px', padding: '0.875rem', textAlign: 'center', marginBottom: '0.875rem' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#065F46' }}>باقي النقدية للعميل (فكة):</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: '#047857', marginTop: '0.25rem', direction: 'ltr' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(changeDue)}</span> <span style={{ fontSize: '18px', fontWeight: 700 }}>ج.م</span>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748B', marginBottom: '0.25rem' }}>ملاحظات الفاتورة:</label>
+              <input
+                type="text"
+                value={invoiceNotes}
+                onChange={(e) => setInvoiceNotes(e.target.value)}
+                placeholder="ملاحظات اختيارية..."
+                style={{ width: '100%', height: '40px', minHeight: '40px', padding: '0 0.75rem', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '13px', color: '#0F172A', outline: 'none', boxSizing: 'border-box' }}
+                className="al-input"
+              />
+            </div>
+
+            {/* Checkout Button & Error Box */}
+            <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {checkoutError && <Alert type="error" message={checkoutError} />}
+
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleCheckout}
+                disabled={isSubmitting || cart.length === 0}
+                style={{
+                  width: '100%',
+                  height: '56px',
+                  minHeight: '56px',
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  backgroundColor: '#0B1220',
+                  color: '#FFFFFF',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                {isSubmitting ? <Spinner size="sm" /> : 'إتمام البيع وحفظ الفاتورة (F9)'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
