@@ -72,21 +72,37 @@ export const Code128Barcode: React.FC<Code128BarcodeProps> = ({
   if (!encoding.valid) {
     return (
       <div
-        className={`inline-flex flex-col items-center justify-center p-1.5 border border-red-300 rounded bg-red-50 text-red-600 text-xs font-mono select-none ${className}`}
-        style={style}
+        className={className}
+        style={{
+          display: 'inline-flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0.375rem',
+          border: '1px solid var(--color-danger-border)',
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: 'var(--color-danger-bg)',
+          color: 'var(--color-danger-600)',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          userSelect: 'none',
+          ...style,
+        }}
         dir="ltr"
         title={encoding.error}
       >
-        <span className="font-bold">[رمز باركود غير صالح]</span>
-        <span className="text-[10px] text-red-500 truncate max-w-[180px]">{value}</span>
+        <span style={{ fontWeight: 700 }}>[رمز باركود غير صالح]</span>
+        <span style={{ fontSize: '10px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value}
+        </span>
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex flex-col items-center select-none ${className}`}
-      style={{ ...style }}
+      className={className}
+      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', maxWidth: '100%', ...style }}
       dir="ltr"
     >
       <svg

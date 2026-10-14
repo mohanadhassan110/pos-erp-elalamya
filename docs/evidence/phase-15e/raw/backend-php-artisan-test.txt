@@ -1,0 +1,264 @@
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\BarcodeGeneratorTest[39m
+  [32;1m✓[39;22m[90m [39m[90mgenerates first sequential barcode for category[39m[90m                                                             [39m [90m3.48s[39m  
+  [32;1m✓[39;22m[90m [39m[90mincrements sequential barcode correctly[39m[90m                                                                     [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdifferent categories maintain independent sequences[39m[90m                                                         [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90msoft deleted product preserves barcode sequence without collision[39m[90m                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrejects invalid category letter[39m[90m                                                                             [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mthrows exception when category reaches maximum capacity[39m[90m                                                     [39m [90m0.03s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\CustomerLedgerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcustomer balance is correctly derived from debit and credit ledger movements[39m[90m                                [39m [90m0.87s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer ledger entries preserve audit traceability[39m[90m                                                         [39m [90m0.03s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\HistoricalCostTest[39m
+  [32;1m✓[39;22m[90m [39m[90minvoice item preserves historical cost and profit when product cost changes[39m[90m                                 [39m [90m0.05s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\MoneyTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan create from decimal string and minor units[39m[90m                                                              [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90maddition and subtraction maintain fixed precision[39m
+  [32;1m✓[39;22m[90m [39m[90mmultiplication and division[39m
+  [32;1m✓[39;22m[90m [39m[90marabic formatting[39m
+  [32;1m✓[39;22m[90m [39m[90minvalid decimal throws exception[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\QuantityTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan create from integer[39m
+  [32;1m✓[39;22m[90m [39m[90mcan create from integer string[39m
+  [32;1m✓[39;22m[90m [39m[90mrejects decimal quantities[39m
+  [32;1m✓[39;22m[90m [39m[90maddition and subtraction[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Domain\SupplierLedgerTest[39m
+  [32;1m✓[39;22m[90m [39m[90msupplier payable is correctly derived from ledger movements[39m[90m                                                 [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90msupplier ledger entries preserve audit traceability[39m[90m                                                         [39m [90m0.04s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthat true is true[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\AuthTest[39m
+  [32;1m✓[39;22m[90m [39m[90muser can login with valid username and password[39m[90m                                                             [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser can login with valid email[39m[90m                                                                             [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlogin fails with invalid credentials[39m[90m                                                                        [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlogin fails when user is inactive[39m[90m                                                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthenticated user can retrieve profile[39m[90m                                                                     [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90munauthenticated user cannot access protected endpoint[39m[90m                                                       [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser can logout[39m[90m                                                                                             [39m [90m0.10s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\AuthorizationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mowner can access owner only endpoint[39m[90m                                                                        [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier is forbidden from owner only endpoint[39m[90m                                                               [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mboth owner and cashier can access operational endpoint[39m[90m                                                      [39m [90m0.04s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\BarcodePrintTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcashier and owner can access barcode preview[39m[90m                                                                [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90munauthenticated request is rejected[39m[90m                                                                         [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbarcode values are preserved and never regenerated[39m[90m                                                          [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconfidentiality purchase cost is strictly omitted from labels[39m[90m                                               [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvalidation rejects empty items or invalid quantity[39m[90m                                                          [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mserialized barcode label response contains exact intended fields only[39m[90m                                       [39m [90m0.04s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\ExchangeCaseCAuditTest[39m
+  [32;1m✓[39;22m[90m [39m[90mexchange case c exact mathematical and accounting equilibrium[39m[90m                                               [39m [90m0.26s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\HealthTest[39m
+  [32;1m✓[39;22m[90m [39m[90mhealth check returns operational status[39m[90m                                                                     [39m [90m0.05s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\InvoicePrintTest[39m
+  [32;1m✓[39;22m[90m [39m[90manonymous retail invoice printing[39m[90m                                                                           [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale invoice with outstanding debt shows prior and resulting balance[39m[90m                                   [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale invoice with overpayment creates credit balance[39m[90m                                                   [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexternal product appears as ordinary line without leaking cost or markers[39m[90m                                   [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconfidentiality cost and profit are never exposed on customer printable resource[39m[90m                            [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale invoice retains historical prior and resulting balances regardless of later transactions[39m[90m          [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mback dated payment with higher id is included in previous balance[39m[90m                                           [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlate created transaction with lower id but future date is not included in previous balance[39m[90m                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90msame timestamp transactions use id as deterministic tiebreaker[39m[90m                                              [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwalk in invoice without customer has no balance section and no errors[39m[90m                                       [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfully paid wholesale invoice and invoice with zero customer transactions[39m[90m                                    [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreprinting same invoice twice returns identical balance numbers[39m[90m                                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer returns before vs after invoice are properly sequenced[39m[90m                                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90munauthenticated request is rejected[39m[90m                                                                         [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mempty showroom settings yield null detail blocks[39m[90m                                                            [39m [90m0.05s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\InvoiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan search product by barcode[39m[90m                                                                               [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan list active payment methods[39m[90m                                                                             [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcreate retail invoice without customer uses retail price default[39m[90m                                            [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mretail sale allows manual price override without changing product master[39m[90m                                    [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale sale strictly requires customer[39m[90m                                                                   [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale sale defaults to wholesale price and integrates customer ledger[39m[90m                                   [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale exact payment leaves zero balance[39m[90m                                                                 [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale overpayment creates customer credit on account[39m[90m                                                    [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90minsufficient stock rejects sale and rolls back everything[39m[90m                                                   [39m [90m0.10s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhistorical cost and profit remain immutable when product cost changes[39m[90m                                       [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexternal product creates expense and does not mutate normal inventory[39m[90m                                       [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer facing representation hides cost and profit from cashier[39m[90m                                           [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcheckout idempotency prevents duplicate invoices and mutations[39m[90m                                              [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90minvoice numbers are unique and sequential[39m[90m                                                                   [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90munauthenticated cannot create or view invoices[39m[90m                                                              [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale underpayment creates exact debt and customer ledger entries[39m[90m                                       [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconcurrent sales cannot oversell available stock[39m[90m                                                            [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90matomic rollback on failure leaves no external expense or invoice[39m[90m                                            [39m [90m0.58s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmulti payment creates multiple records and rejects inactive methods[39m[90m                                         [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconcurrent sale of last unit row level locking prevents negative stock[39m[90m                                      [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale overpayment creates customer credit balance[39m[90m                                                       [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mretail overpayment records change due without customer ledger[39m[90m                                               [39m [90m0.05s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\MasterDataTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcashier can create category with valid letter[39m[90m                                                               [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mduplicate category code is rejected[39m[90m                                                                         [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90minvalid category code is rejected[39m[90m                                                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcategory code cannot be changed if products exist[39m[90m                                                           [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan toggle category status[39m[90m                                                                                  [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier can create product with initial stock movement[39m[90m                                                      [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mproduct price and cost editing updates current cost cleanly[39m[90m                                                 [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer crud and balance reporting[39m[90m                                                                         [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90msupplier crud payable and add balance[39m[90m                                                                       [39m [90m0.16s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\ReportTest[39m
+  [32;1m✓[39;22m[90m [39m[90munauthenticated requests are denied with 401[39m[90m                                                                [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier requests are denied with 403 on all report endpoints[39m[90m                                                [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner can access all report endpoints[39m[90m                                                                       [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mempty datasets return valid zero results[39m[90m                                                                    [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90msales and realized profit calculation with cancellation and returns[39m[90m                                         [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpolicy c external product expenses and no double counting[39m[90m                                                   [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer balances are authoritatively derived from ledger[39m[90m                                                   [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90msupplier payables are authoritatively derived from ledger[39m[90m                                                   [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90minventory valuation uses current stock and current purchase cost[39m[90m                                            [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpayment breakdown and cash flow summary[39m[90m                                                                     [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdate filters boundary behavior in cairo timezone[39m[90m                                                            [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdedicated profit endpoint and reconciliation[39m[90m                                                                [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer balances search and pagination[39m[90m                                                                     [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90msupplier payables search and pagination[39m[90m                                                                     [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90minventory valuation with inactive products and search[39m[90m                                                       [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpayment movements inflows and refunds distinction[39m[90m                                                           [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdocuments unified endpoint for invoices and returns[39m[90m                                                         [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdate filters validation errors[39m[90m                                                                              [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier confidentiality on invoice cost and profit[39m[90m                                                          [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconcrete external product return scenario produces exact loss of 600[39m[90m                                        [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnormal product return regression and current cost change invariance[39m[90m                                         [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcomprehensive sales returns replacement and cancelled invoices reconciliation[39m[90m                               [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcairo timezone midnight boundaries inclusion and exclusion[39m[90m                                                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcairo dst boundary and documents history date filtering[39m[90m                                                     [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcairo day boundary coverage across all date filtered report endpoints[39m[90m                                       [39m [90m0.08s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\Reports\OwnerProfitReportTest[39m
+  [32;1m✓[39;22m[90m [39m[90mowner can access invoices profit history unconditionally[39m[90m                                                    [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier without unlock is forbidden with reports locked[39m[90m                                                     [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier with active unlock can access reports history[39m[90m                                                       [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier operational invoices endpoint never exposes cost or profit[39m[90m                                          [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreconciliation per invoice net profit matches reports profit exactly[39m[90m                                        [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mperformance check on 5000 invoices[39m[90m                                                                          [39m [90m1.17s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\SalesReturnTest[39m
+  [32;1m✓[39;22m[90m [39m[90mfull retail return with cash refund[39m[90m                                                                         [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpartial retail return[39m[90m                                                                                       [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfull wholesale return with customer account credit[39m[90m                                                          [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpartial wholesale return against unpaid invoice[39m[90m                                                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn exceeding remaining quantity is rejected[39m[90m                                                             [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn against cancelled invoice is rejected[39m[90m                                                                [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn against non existent invoice is rejected[39m[90m                                                             [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmultiple returns against same invoice[39m[90m                                                                       [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhistorical cost is preserved during return when product cost changes[39m[90m                                        [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90minventory is restored correctly with sales return movement[39m[90m                                                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexternal product return does not create inventory movement[39m[90m                                                  [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexternal product return preserves original purchase expense without supplier reimbursement[39m[90m                  [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcash refund creates payment record[39m[90m                                                                          [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mequal value exchange[39m[90m                                                                                        [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhigher value exchange with difference payment[39m[90m                                                               [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexchange difference with inactive payment method is rejected[39m[90m                                                [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale customer account credit reduces debt[39m[90m                                                              [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn creating customer credit beyond zero[39m[90m                                                                 [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale cash refund preserves customer balance[39m[90m                                                            [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90minactive payment method rejected for cash refund[39m[90m                                                            [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90midempotency prevents duplicate returns[39m[90m                                                                      [39m [90m0.95s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn numbers are unique and sequential[39m[90m                                                                    [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconcurrent returns cannot over return[39m[90m                                                                       [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90matomic rollback on failure leaves no return records[39m[90m                                                         [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturn creates audit log record[39m[90m                                                                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot access owner only financial information[39m[90m                                                      [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale cash refund when invoice is unpaid asserting exact ledger entries[39m[90m                                 [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale cash refund when invoice is partially paid asserting exact ledger entries[39m[90m                         [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale cash refund when invoice is fully paid asserting exact ledger entries[39m[90m                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale cash refund when customer already has credit balance[39m[90m                                              [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale exchange upgrade end to end ledger and inventory equilibrium[39m[90m                                      [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mequal exchange requires zero additional payment[39m[90m                                                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexchange with lower value replacement is strictly rejected[39m[90m                                                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90midempotency key reuse across different invoices is rejected[39m[90m                                                 [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90midempotency retry on exchange does not duplicate stock or payments[39m[90m                                          [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexchange atomic rollback on failure leaves no traces[39m[90m                                                        [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot access cost metrics on replacement invoice[39m[90m                                                   [39m [90m0.07s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\SecurityTest[39m
+  [32;1m✓[39;22m[90m [39m[90munauthenticated requests receive 401 across all route groups[39m[90m                                                [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier is locked out of reports by default and forbidden from owner endpoints[39m[90m                              [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90minactive user is forbidden even with valid token[39m[90m                                                            [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot see cost or profit on invoices and returns[39m[90m                                                   [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90midor non existent entity ids return 404[39m[90m                                                                     [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmass assignment tampering on invoices is ignored[39m[90m                                                            [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprint and barcode outputs are strictly free of confidential markers[39m[90m                                         [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlogin rate limiting protects against brute force[39m[90m                                                            [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90msecurity headers are present on api responses[39m[90m                                                               [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports password gate unlock and lock lifecycle[39m[90m                                                             [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports unlock expires after ttl[39m[90m                                                                            [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports unlock does not survive logout[39m[90m                                                                      [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90munlocking reports does not leak cost on non report endpoints[39m[90m                                                [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports unlock rate limiting[39m[90m                                                                                [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner does not require password for reports[39m[90m                                                                 [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot change reports password[39m[90m                                                                      [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlogin rate limiter allows correct login after fewer than limit failures[39m[90m                                     [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier post invoice and post return responses do not leak cost or profit[39m[90m                                   [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcustomer and supplier endpoints do not leak cost or profit[39m[90m                                                  [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcross entity idor prevention on returns[39m[90m                                                                     [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapp debug false does not leak stack traces or sql[39m[90m                                                           [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports password not configured rejects cashier unlock while owner retains access[39m[90m                           [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfailed unlock attempts of user a do not affect user b[39m[90m                                                       [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeactivated user is immediately locked out even with previously active unlock[39m[90m                               [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier operational cost visibility on inventory products and stock receipts[39m[90m                                [39m [90m0.15s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\Settings\ShowroomSettingsTest[39m
+  [32;1m✓[39;22m[90m [39m[90mowner can view showroom settings[39m[90m                                                                            [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner can update showroom settings[39m[90m                                                                          [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot view showroom settings[39m[90m                                                                       [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcashier cannot update showroom settings[39m[90m                                                                     [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90munauthenticated cannot access showroom settings[39m[90m                                                             [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mupdate validates field lengths[39m[90m                                                                              [39m [90m0.03s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Api\V1\StockReceivingTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan receive single product and update stock cost movement and supplier payable[39m[90m                              [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan receive multiple products with different costs atomically[39m[90m                                               [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstock receiving rolls back everything if any item is invalid[39m[90m                                                [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstock receiving does not mutate historical invoice costs[39m[90m                                                    [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90minventory visibility endpoint returns accurate stock and valuation[39m[90m                                          [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mduplicate product lines within single receipt are rejected[39m[90m                                                  [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90midempotency key prevents duplicate stock receipt creation and double mutations[39m[90m                              [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreceipt number generation handles concurrency and recovers from collisions[39m[90m                                  [39m [90m0.07s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Console\UserManagementCommandTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmake cashier command creates active cashier with min 8 password[39m[90m                                             [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmake cashier command rejects password shorter than 8 chars[39m[90m                                                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser reset password command updates password and enforces length[39m[90m                                            [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser toggle status deactivates user and revokes tokens[39m[90m                                                      [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports set password command stores hash and allows unlock[39m[90m                                                  [39m [90m0.34s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\DatabaseIntegrityTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcategory code must be unique at database level[39m[90m                                                              [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90mproduct barcode must be unique at database level[39m[90m                                                            [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mproduct is independent from supplier[39m[90m                                                                        [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mretail invoice can exist without customer[39m[90m                                                                   [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot delete category when products exist due to restrict on delete[39m[90m                                        [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90minventory movement tracks quantity and resulting stock[39m[90m                                                      [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90maudit log records polymorphic action with json metadata[39m[90m                                                     [39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90msetting store and retrieve helper[39m[90m                                                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mwholesale invoice associates with registered customer[39m[90m                                                       [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexternal product invoice item supports polymorphic linked expense[39m[90m                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstock receipt records items and links to supplier[39m[90m                                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90msales return and return items preserve historical profit reversal[39m[90m                                           [39m [90m0.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot force delete product when inventory movements exist[39m[90m                                                  [39m [90m0.03s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthe application returns a successful response[39m[90m                                                               [39m [90m0.08s[39m  
+
+  [90mTests:[39m    [32;1m211 passed[39;22m[90m (1505 assertions)[39m
+  [90mDuration:[39m [39m24.97s[39m
+
+exit=0

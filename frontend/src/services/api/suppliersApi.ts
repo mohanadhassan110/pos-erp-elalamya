@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { Supplier, PaginatedResponse } from '../../types/domain';
+import type { Supplier, SupplierStatementResponse, PaginatedResponse } from '../../types/domain';
 
 export interface SupplierFilters {
   [key: string]: string | number | boolean | undefined | null;
@@ -47,5 +47,28 @@ export const suppliersApi = {
   addBalance: async (id: number, payload: { amount: string; description: string }): Promise<{ supplier: Supplier }> => {
     const res = await apiClient.post<{ supplier: Supplier }>(API_ENDPOINTS.SUPPLIERS.ADD_BALANCE(id), payload);
     return res.data;
+  },
+
+  recordPayment: async (
+    id: number,
+    payload: { amount: string; payment_method_id: number; notes?: string }
+  ): Promise<{ message: string; supplier: Supplier; payment_id: number; payment_number: string }> => {
+    const res = await apiClient.post<{ message: string; supplier: Supplier; payment_id: number; payment_number: string }>(
+      API_ENDPOINTS.SUPPLIERS.PAYMENTS(id),
+      payload
+    );
+    return res.data;
+  },
+
+  getStatement: async (
+    id: number,
+    params?: { from_date?: string; to_date?: string }
+  ): Promise<SupplierStatementResponse> => {
+    const res = await apiClient.get<SupplierStatementResponse>(API_ENDPOINTS.SUPPLIERS.STATEMENT(id), { params });
+    const raw = res as unknown as { data?: SupplierStatementResponse; transactions?: unknown[] };
+    if (raw && raw.data && Array.isArray((raw.data as SupplierStatementResponse).transactions)) {
+      return raw.data;
+    }
+    return res as unknown as SupplierStatementResponse;
   },
 };

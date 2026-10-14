@@ -71,8 +71,20 @@ class SalesReturnController extends Controller
             ], 422);
         }
 
-        $invoice = Invoice::where('invoice_number', $search)
-            ->with(['customer', 'items.returnItems', 'items.product'])
+        $query = Invoice::query()
+            ->where(function ($q) use ($search) {
+                $q->where('invoice_number', $search)
+                    ->orWhere('invoice_number', 'like', "%{$search}")
+                    ->orWhere('invoice_number', 'like', "%{$search}%")
+                    ->orWhere('id', is_numeric($search) ? (int) $search : -1);
+            });
+
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->query('customer_id'));
+        }
+
+        $invoice = $query->with(['customer', 'items.returnItems', 'items.product', 'returns'])
+            ->latest('id')
             ->first();
 
         if (! $invoice) {
@@ -91,7 +103,7 @@ class SalesReturnController extends Controller
      */
     public function getReturnableInvoice(Invoice $invoice): JsonResponse
     {
-        $invoice->load(['customer', 'items.returnItems', 'items.product']);
+        $invoice->load(['customer', 'items.returnItems', 'items.product', 'returns']);
 
         return response()->json([
             'data' => new ReturnableInvoiceResource($invoice),

@@ -28,12 +28,16 @@ export const API_ENDPOINTS = {
     BASE: '/customers',
     BY_ID: (id: number) => `/customers/${id}`,
     STATUS: (id: number) => `/customers/${id}/status`,
+    PAYMENTS: (id: number) => `/customers/${id}/payments`,
+    STATEMENT: (id: number) => `/customers/${id}/statement`,
   },
   SUPPLIERS: {
     BASE: '/suppliers',
     BY_ID: (id: number) => `/suppliers/${id}`,
     STATUS: (id: number) => `/suppliers/${id}/status`,
     ADD_BALANCE: (id: number) => `/suppliers/${id}/add-balance`,
+    PAYMENTS: (id: number) => `/suppliers/${id}/payments`,
+    STATEMENT: (id: number) => `/suppliers/${id}/statement`,
   },
   STOCK_RECEIPTS: {
     BASE: '/stock-receipts',

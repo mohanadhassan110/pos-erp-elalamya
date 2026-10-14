@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api\V1\Suppliers;
 
 use App\Actions\Suppliers\AddSupplierBalanceAction;
 use App\Actions\Suppliers\CreateSupplierAction;
+use App\Actions\Suppliers\CreateSupplierPaymentAction;
 use App\Actions\Suppliers\ToggleSupplierStatusAction;
 use App\Actions\Suppliers\UpdateSupplierAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Suppliers\AddSupplierBalanceRequest;
+use App\Http\Requests\Suppliers\SupplierPaymentRequest;
 use App\Http\Requests\Suppliers\SupplierRequest;
 use App\Http\Resources\Suppliers\SupplierResource;
 use App\Models\Supplier;
+use App\Services\Ledger\SupplierStatementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -77,5 +80,30 @@ class SupplierController extends Controller
             'supplier' => new SupplierResource($supplier->fresh()),
             'transaction_id' => $transaction->id,
         ], 201);
+    }
+
+    public function recordPayment(
+        SupplierPaymentRequest $request,
+        Supplier $supplier,
+        CreateSupplierPaymentAction $action
+    ): JsonResponse {
+        $payment = $action->execute($supplier, $request->validated(), $request->user());
+
+        return response()->json([
+            'message' => 'تم تسجيل سداد الدفعة للمورد بنجاح.',
+            'supplier' => new SupplierResource($supplier->fresh()),
+            'payment_id' => $payment->id,
+            'payment_number' => $payment->payment_number,
+        ], 201);
+    }
+
+    public function statement(
+        Request $request,
+        Supplier $supplier,
+        SupplierStatementService $service
+    ): JsonResponse {
+        $statement = $service->getStatement($supplier, $request);
+
+        return response()->json($statement);
     }
 }

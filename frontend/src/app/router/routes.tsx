@@ -11,7 +11,7 @@ import { StockReceivingPage } from '../../features/stock-receiving/StockReceivin
 import { InventoryPage } from '../../features/inventory/InventoryPage';
 import { PosPage } from '../../features/pos/PosPage';
 import { InvoicesPage } from '../../features/invoices/InvoicesPage';
-import { ReturnsPage } from '../../features/returns/ReturnsPage';
+import { RETURNS_TAB_PATH } from '../../features/returns/returnEligibility';
 import { BarcodePrintingPage } from '../../features/barcodes/BarcodePrintingPage';
 import { ReportsPage } from '../../features/reports/ReportsPage';
 import { SettingsPage } from '../../features/settings/SettingsPage';
@@ -37,7 +37,8 @@ export const AppRoutes: React.FC = () => {
         {/* Operational Workflow Routes (Owner & Cashier) */}
         <Route path="pos" element={<PosPage />} />
         <Route path="invoices" element={<InvoicesPage />} />
-        <Route path="returns" element={<ReturnsPage />} />
+        {/* Returns live inside Invoices; keep old /returns bookmarks working */}
+        <Route path="returns" element={<Navigate to={RETURNS_TAB_PATH} replace />} />
 
         <Route path="products" element={<ProductsPage />} />
         <Route path="categories" element={<CategoriesPage />} />

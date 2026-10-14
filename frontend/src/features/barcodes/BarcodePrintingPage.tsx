@@ -1,66 +1,202 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { productsApi } from '../../services/api/productsApi';
 import type { Product, BarcodeLabel } from '../../types/domain';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Spinner } from '../../components/ui/Spinner';
-import { Alert } from '../../components/ui/Alert';
+import { Button, Input, Spinner, Alert, Card, Badge } from '../../components/ui';
 import { Code128Barcode } from '../../components/barcode/Code128Barcode';
 import { Printer, Trash2, Info, Barcode } from 'lucide-react';
+import {
+  LABEL_FORMATS,
+  LABEL_FORMAT_ORDER,
+  A4_WIDTH_MM,
+  MAX_LABELS_PER_BATCH,
+  chunkIntoSheets,
+  pageRuleFor,
+  type LabelFormat,
+  type LabelFormatId,
+} from './labelFormats';
 
 interface QueueItem {
   product: Product;
   quantity: number;
 }
 
+interface LabelFields {
+  showShowroomName: boolean;
+  showPrice: boolean;
+  showCategory: boolean;
+}
+
+const DEFAULT_SHOWROOM_NAME = 'معرض العالمية للمفروشات';
+const MM_TO_PX = 96 / 25.4;
+const PREVIEW_THERMAL_LIMIT = 60;
+const PREVIEW_SHEET_LIMIT = 2;
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: 'var(--font-size-sm)',
+  fontWeight: 'var(--font-weight-bold)',
+  color: 'var(--text-secondary)',
+  marginBottom: '0.5rem',
+};
+
+const ellipsis: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+
+/** One label's content, sized to fill its mm box. Shared by the preview and the print output. */
+const LabelContent: React.FC<{ label: BarcodeLabel; format: LabelFormat; fields: LabelFields }> = ({ label, format, fields }) => {
+  const t = format.typography;
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        padding: format.kind === 'thermal' ? '1mm 1.5mm' : '2mm 3mm',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'stretch',
+        textAlign: 'center',
+        color: '#000000',
+        backgroundColor: '#FFFFFF',
+        overflow: 'hidden',
+        direction: 'rtl',
+        fontFamily: 'var(--font-family-base)',
+      }}
+    >
+      {(fields.showShowroomName || fields.showCategory) && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '2px', fontSize: `${t.headerFontPx}px`, lineHeight: 1.2 }}>
+          <span style={{ fontWeight: 700, ...ellipsis }}>{fields.showShowroomName ? label.showroom_name || DEFAULT_SHOWROOM_NAME : ''}</span>
+          {fields.showCategory && (
+            <span style={{ fontFamily: 'monospace', flexShrink: 0 }}>[{label.category_code || label.category_name}]</span>
+          )}
+        </div>
+      )}
+      <div style={{ fontSize: `${t.nameFontPx}px`, fontWeight: 700, lineHeight: 1.2, ...ellipsis }} title={label.product_name}>
+        {label.product_name}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', minHeight: 0 }}>
+        <Code128Barcode
+          value={label.barcode}
+          height={t.barHeightPx}
+          moduleWidth={t.moduleWidthPx}
+          fontSize={t.barTextFontPx}
+          showText={true}
+        />
+      </div>
+      {fields.showPrice && (
+        <div style={{ fontSize: `${t.priceFontPx}px`, fontWeight: 700, lineHeight: 1.2 }}>
+          {label.retail_price_formatted}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** An A4 sheet laid out in a fixed mm grid. */
+const A4Sheet: React.FC<{ labels: BarcodeLabel[]; format: LabelFormat; fields: LabelFields; outlined: boolean }> = ({
+  labels,
+  format,
+  fields,
+  outlined,
+}) => (
+  <div
+    style={{
+      width: `${A4_WIDTH_MM}mm`,
+      height: `${format.rows * format.heightMm}mm`,
+      display: 'grid',
+      gridTemplateColumns: `repeat(${format.columns}, ${format.widthMm}mm)`,
+      gridTemplateRows: `repeat(${format.rows}, ${format.heightMm}mm)`,
+      backgroundColor: '#FFFFFF',
+      direction: 'rtl',
+    }}
+  >
+    {labels.map((lbl, idx) => (
+      <div
+        key={`${lbl.product_id}_${idx}`}
+        style={{ outline: outlined ? '1px dashed var(--border-strong)' : 'none', outlineOffset: '-1px', overflow: 'hidden' }}
+      >
+        <LabelContent label={lbl} format={format} fields={fields} />
+      </div>
+    ))}
+  </div>
+);
+
+/** Scales a real-size A4 sheet down to the preview column width. */
+const ScaledSheetPreview: React.FC<{ children: React.ReactNode; rows: number; format: LabelFormat }> = ({ children, rows, format }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => setContainerWidth(entries[0].contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const sheetWidthPx = A4_WIDTH_MM * MM_TO_PX;
+  const sheetHeightPx = rows * format.heightMm * MM_TO_PX;
+  const scale = containerWidth > 0 ? Math.min(1, containerWidth / sheetWidthPx) : 1;
+
+  return (
+    <div ref={containerRef} style={{ width: '100%' }}>
+      {/* LTR wrapper so the unscaled sheet overflows to the right and scales from the top-left corner */}
+      <div style={{ height: `${sheetHeightPx * scale}px`, width: `${sheetWidthPx * scale}px`, margin: '0 auto', overflow: 'hidden', direction: 'ltr' }}>
+        <div
+          style={{
+            width: `${sheetWidthPx}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            boxShadow: 'var(--shadow-sm)',
+            direction: 'ltr',
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const BarcodePrintingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialProductId = searchParams.get('productId');
 
-  // Search & Catalog
+  // Search & catalog
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  // Print Queue
+  // Print queue
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPreparingLabels, setIsPreparingLabels] = useState<boolean>(false);
   const [preparedLabels, setPreparedLabels] = useState<BarcodeLabel[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Layout & Customization Options
-  const [layoutMode, setLayoutMode] = useState<'thermal' | 'a4-grid-3' | 'a4-grid-4'>('thermal');
-  const [showShowroomName, setShowShowroomName] = useState<boolean>(true);
-  const [showPrice, setShowPrice] = useState<boolean>(true);
-  const [showCategory, setShowCategory] = useState<boolean>(true);
+  // Format & fields
+  const [formatId, setFormatId] = useState<LabelFormatId>('thermal-50x25');
+  const [fields, setFields] = useState<LabelFields>({ showShowroomName: true, showPrice: true, showCategory: true });
+  const format = LABEL_FORMATS[formatId];
 
   // If productId passed in query param, load and add to queue
   useEffect(() => {
-    if (initialProductId) {
-      const pid = parseInt(initialProductId, 10);
-      if (!isNaN(pid)) {
-        productsApi.getById(pid)
-          .then((p) => {
-            if (p && p.is_active) {
-              setQueue((prev) => {
-                if (prev.some((q) => q.product.id === p.id)) return prev;
-                return [...prev, { product: p, quantity: 1 }];
-              });
-            }
-          })
-          .catch(() => {});
-      }
-    }
+    if (!initialProductId) return;
+    const pid = parseInt(initialProductId, 10);
+    if (isNaN(pid)) return;
+    productsApi.getById(pid)
+      .then((p) => {
+        if (p && p.is_active) {
+          setQueue((prev) => (prev.some((q) => q.product.id === p.id) ? prev : [...prev, { product: p, quantity: 1 }]));
+        }
+      })
+      .catch(() => {});
   }, [initialProductId]);
 
-  // Product Search Debounce
+  // Product search debounce
   useEffect(() => {
     const q = searchQuery.trim();
-    if (!q) {
-      return;
-    }
+    if (!q) return;
 
     let isMounted = true;
     const timer = setTimeout(() => {
@@ -83,14 +219,11 @@ export const BarcodePrintingPage: React.FC = () => {
     };
   }, [searchQuery]);
 
-  // Add Product to Queue
   const addToQueue = (product: Product, defaultQty = 1) => {
     setQueue((prev) => {
       const existingIdx = prev.findIndex((item) => item.product.id === product.id);
       if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx].quantity += defaultQty;
-        return updated;
+        return prev.map((item, i) => (i === existingIdx ? { ...item, quantity: item.quantity + defaultQty } : item));
       }
       return [...prev, { product, quantity: defaultQty }];
     });
@@ -100,9 +233,7 @@ export const BarcodePrintingPage: React.FC = () => {
 
   const updateQuantity = (productId: number, qty: number) => {
     const safeQty = Math.max(1, Math.min(500, qty));
-    setQueue((prev) =>
-      prev.map((item) => (item.product.id === productId ? { ...item, quantity: safeQty } : item))
-    );
+    setQueue((prev) => prev.map((item) => (item.product.id === productId ? { ...item, quantity: safeQty } : item)));
   };
 
   const removeFromQueue = (productId: number) => {
@@ -114,7 +245,7 @@ export const BarcodePrintingPage: React.FC = () => {
     setPreparedLabels([]);
   };
 
-  // Whenever queue changes, generate preview via previewBarcodes API endpoint
+  // Whenever the queue changes, prepare labels via the preview endpoint
   useEffect(() => {
     let isMounted = true;
     if (queue.length === 0) {
@@ -127,30 +258,20 @@ export const BarcodePrintingPage: React.FC = () => {
       };
     }
 
-    const itemsPayload = queue.map((q) => ({
-      product_id: q.product.id,
-      quantity: q.quantity,
-    }));
+    const itemsPayload = queue.map((q) => ({ product_id: q.product.id, quantity: q.quantity }));
 
     const timer = setTimeout(() => {
       setIsPreparingLabels(true);
       setError(null);
-
       productsApi.previewBarcodes(itemsPayload)
         .then((res) => {
-          if (isMounted) {
-            setPreparedLabels(res.data.labels);
-          }
+          if (isMounted) setPreparedLabels(res.data.labels);
         })
         .catch(() => {
-          if (isMounted) {
-            setError('تعذر تجهيز ملصقات الباركود من الخادم. يرجى التحقق من الاتصال.');
-          }
+          if (isMounted) setError('تعذر تجهيز ملصقات الباركود من الخادم. يرجى التحقق من الاتصال.');
         })
         .finally(() => {
-          if (isMounted) {
-            setIsPreparingLabels(false);
-          }
+          if (isMounted) setIsPreparingLabels(false);
         });
     }, 0);
 
@@ -160,401 +281,404 @@ export const BarcodePrintingPage: React.FC = () => {
     };
   }, [queue]);
 
-  const totalLabelsCount = useMemo(() => {
-    return queue.reduce((sum, item) => sum + item.quantity, 0);
-  }, [queue]);
+  const totalLabelsCount = useMemo(() => queue.reduce((sum, item) => sum + item.quantity, 0), [queue]);
 
-  // Flattened array of individual labels to render in printable area
+  // One entry per physical label
   const flattenedLabels = useMemo(() => {
     const list: BarcodeLabel[] = [];
     for (const label of preparedLabels) {
       const count = label.print_quantity || 1;
-      for (let i = 0; i < count; i++) {
-        list.push(label);
-      }
+      for (let i = 0; i < count; i++) list.push(label);
     }
     return list;
   }, [preparedLabels]);
+
+  const sheets = useMemo(() => chunkIntoSheets(flattenedLabels, format), [flattenedLabels, format]);
+  const overLimit = totalLabelsCount > MAX_LABELS_PER_BATCH;
+  const canPrint = flattenedLabels.length > 0 && !isPreparingLabels && !overLimit;
 
   const handlePrint = () => {
     window.print();
   };
 
+  const toggleField = (key: keyof LabelFields) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFields((prev) => ({ ...prev, [key]: e.target.checked }));
+
   const printableRoot = typeof document !== 'undefined' ? document.getElementById('printable-root') : null;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto text-gray-900 font-sans" dir="rtl">
-      {/* Page Header (Hidden when printing) */}
-      <div className="no-print flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '100rem', margin: '0 auto', width: '100%' }}>
+      {/* Page header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Barcode size={22} className="text-[#0B1220]" />
+          <h1
+            style={{
+              fontSize: 'var(--font-size-xl, 20px)',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <Barcode size={22} />
             طباعة ملصقات الباركود
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '2px' }}>
             توليد وطباعة باركود الأصناف للأرفف والتغليف وفق معيار Code 128
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="primary"
-            onClick={handlePrint}
-            disabled={flattenedLabels.length === 0 || isPreparingLabels || totalLabelsCount > 1000}
-            className="flex items-center gap-1.5 min-h-[44px]"
-          >
-            <Printer size={16} />
-            طباعة الملصقات ({flattenedLabels.length})
-          </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {queue.length > 0 && (
-            <Button variant="outline" size="sm" onClick={clearQueue} className="min-h-[44px]">
+            <Button variant="secondary" onClick={clearQueue}>
               مسح القائمة
             </Button>
           )}
+          <Button variant="primary" onClick={handlePrint} disabled={!canPrint} icon={<Printer size={16} />}>
+            طباعة الملصقات ({flattenedLabels.length})
+          </Button>
         </div>
       </div>
 
-      {totalLabelsCount > 1000 && (
-        <div className="no-print">
-          <Alert
-            type="error"
-            message={`الحد الأقصى للطباعة في الدفعة الواحدة هو 1000 ملصق منعاً لتجميد الطابعة. العدد المحدد حالياً: ${totalLabelsCount}`}
-          />
-        </div>
+      {overLimit && (
+        <Alert
+          type="error"
+          message={`الحد الأقصى للطباعة في الدفعة الواحدة هو ${MAX_LABELS_PER_BATCH} ملصق منعاً لتجميد الطابعة. العدد المحدد حالياً: ${totalLabelsCount}`}
+        />
       )}
+      {error && <Alert type="error" message={error} />}
 
-      {error && (
-        <div className="no-print">
-          <Alert type="error" message={error} />
-        </div>
-      )}
+      <div className="barcode-workspace-grid">
+        {/* Controls column: products + settings */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+          <Card dense title="1. الأصناف المطلوب طباعتها" subtitle={`${queue.length} صنف — ${totalLabelsCount} ملصق`}>
+            <div style={{ position: 'relative' }}>
+              <Input
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!e.target.value.trim()) setSearchResults([]);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchResults.length > 0) {
+                    e.preventDefault();
+                    addToQueue(searchResults[0], 1);
+                  } else if (e.key === 'Escape') {
+                    setSearchResults([]);
+                  }
+                }}
+                placeholder="ابحث باسم الصنف أو امسح الباركود ثم Enter..."
+                aria-label="بحث عن صنف لإضافته"
+                rightIcon={isSearching ? <Spinner size="sm" /> : undefined}
+                autoFocus
+              />
 
-      {/* Main Grid: Queue & Config (Hidden when printing) */}
-      <div className="no-print grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Col: Product Search and Selected Queue */}
-        <div className="lg:col-span-7 bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">
-            1. إضافة الأصناف لقائمة الطباعة
-          </h2>
-
-          {/* Search Box */}
-          <div className="relative">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث باسم الصنف أو الباركود لإضافته..."
-              autoFocus
-            />
-            {isSearching && (
-              <span className="absolute left-3 top-2.5">
-                <Spinner size="sm" />
-              </span>
-            )}
-
-            {/* Dropdown Results */}
-            {searchResults.length > 0 && (
-              <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden divide-y divide-gray-100">
-                {searchResults.map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => addToQueue(product, 1)}
-                    className="p-3 hover:bg-gray-50 flex items-center justify-between cursor-pointer transition-colors"
-                  >
-                    <div>
-                      <div className="font-semibold text-xs text-gray-900">{product.name}</div>
-                      <div className="text-[11px] text-gray-500 font-mono">
-                        {product.barcode} | {product.category_name}
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-[#0B1220] text-xs font-mono">{product.retail_price_formatted}</div>
-                      <div className="text-[10px] text-emerald-600">رصيد: {product.stock_quantity}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Current Queue Table */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs text-gray-600">
-              <span>الأصناف المختارة ({queue.length}):</span>
-              <span>إجمالي الملصقات: <strong className="text-gray-900 font-mono">{totalLabelsCount}</strong></span>
+              {searchResults.length > 0 && (
+                <div
+                  role="listbox"
+                  style={{
+                    position: 'absolute',
+                    zIndex: 20,
+                    top: 'calc(100% + 4px)',
+                    insetInline: 0,
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-lg)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {searchResults.map((product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => addToQueue(product, 1)}
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        padding: '0.6rem 0.85rem',
+                        border: 'none',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        background: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        textAlign: 'right',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <span style={{ minWidth: 0 }}>
+                        <span style={{ display: 'block', fontWeight: 600, fontSize: '13px', ...ellipsis }}>{product.name}</span>
+                        <span style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          {product.barcode} | {product.category_name}
+                        </span>
+                      </span>
+                      <span style={{ textAlign: 'left', flexShrink: 0 }}>
+                        <span style={{ display: 'block', fontWeight: 700, fontSize: '13px', direction: 'ltr' }}>
+                          {product.retail_price_formatted}
+                        </span>
+                        <span style={{ display: 'block', fontSize: '11px', color: 'var(--color-success-700)' }}>
+                          رصيد: {product.stock_quantity}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {queue.length === 0 ? (
-              <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-xs text-gray-400">
-                القائمة فارغة. ابحث عن أصناف أعلاه لإضافتها وتحديد عدد الملصقات لكل صنف.
+            <div style={{ marginTop: '0.85rem' }}>
+              {queue.length === 0 ? (
+                <div
+                  style={{
+                    border: '1px dashed var(--border-default)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  القائمة فارغة. ابحث عن أصناف أعلاه لإضافتها وتحديد عدد الملصقات لكل صنف.
+                </div>
+              ) : (
+                <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', maxHeight: '22rem', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'right' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-secondary)' }}>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>الصنف</th>
+                        <th style={{ padding: '0.5rem 0.75rem', width: '90px' }}>العدد</th>
+                        <th style={{ padding: '0.5rem 0.75rem', width: '48px' }} aria-label="حذف" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {queue.map(({ product, quantity }) => (
+                        <tr key={product.id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                          <td style={{ padding: '0.5rem 0.75rem', maxWidth: 0 }}>
+                            <div style={{ fontWeight: 600, ...ellipsis }}>{product.name}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                              {product.barcode} | {product.retail_price_formatted}
+                            </div>
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>
+                            <input
+                              type="number"
+                              min={1}
+                              max={500}
+                              value={quantity}
+                              aria-label={`عدد ملصقات ${product.name}`}
+                              onChange={(e) => updateQuantity(product.id, parseInt(e.target.value, 10) || 1)}
+                              style={{
+                                width: '100%',
+                                height: '36px',
+                                padding: '0 0.4rem',
+                                border: '1px solid var(--border-default)',
+                                borderRadius: 'var(--radius-sm)',
+                                textAlign: 'center',
+                                fontWeight: 700,
+                                fontFamily: 'monospace',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '0.5rem 0.5rem' }}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromQueue(product.id)}
+                              title="حذف من القائمة"
+                              aria-label={`حذف ${product.name} من القائمة`}
+                              style={{ color: 'var(--color-danger)', padding: '0 0.5rem' }}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card dense title="2. مقاس الملصق والحقول">
+            <div style={sectionTitleStyle}>نوع الورق / الطابعة</div>
+            <div role="radiogroup" aria-label="مقاس الملصق" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+              {LABEL_FORMAT_ORDER.map((id) => {
+                const f = LABEL_FORMATS[id];
+                const isSelected = id === formatId;
+                return (
+                  <label
+                    key={id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem',
+                      padding: '0.6rem 0.75rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: isSelected ? '2px solid var(--color-navy-950)' : '1px solid var(--border-default)',
+                      backgroundColor: isSelected ? 'var(--color-navy-50)' : 'var(--bg-surface)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="label-format"
+                      value={id}
+                      checked={isSelected}
+                      onChange={() => setFormatId(id)}
+                      style={{ marginTop: '3px' }}
+                    />
+                    <span>
+                      <span style={{ display: 'block', fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{f.title}</span>
+                      <span style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)' }}>{f.description}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div style={{ ...sectionTitleStyle, marginTop: '1rem' }}>حقول الملصق</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={fields.showShowroomName} onChange={toggleField('showShowroomName')} />
+                اسم المعرض
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={fields.showPrice} onChange={toggleField('showPrice')} />
+                سعر البيع للمستهلك
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={fields.showCategory} onChange={toggleField('showCategory')} />
+                رمز الفئة
+              </label>
+            </div>
+
+            <div
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                gap: '0.5rem',
+                alignItems: 'flex-start',
+                padding: '0.6rem 0.75rem',
+                backgroundColor: 'var(--color-navy-50)',
+                border: '1px solid var(--color-navy-100)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '12px',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.6,
+              }}
+            >
+              <Info size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>
+                يُشفَّر الباركود بمعيار Code 128 المتوافق مع قارئات الباركود، ولا يظهر على الملصق أي سعر شراء أو تكلفة داخلية.
+                عند الطباعة اختر الطابعة المناسبة واضبط الهوامش على «بلا».
+              </span>
+            </div>
+          </Card>
+        </div>
+
+        {/* Live preview column */}
+        <Card
+          dense
+          title="معاينة الطباعة المباشرة"
+          subtitle={`${format.title} — المقاس الفعلي للملصق ${format.widthMm}×${format.heightMm} مم`}
+          actions={
+            <span style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
+              {isPreparingLabels && <Spinner size="sm" />}
+              <Badge variant="neutral" size="sm">{flattenedLabels.length} ملصق</Badge>
+              {format.kind === 'a4' && sheets.length > 0 && <Badge variant="neutral" size="sm">{sheets.length} صفحة</Badge>}
+            </span>
+          }
+          style={{ minWidth: 0 }}
+        >
+          <div
+            style={{
+              minHeight: '16rem',
+              backgroundColor: 'var(--bg-surface-subtle)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1rem',
+            }}
+          >
+            {flattenedLabels.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '4rem 1rem' }}>
+                أضف أصنافاً لقائمة الطباعة لمعاينة الملصقات هنا
+              </div>
+            ) : format.kind === 'thermal' ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'flex-start' }}>
+                {flattenedLabels.slice(0, PREVIEW_THERMAL_LIMIT).map((lbl, idx) => (
+                  <div
+                    key={`${lbl.product_id}_${idx}`}
+                    style={{
+                      width: `${format.widthMm}mm`,
+                      height: `${format.heightMm}mm`,
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '2px',
+                      boxShadow: 'var(--shadow-sm)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <LabelContent label={lbl} format={format} fields={fields} />
+                  </div>
+                ))}
+                {flattenedLabels.length > PREVIEW_THERMAL_LIMIT && (
+                  <div style={{ alignSelf: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    + {flattenedLabels.length - PREVIEW_THERMAL_LIMIT} ملصق آخر (يُطبع كاملاً)
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-lg">
-                {queue.map(({ product, quantity }) => (
-                  <div key={product.id} className="p-3 flex items-center justify-between gap-3 bg-white">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-xs text-gray-900 truncate">{product.name}</div>
-                      <div className="text-[11px] text-gray-500 font-mono">
-                        {product.barcode} | {product.retail_price_formatted}
-                      </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {sheets.slice(0, PREVIEW_SHEET_LIMIT).map((sheet, sIdx) => (
+                  <div key={sIdx}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                      صفحة {sIdx + 1} من {sheets.length} — {sheet.length} من {format.perSheet} ملصق
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <label className="text-[11px] text-gray-500">العدد:</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="500"
-                        value={quantity}
-                        onChange={(e) => updateQuantity(product.id, parseInt(e.target.value, 10) || 1)}
-                        className="w-16 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-center text-xs font-bold font-mono text-gray-900 focus:outline-none focus:ring-1 focus:ring-navy-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeFromQueue(product.id)}
-                        className="text-gray-400 hover:text-rose-600 p-1.5 transition-colors"
-                        title="حذف من القائمة"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <ScaledSheetPreview rows={format.rows} format={format}>
+                      <A4Sheet labels={sheet} format={format} fields={fields} outlined />
+                    </ScaledSheetPreview>
                   </div>
                 ))}
+                {sheets.length > PREVIEW_SHEET_LIMIT && (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    + {sheets.length - PREVIEW_SHEET_LIMIT} صفحة أخرى (تُطبع كاملة)
+                  </div>
+                )}
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right Col: Layout & Print Preferences */}
-        <div className="lg:col-span-5 bg-white border border-gray-200 rounded-xl p-4 space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">
-            2. إعدادات المقاس وتنسيق الملصق
-          </h2>
-
-          {/* Layout Mode */}
-          <div className="space-y-1.5 text-xs">
-            <label className="block text-gray-700 font-semibold">نوع الورق / الطابعة:</label>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer hover:border-gray-300">
-                <input
-                  type="radio"
-                  name="layoutMode"
-                  value="thermal"
-                  checked={layoutMode === 'thermal'}
-                  onChange={() => setLayoutMode('thermal')}
-                  className="text-navy-800"
-                />
-                <div>
-                  <div className="font-bold text-gray-900">ملصق حراري مفرد (طابعة باركود حرارية)</div>
-                  <div className="text-[11px] text-gray-500">ملصقات رول مستمرة (50×25 مم أو 38×25 مم)</div>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer hover:border-gray-300">
-                <input
-                  type="radio"
-                  name="layoutMode"
-                  value="a4-grid-3"
-                  checked={layoutMode === 'a4-grid-3'}
-                  onChange={() => setLayoutMode('a4-grid-3')}
-                  className="text-navy-800"
-                />
-                <div>
-                  <div className="font-bold text-gray-900">صفحة A4 ملصقات (3 أعمدة)</div>
-                  <div className="text-[11px] text-gray-500">ورق A4 لاصق مقسم 3 أعمدة (21 ملصق / صفحة)</div>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer hover:border-gray-300">
-                <input
-                  type="radio"
-                  name="layoutMode"
-                  value="a4-grid-4"
-                  checked={layoutMode === 'a4-grid-4'}
-                  onChange={() => setLayoutMode('a4-grid-4')}
-                  className="text-navy-800"
-                />
-                <div>
-                  <div className="font-bold text-gray-900">صفحة A4 ملصقات (4 أعمدة)</div>
-                  <div className="text-[11px] text-gray-500">ورق A4 لاصق مكثف 4 أعمدة (32 ملصق / صفحة)</div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Visibility Options */}
-          <div className="space-y-2 pt-2 border-t border-gray-200 text-xs">
-            <span className="block text-gray-700 font-semibold">حقول الملصق:</span>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showShowroomName}
-                  onChange={(e) => setShowShowroomName(e.target.checked)}
-                  className="rounded text-navy-800"
-                />
-                <span className="text-gray-700">اسم المعرض (معرض العالمية للمفروشات)</span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showPrice}
-                  onChange={(e) => setShowPrice(e.target.checked)}
-                  className="rounded text-navy-800"
-                />
-                <span className="text-gray-700">سعر البيع للمستهلك</span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showCategory}
-                  onChange={(e) => setShowCategory(e.target.checked)}
-                  className="rounded text-navy-800"
-                />
-                <span className="text-gray-700">فئة الصنف</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-900 leading-relaxed flex items-start gap-2">
-            <Info size={16} className="text-blue-700 shrink-0 mt-0.5" />
-            <div>
-              <strong>معلومة:</strong> يتم تشفير الباركود تلقائياً بمعيار Code 128 المتوافق مع كافة قارئات الباركود الليزرية والضوئية، دون إظهار أي تكاليف شراء داخلية.
-            </div>
-          </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Live On-Screen Preview Area */}
-      <div className="no-print space-y-3">
-        <div className="flex justify-between items-center text-xs font-bold text-gray-800">
-          <span>معاينة الطباعة المباشرة ({flattenedLabels.length} ملصق):</span>
-          <span className="text-gray-500 font-normal text-[11px]">
-            المظهر المطابق تماماً لما سيظهر على الطابعة
-          </span>
-        </div>
-
-        <div className="p-4 bg-gray-100 rounded-xl border border-gray-300 min-h-[160px] overflow-x-auto">
-          {flattenedLabels.length === 0 ? (
-            <div className="text-center text-xs text-gray-400 py-10">
-              أضف أصنافاً لقائمة الطباعة لمعاينة الملصقات هنا
-            </div>
-          ) : (
-            <div
-              className={
-                layoutMode === 'thermal'
-                  ? 'flex flex-wrap gap-3'
-                  : layoutMode === 'a4-grid-3'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'
-                  : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2'
-              }
-            >
-              {flattenedLabels.map((lbl, idx) => (
-                <div
-                  key={`${lbl.product_id}_${idx}`}
-                  className="bg-white border border-gray-300 rounded p-2 text-center shadow-sm w-48 flex flex-col justify-between"
-                  style={{ minHeight: '110px' }}
-                >
-                  <div className="w-full flex justify-between items-center text-[9px] text-gray-600 border-b border-gray-100 pb-0.5 mb-1 px-0.5">
-                    {showShowroomName ? (
-                      <span className="font-bold text-gray-900 truncate">
-                        {lbl.showroom_name || 'معرض العالمية للمفروشات'}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
-                    {showCategory && (
-                      <span className="text-gray-500 font-mono text-[8px]">
-                        [{lbl.category_code || lbl.category_name}]
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="w-full text-center px-1 mb-1">
-                    <span
-                      className="font-bold text-gray-900 block text-[11px] leading-tight line-clamp-2"
-                      title={lbl.product_name}
-                    >
-                      {lbl.product_name}
-                    </span>
-                  </div>
-
-                  <div className="my-0.5 flex justify-center w-full">
-                    <Code128Barcode
-                      value={lbl.barcode}
-                      height={28}
-                      moduleWidth={1.15}
-                      fontSize={10}
-                      showText={true}
-                    />
-                  </div>
-
-                  {showPrice && (
-                    <div className="w-full pt-0.5 border-t border-gray-100 flex justify-between items-center text-[10px] px-1 font-bold text-gray-900 mt-0.5">
-                      <span className="text-[8px] text-gray-500 font-normal">السعر:</span>
-                      <span className="font-mono text-[11px] text-gray-900">
-                        {lbl.retail_price_formatted}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Dedicated Printable Portal into #printable-root */}
+      {/* Dedicated print output into #printable-root (screen-hidden, see globals.css) */}
       {printableRoot &&
         flattenedLabels.length > 0 &&
         createPortal(
-          <div
-            className={`barcode-print-portal ${
-              layoutMode === 'thermal'
-                ? 'print-thermal-labels'
-                : layoutMode === 'a4-grid-3'
-                ? 'print-a4-labels-3'
-                : 'print-a4-labels-4'
-            }`}
-          >
-            {flattenedLabels.map((lbl, idx) => (
-              <div
-                key={`print_${lbl.product_id}_${idx}`}
-                className="single-barcode-label"
-                style={{
-                  pageBreakInside: 'avoid',
-                  breakInside: 'avoid',
-                  textAlign: 'center',
-                  padding: '4px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  border: layoutMode === 'thermal' ? 'none' : '1px dashed #ccc',
-                  width: layoutMode === 'thermal' ? '50mm' : 'auto',
-                  height: layoutMode === 'thermal' ? '25mm' : 'auto',
-                }}
-              >
-                {showShowroomName && (
-                  <div style={{ fontSize: '8px', fontWeight: 'bold' }}>
-                    {lbl.showroom_name || 'معرض العالمية للمفروشات'}
+          <div className="barcode-print-portal" data-format={format.id}>
+            <style>{`@media print { ${pageRuleFor(format)} }`}</style>
+            {format.kind === 'thermal'
+              ? flattenedLabels.map((lbl, idx) => (
+                  <div
+                    key={`print_${lbl.product_id}_${idx}`}
+                    className="barcode-print-sheet"
+                    style={{ width: `${format.widthMm}mm`, height: `${format.heightMm}mm`, overflow: 'hidden' }}
+                  >
+                    <LabelContent label={lbl} format={format} fields={fields} />
                   </div>
-                )}
-                <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{lbl.product_name}</div>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <Code128Barcode
-                    value={lbl.barcode}
-                    height={24}
-                    moduleWidth={1}
-                    fontSize={9}
-                    showText={true}
-                  />
-                </div>
-                {showPrice && (
-                  <div style={{ fontSize: '9px', fontWeight: 'bold' }}>{lbl.retail_price_formatted}</div>
-                )}
-              </div>
-            ))}
+                ))
+              : sheets.map((sheet, sIdx) => (
+                  <div key={`print_sheet_${sIdx}`} className="barcode-print-sheet">
+                    <A4Sheet labels={sheet} format={format} fields={fields} outlined={false} />
+                  </div>
+                ))}
           </div>,
           printableRoot
         )}

@@ -25,6 +25,8 @@ class SalesReturnItemResource extends JsonResource
             'product_name' => $this->invoiceItem?->product_name ?? $this->product?->name,
             'barcode' => $this->invoiceItem?->barcode ?? $this->product?->barcode,
             'quantity' => $this->quantity->toInt(),
+            'item_condition' => $this->item_condition ?? 'resellable',
+            'return_reason' => $this->return_reason,
             'unit_sale_price' => $this->unit_sale_price->toDecimal(),
             'subtotal' => $this->subtotal->toDecimal(),
 

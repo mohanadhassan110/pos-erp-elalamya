@@ -1,0 +1,10 @@
+
+ RUN  v5.0.3 D:/elalamya-main/frontend
+
+
+ Test Files  10 passed (10)
+      Tests  100 passed (100)
+   Start at  18:27:30
+   Duration  1.96s (transform 56%, import 30%, tests 10%, worker 4%)
+
+exit=0

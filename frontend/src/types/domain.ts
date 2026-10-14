@@ -211,6 +211,14 @@ export interface Invoice {
   has_returns?: boolean;
   returned_value?: string;
   net_after_returns?: string;
+  returns?: Array<{
+    id: number;
+    return_number: string;
+    resolution: string;
+    resolution_label: string;
+    total_return_amount: string;
+    created_at?: string;
+  }>;
 }
 
 export interface PrintableInvoiceItem {
@@ -385,8 +393,23 @@ export interface ReturnableInvoice {
   customer_id: number | null;
   customer_name: string | null;
   customer_phone: string | null;
+  customer_balance?: string | null;
+  customer_balance_formatted?: string | null;
   created_at: string;
   created_at_formatted: string;
+  has_returns?: boolean;
+  is_fully_returned?: boolean;
+  previously_returned_amount?: string;
+  remaining_returnable_amount?: string;
+  total_original_quantity?: number;
+  total_remaining_quantity?: number;
+  returns_summary?: Array<{
+    id: number;
+    return_number: string;
+    amount: string;
+    created_at?: string;
+    resolution_label: string;
+  }>;
   items: ReturnableItem[];
 }
 
@@ -398,6 +421,8 @@ export interface SalesReturnItem {
   product_name: string;
   barcode: string | null;
   quantity: number;
+  item_condition?: 'resellable' | 'damaged';
+  return_reason?: string | null;
   unit_sale_price: string;
   subtotal: string;
   unit_cost?: string;
@@ -439,6 +464,8 @@ export interface SalesReturn {
 export interface CreateReturnItemPayload {
   invoice_item_id: number;
   quantity: number;
+  item_condition?: 'resellable' | 'damaged';
+  return_reason?: string | null;
 }
 
 export interface CreateReplacementItemPayload {
@@ -856,5 +883,87 @@ export interface ReportReturnsHistoryData {
     per_page: number;
     total: number;
   };
+}
+
+export interface StatementTransactionItem {
+  id: number;
+  created_at: string;
+  date_formatted: string;
+  type: string;
+  type_label: string;
+  direction: string;
+  direction_label: string;
+  amount: string;
+  debit: string;
+  credit: string;
+  running_balance: string;
+  running_balance_formatted: string;
+  reference_type: string | null;
+  reference_id: number | null;
+  reference_number: string | null;
+  description: string | null;
+  creator_name: string | null;
+}
+
+export interface StatementSummary {
+  total_debits: string;
+  total_credits: string;
+  net_change: string;
+  closing_balance: string;
+  closing_balance_formatted: string;
+  transactions_count: number;
+}
+
+export interface CustomerStatementResponse {
+  customer: {
+    id: number;
+    name: string;
+    phone: string | null;
+    address: string | null;
+    is_active: boolean;
+    current_balance: string;
+    current_balance_formatted: string;
+  };
+  period: {
+    from_date: string | null;
+    to_date: string | null;
+  };
+  opening_balance: string;
+  opening_balance_formatted: string;
+  period_summary: StatementSummary;
+  transactions: StatementTransactionItem[];
+  showroom: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+  generated_at: string;
+}
+
+export interface SupplierStatementResponse {
+  supplier: {
+    id: number;
+    name: string;
+    phone: string | null;
+    address: string | null;
+    is_active: boolean;
+    current_payable: string;
+    current_payable_formatted: string;
+    is_settled: boolean;
+  };
+  period: {
+    from_date: string | null;
+    to_date: string | null;
+  };
+  opening_balance: string;
+  opening_balance_formatted: string;
+  period_summary: StatementSummary;
+  transactions: StatementTransactionItem[];
+  showroom: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+  generated_at: string;
 }
 

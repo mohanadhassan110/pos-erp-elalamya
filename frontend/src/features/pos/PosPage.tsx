@@ -12,6 +12,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../app/providers/useToast';
 import { InvoicePrintModal } from '../../components/invoice/InvoicePrintModal';
+import { ReturnFlow } from '../returns/ReturnFlow';
 import { formatCurrency, formatQuantity, formatNumber } from '../../utils/formatters';
 import {
   ShoppingCart,
@@ -21,6 +22,7 @@ import {
   Layers,
   PlusCircle,
   Barcode as BarcodeIcon,
+  RotateCcw,
 } from 'lucide-react';
 
 export interface CartLine {
@@ -82,6 +84,9 @@ export const PosPage: React.FC = () => {
 
   // Successful invoice modal / Print
   const [completedInvoice, setCompletedInvoice] = useState<Invoice | null>(null);
+
+  // Return Flow Modal State directly from POS
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState<boolean>(false);
 
   // Idempotency key per invoice attempt
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
@@ -418,6 +423,9 @@ export const PosPage: React.FC = () => {
       } else if (e.key === 'F4') {
         e.preventDefault();
         setSaleType((prev) => (prev === 'retail' ? 'wholesale' : 'retail'));
+      } else if (e.key === 'F7') {
+        e.preventDefault();
+        setIsReturnModalOpen((prev) => !prev);
       } else if (e.key === 'F8') {
         e.preventDefault();
         handleExactPayment();
@@ -432,12 +440,13 @@ export const PosPage: React.FC = () => {
           barcodeInputRef.current?.focus();
         }
         if (isExternalModalOpen) setIsExternalModalOpen(false);
+        if (isReturnModalOpen) setIsReturnModalOpen(false);
         if (completedInvoice) setCompletedInvoice(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExactPayment, isSubmitting, isCatalogOpen, isExternalModalOpen, completedInvoice, handleCheckout]);
+  }, [handleExactPayment, isSubmitting, isCatalogOpen, isExternalModalOpen, isReturnModalOpen, completedInvoice, handleCheckout]);
 
   // Reset POS for New Sale
   const handleStartNewSale = () => {
@@ -554,8 +563,8 @@ export const PosPage: React.FC = () => {
               )}
             </div>
 
-            {/* Quick Catalog & External Item Buttons (Min 12px gap) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Quick Catalog, External Item & Return Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Button
                 size="md"
                 variant="secondary"
@@ -573,6 +582,21 @@ export const PosPage: React.FC = () => {
                 style={{ fontSize: '13px' }}
               >
                 صنف خارجي
+              </Button>
+              <Button
+                size="md"
+                variant="secondary"
+                onClick={() => setIsReturnModalOpen(true)}
+                icon={<RotateCcw size={16} />}
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#B91C1C',
+                  backgroundColor: '#FEF2F2',
+                  border: '1px solid #FECACA',
+                }}
+              >
+                فاتورة مرتجع (F7)
               </Button>
             </div>
           </div>
@@ -1209,6 +1233,23 @@ export const PosPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Sales Return Modal directly from POS */}
+      {isReturnModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsReturnModalOpen(false)}
+          title="فاتورة مرتجع واستبدال مبيعات"
+          maxWidth="72rem"
+        >
+          <ReturnFlow
+            onClose={() => setIsReturnModalOpen(false)}
+            onCompleted={(result) => {
+              showToast(`تم تسجيل فاتورة المرتجع رقم ${result.return_number} بنجاح`, 'success');
+            }}
+          />
+        </Modal>
+      )}
 
       {/* Successful Checkout & Printable Invoice Modal */}
       {completedInvoice && (

@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $invoice_item_id
  * @property int|null $product_id
  * @property Quantity $quantity
+ * @property string $item_condition
+ * @property string|null $return_reason
  * @property Money $unit_sale_price
  * @property Money $unit_cost
  * @property Money $subtotal
@@ -30,6 +32,8 @@ class SalesReturnItem extends Model
         'invoice_item_id',
         'product_id',
         'quantity',
+        'item_condition',
+        'return_reason',
         'unit_sale_price',
         'unit_cost',
         'subtotal',

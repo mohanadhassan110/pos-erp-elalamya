@@ -88,6 +88,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('api.v1.customers.show');
         Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('api.v1.customers.update');
         Route::patch('/customers/{customer}/status', [CustomerController::class, 'toggleStatus'])->name('api.v1.customers.toggle-status');
+        Route::post('/customers/{customer}/payments', [CustomerController::class, 'recordPayment'])->name('api.v1.customers.record-payment');
+        Route::get('/customers/{customer}/statement', [CustomerController::class, 'statement'])->name('api.v1.customers.statement');
 
         // Suppliers
         Route::get('/suppliers', [SupplierController::class, 'index'])->name('api.v1.suppliers.index');
@@ -96,6 +98,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('api.v1.suppliers.update');
         Route::patch('/suppliers/{supplier}/status', [SupplierController::class, 'toggleStatus'])->name('api.v1.suppliers.toggle-status');
         Route::post('/suppliers/{supplier}/add-balance', [SupplierController::class, 'addBalance'])->name('api.v1.suppliers.add-balance');
+        Route::post('/suppliers/{supplier}/payments', [SupplierController::class, 'recordPayment'])->name('api.v1.suppliers.record-payment');
+        Route::get('/suppliers/{supplier}/statement', [SupplierController::class, 'statement'])->name('api.v1.suppliers.statement');
 
         // Purchasing & Stock Receiving
         Route::get('/stock-receipts', [StockReceiptController::class, 'index'])->name('api.v1.stock-receipts.index');

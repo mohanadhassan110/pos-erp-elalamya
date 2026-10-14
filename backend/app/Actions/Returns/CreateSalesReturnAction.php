@@ -251,10 +251,17 @@ class CreateSalesReturnAction
                     ? $lockedProducts->get($invoiceItem->product_id)
                     : null;
 
+                $itemCondition = isset($rItem['item_condition']) && in_array($rItem['item_condition'], ['resellable', 'damaged'], true)
+                    ? $rItem['item_condition']
+                    : 'resellable';
+                $returnReason = ! empty($rItem['return_reason']) ? trim((string) $rItem['return_reason']) : null;
+
                 $processedReturnItems[] = [
                     'invoice_item' => $invoiceItem,
                     'product' => $product,
                     'quantity' => Quantity::from($requestedQuantity),
+                    'item_condition' => $itemCondition,
+                    'return_reason' => $returnReason,
                     'unit_sale_price' => $unitSalePrice,
                     'unit_cost' => $unitCost,
                     'subtotal' => $lineSubtotal,
@@ -449,12 +456,16 @@ class CreateSalesReturnAction
                 /** @var InvoiceItem $invItem */
                 $invItem = $pItem['invoice_item'];
                 $qty = $pItem['quantity'];
+                $condition = $pItem['item_condition'];
+                $reason = $pItem['return_reason'];
 
                 SalesReturnItem::create([
                     'sales_return_id' => $salesReturn->id,
                     'invoice_item_id' => $invItem->id,
                     'product_id' => $invItem->product_id,
                     'quantity' => $qty,
+                    'item_condition' => $condition,
+                    'return_reason' => $reason,
                     'unit_sale_price' => $pItem['unit_sale_price'],
                     'unit_cost' => $pItem['unit_cost'],
                     'subtotal' => $pItem['subtotal'],
@@ -465,22 +476,39 @@ class CreateSalesReturnAction
                 if ($invItem->isNormalProduct() && $pItem['product']) {
                     /** @var Product $product */
                     $product = $pItem['product'];
-                    $newStock = $product->stock_quantity->add($qty);
-                    $product->stock_quantity = $newStock;
-                    $product->save();
 
-                    // Record sales_return inventory movement
-                    InventoryMovement::create([
-                        'product_id' => $product->id,
-                        'type' => InventoryMovementType::SALES_RETURN,
-                        'quantity' => $qty,
-                        'unit_cost' => $pItem['unit_cost'], // Historical cost snapshot
-                        'resulting_stock' => $newStock,
-                        'reference_type' => SalesReturn::class,
-                        'reference_id' => $salesReturn->id,
-                        'reason' => "مرتجع مبيعات رقم {$salesReturn->return_number} من فاتورة {$invoice->invoice_number}",
-                        'created_by' => $actor?->id,
-                    ]);
+                    if ($condition === 'resellable') {
+                        // Resellable items: routed back to main sellable showroom inventory
+                        $newStock = $product->stock_quantity->add($qty);
+                        $product->stock_quantity = $newStock;
+                        $product->save();
+
+                        // Record sales_return inventory movement
+                        InventoryMovement::create([
+                            'product_id' => $product->id,
+                            'type' => InventoryMovementType::SALES_RETURN,
+                            'quantity' => $qty,
+                            'unit_cost' => $pItem['unit_cost'], // Historical cost snapshot
+                            'resulting_stock' => $newStock,
+                            'reference_type' => SalesReturn::class,
+                            'reference_id' => $salesReturn->id,
+                            'reason' => "مرتجع مبيعات (سليم/صالح للبيع) رقم {$salesReturn->return_number} من فاتورة {$invoice->invoice_number}" . ($reason ? " - سبب: {$reason}" : ''),
+                            'created_by' => $actor?->id,
+                        ]);
+                    } else {
+                        // Damaged / defective items: routed to scrap / defective holding, NOT restored to sellable stock
+                        InventoryMovement::create([
+                            'product_id' => $product->id,
+                            'type' => InventoryMovementType::SALES_RETURN,
+                            'quantity' => $qty,
+                            'unit_cost' => $pItem['unit_cost'],
+                            'resulting_stock' => $product->stock_quantity, // Sellable showroom stock unchanged
+                            'reference_type' => SalesReturn::class,
+                            'reference_id' => $salesReturn->id,
+                            'reason' => "مرتجع مبيعات تالف/معيب (محول لمخزن الهوالك/التوالف) رقم {$salesReturn->return_number} من فاتورة {$invoice->invoice_number}" . ($reason ? " - سبب: {$reason}" : ''),
+                            'created_by' => $actor?->id,
+                        ]);
+                    }
                 }
                 // External products: NO inventory movement and NO showroom stock mutation
             }

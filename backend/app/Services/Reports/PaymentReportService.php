@@ -46,11 +46,13 @@ class PaymentReportService
             $pmCode = $pm?->code ?? 'unknown';
             $isCash = (bool) ($pm?->is_cash ?? false);
 
-            $isOutflow = ($type === PaymentType::REFUND);
+            $isOutflow = in_array($type, [PaymentType::REFUND, PaymentType::SUPPLIER_PAYMENT], true);
 
             if ($isOutflow) {
                 $totalOutflows = $totalOutflows->add($amount);
-                $refundsTotal = $refundsTotal->add($amount);
+                if ($type === PaymentType::REFUND) {
+                    $refundsTotal = $refundsTotal->add($amount);
+                }
                 if ($isCash) {
                     $cashOutflows = $cashOutflows->add($amount);
                 }

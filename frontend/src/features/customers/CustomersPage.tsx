@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { customersApi } from '../../services/api/customersApi';
-import type { Customer, PaginatedResponse } from '../../types/domain';
+import { paymentMethodsApi } from '../../services/api/paymentMethodsApi';
+import type { Customer, PaginatedResponse, PaymentMethod } from '../../types/domain';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Modal } from '../../components/ui/Modal';
 import { Table, type Column } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
@@ -10,6 +12,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useToast } from '../../app/providers/useToast';
+import { AccountStatementModal } from '../../components/statement/AccountStatementModal';
 
 export const CustomersPage: React.FC = () => {
   const { showToast } = useToast();
@@ -17,6 +20,7 @@ export const CustomersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -29,6 +33,24 @@ export const CustomersPage: React.FC = () => {
   const [formNotes, setFormNotes] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Customer Payment Modal State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
+  const [paymentCustomer, setPaymentCustomer] = useState<Customer | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<string>('');
+  const [paymentMethodId, setPaymentMethodId] = useState<number>(0);
+  const [paymentNotes, setPaymentNotes] = useState<string>('');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState<boolean>(false);
+
+  // Statement Modal State
+  const [isStatementOpen, setIsStatementOpen] = useState<boolean>(false);
+  const [statementCustomer, setStatementCustomer] = useState<Customer | null>(null);
+
+  const handleOpenStatement = (c: Customer) => {
+    setStatementCustomer(c);
+    setIsStatementOpen(true);
+  };
 
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
@@ -62,6 +84,15 @@ export const CustomersPage: React.FC = () => {
     };
   }, [search, page, showToast]);
 
+  useEffect(() => {
+    paymentMethodsApi
+      .list()
+      .then((methods) => {
+        setPaymentMethods(methods);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleOpenAddModal = () => {
     setEditingCustomer(null);
     setFormName('');
@@ -80,6 +111,51 @@ export const CustomersPage: React.FC = () => {
     setFormNotes(c.notes || '');
     setFormError(null);
     setIsModalOpen(true);
+  };
+
+  const handleOpenPaymentModal = (c: Customer) => {
+    setPaymentCustomer(c);
+    const numBal = parseFloat(c.balance);
+    setPaymentAmount(numBal > 0 ? String(numBal) : '');
+    const defaultMethod =
+      paymentMethods.find((m) => m.is_active && m.is_cash) ||
+      paymentMethods.find((m) => m.is_active);
+    setPaymentMethodId(defaultMethod ? defaultMethod.id : (paymentMethods[0]?.id ?? 1));
+    setPaymentNotes('');
+    setPaymentError(null);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPaymentError(null);
+
+    if (!paymentCustomer) return;
+    if (!paymentAmount || Number(paymentAmount) <= 0) {
+      setPaymentError('مبلغ الدفعة يجب أن يكون رقماً أكبر من الصفر');
+      return;
+    }
+    if (!paymentMethodId) {
+      setPaymentError('يرجى اختيار طريقة الدفع');
+      return;
+    }
+
+    setIsSubmittingPayment(true);
+    try {
+      await customersApi.recordPayment(paymentCustomer.id, {
+        amount: paymentAmount,
+        payment_method_id: paymentMethodId,
+        notes: paymentNotes.trim() || undefined,
+      });
+      showToast('تم تسجيل سداد دفعة العميل بنجاح', 'success');
+      setIsPaymentModalOpen(false);
+      fetchCustomers();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'فشل تسجيل دفعة العميل';
+      setPaymentError(errorMsg);
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -188,10 +264,25 @@ export const CustomersPage: React.FC = () => {
     {
       key: 'actions',
       header: 'الإجراءات',
-      width: '9rem',
+      width: '20rem',
       align: 'left',
       render: (c: Customer) => (
         <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenStatement(c)}
+          >
+            كشف حساب
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => handleOpenPaymentModal(c)}
+            disabled={!c.is_active}
+          >
+            سداد دفعة
+          </Button>
           <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(c)}>
             تعديل
           </Button>
@@ -359,6 +450,93 @@ export const CustomersPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Customer Payment Modal */}
+      <Modal
+        isOpen={isPaymentModalOpen}
+        onClose={() => !isSubmittingPayment && setIsPaymentModalOpen(false)}
+        title={`سداد دفعة على الحساب — ${paymentCustomer?.name || ''}`}
+      >
+        <form onSubmit={handlePaymentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {paymentError && <Alert type="error" message={paymentError} />}
+
+          {paymentCustomer && (
+            <div
+              style={{
+                backgroundColor: 'var(--color-primary-50, #EFF6FF)',
+                padding: '0.875rem',
+                borderRadius: 'var(--radius-md, 6px)',
+                border: '1px solid var(--color-primary-200, #BFDBFE)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-900, #1E3A8A)' }}>
+                  رصيد الحساب الحالي:
+                </span>
+                <span style={{ fontWeight: 'var(--font-weight-bold)', fontFamily: 'var(--font-family-mono)' }}>
+                  {paymentCustomer.balance_formatted}
+                </span>
+              </div>
+              <div style={{ marginTop: '0.25rem', fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-700, #1D4ED8)' }}>
+                {paymentCustomer.balance_status_label}
+              </div>
+            </div>
+          )}
+
+          <Input
+            label="المبلغ المسدد (ج.م)"
+            type="number"
+            step="0.01"
+            min="0.01"
+            placeholder="0.00"
+            value={paymentAmount}
+            onChange={(e) => setPaymentAmount(e.target.value)}
+            required
+            autoFocus
+          />
+
+          <Select
+            label="طريقة الدفع"
+            value={paymentMethodId}
+            onChange={(e) => setPaymentMethodId(Number(e.target.value))}
+            options={paymentMethods.map((pm) => ({
+              value: pm.id,
+              label: pm.name,
+            }))}
+            required
+          />
+
+          <Input
+            label="ملاحظات / بيان الدفعة"
+            placeholder="مثال: دفعة نقدية بالمعرض / إيصال رقم..."
+            value={paymentNotes}
+            onChange={(e) => setPaymentNotes(e.target.value)}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPaymentModalOpen(false)}
+              disabled={isSubmittingPayment}
+            >
+              إلغاء
+            </Button>
+            <Button type="submit" variant="primary" isLoading={isSubmittingPayment}>
+              تسجيل الدفعة
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Customer Account Statement Modal */}
+      <AccountStatementModal
+        isOpen={isStatementOpen}
+        onClose={() => setIsStatementOpen(false)}
+        entityType="customer"
+        entityId={statementCustomer?.id ?? null}
+        entityName={statementCustomer?.name ?? ''}
+      />
     </div>
   );
 };

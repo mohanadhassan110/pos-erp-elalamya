@@ -285,4 +285,33 @@ select:focus-visible {
     background: #ffffff !important;
     color: #000000 !important;
   }
+
+  /* Barcode labels: one printed page per thermal label / per A4 sheet.
+     Page size comes from the @page rule the barcode page injects for the chosen format. */
+  .barcode-print-sheet {
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0 !important;
+  }
+
+  .barcode-print-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}
+
+/* Barcode printing workspace: controls | live preview, single column on narrow screens */
+.barcode-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .barcode-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

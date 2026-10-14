@@ -1,0 +1,57 @@
+$ grep -rn 'className="' frontend/src --include=*.tsx
+frontend/src/app/router/AppLayout.tsx:131:            className="md-mobile-menu-btn"
+frontend/src/components/invoice/InvoicePrintModal.tsx:108:        className="no-print"
+frontend/src/components/invoice/PrintableInvoiceDocument.tsx:23:        className="thermal-80mm-page"
+frontend/src/components/invoice/PrintableInvoiceDocument.tsx:314:      className="a4-invoice-page"
+frontend/src/features/barcodes/BarcodePrintingPage.tsx:352:      <div className="barcode-workspace-grid">
+frontend/src/features/barcodes/BarcodePrintingPage.tsx:665:          <div className="barcode-print-portal" data-format={format.id}>
+frontend/src/features/barcodes/BarcodePrintingPage.tsx:671:                    className="barcode-print-sheet"
+frontend/src/features/barcodes/BarcodePrintingPage.tsx:678:                  <div key={`print_sheet_${sIdx}`} className="barcode-print-sheet">
+frontend/src/features/pos/PosPage.tsx:459:    <div className="pos-container" dir="rtl">
+frontend/src/features/pos/PosPage.tsx:461:      <div className="pos-workspace-grid">
+frontend/src/features/pos/PosPage.tsx:463:        <div className="pos-cart-column">
+frontend/src/features/pos/PosPage.tsx:480:              <div className="segmented-control">
+frontend/src/features/pos/PosPage.tsx:523:                  className="al-select"
+frontend/src/features/pos/PosPage.tsx:604:                  className="al-input"
+frontend/src/features/pos/PosPage.tsx:663:                        <td className="py-3 px-3">
+frontend/src/features/pos/PosPage.tsx:664:                          <div className="font-semibold text-gray-900 text-sm">{line.productName}</div>
+frontend/src/features/pos/PosPage.tsx:665:                          <div className="flex items-center gap-1.5 mt-0.5">
+frontend/src/features/pos/PosPage.tsx:667:                              <span className="text-[11px] text-gray-500 font-mono">
+frontend/src/features/pos/PosPage.tsx:671:                              <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+frontend/src/features/pos/PosPage.tsx:678:                        <td className="py-3 px-2 text-center">
+frontend/src/features/pos/PosPage.tsx:692:                            <span className="text-gray-400">—</span>
+frontend/src/features/pos/PosPage.tsx:696:                        <td className="py-3 px-3 text-center">
+frontend/src/features/pos/PosPage.tsx:697:                          <div className="inline-flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden shadow-sm">
+frontend/src/features/pos/PosPage.tsx:701:                              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200"
+frontend/src/features/pos/PosPage.tsx:712:                              className="w-12 text-center bg-transparent text-gray-900 font-bold text-xs focus:outline-none font-mono"
+frontend/src/features/pos/PosPage.tsx:717:                              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200"
+frontend/src/features/pos/PosPage.tsx:725:                        <td className="py-3 px-3 text-center">
+frontend/src/features/pos/PosPage.tsx:726:                          <div className="relative inline-block">
+frontend/src/features/pos/PosPage.tsx:740:                              <span className="block text-[10px] text-amber-600 mt-0.5">معدل</span>
+frontend/src/features/pos/PosPage.tsx:745:                        <td className="py-3 px-3 text-center font-bold text-gray-900 font-mono text-sm">
+frontend/src/features/pos/PosPage.tsx:749:                        <td className="py-3 px-2 text-center">
+frontend/src/features/pos/PosPage.tsx:753:                            className="text-gray-400 hover:text-rose-600 transition-colors p-1.5 rounded"
+frontend/src/features/pos/PosPage.tsx:768:          <div className="p-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between text-xs">
+frontend/src/features/pos/PosPage.tsx:769:            <span className="text-gray-600">
+frontend/src/features/pos/PosPage.tsx:770:              عدد البنود: <strong className="text-gray-900 font-mono">{cart.length}</strong>
+frontend/src/features/pos/PosPage.tsx:777:              className="text-xs text-rose-600 hover:text-rose-700 border-rose-200"
+frontend/src/features/pos/PosPage.tsx:785:        <div className="pos-payment-column">
+frontend/src/features/pos/PosPage.tsx:830:                  className="al-select"
+frontend/src/features/pos/PosPage.tsx:879:                className="al-input"
+frontend/src/features/pos/PosPage.tsx:936:                className="al-input"
+frontend/src/features/pos/PosPage.tsx:1149:        <form onSubmit={handleAddExternalProduct} className="space-y-3 text-right">
+frontend/src/features/pos/PosPage.tsx:1153:            <label className="block text-xs font-semibold text-gray-700 mb-1">اسم الصنف الخارجي:</label>
+frontend/src/features/pos/PosPage.tsx:1162:          <div className="grid grid-cols-3 gap-2">
+frontend/src/features/pos/PosPage.tsx:1164:              <label className="block text-xs font-semibold text-gray-700 mb-1">الكمية:</label>
+frontend/src/features/pos/PosPage.tsx:1173:              <label className="block text-xs font-semibold text-gray-700 mb-1">
+frontend/src/features/pos/PosPage.tsx:1175:                <span className="text-[10px] text-amber-600 block font-normal">(تسجل كمصروف داخلي)</span>
+frontend/src/features/pos/PosPage.tsx:1187:              <label className="block text-xs font-semibold text-gray-700 mb-1">
+frontend/src/features/pos/PosPage.tsx:1189:                <span className="text-[10px] text-emerald-700 block font-normal">(يظهر في الفاتورة)</span>
+frontend/src/features/pos/PosPage.tsx:1202:          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+
+$ grep -rn 'className={`' frontend/src --include=*.tsx   (template-literal classNames, not covered by the requested grep)
+frontend/src/components/ui/Input.tsx:85:            className={`al-input ${className}`}
+frontend/src/components/ui/Select.tsx:58:            className={`al-select ${className}`}
+frontend/src/features/pos/PosPage.tsx:484:                  className={`segmented-btn ${saleType === 'retail' ? 'active' : ''}`}
+frontend/src/features/pos/PosPage.tsx:491:                  className={`segmented-btn ${saleType === 'wholesale' ? 'active' : ''}`}
+frontend/src/features/pos/PosPage.tsx:733:                              className={`w-24 text-center bg-white border rounded px-1.5 py-1.5 text-xs font-semibold focus:outline-none font-mono ${

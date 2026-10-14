@@ -83,6 +83,16 @@ class InvoiceResource extends JsonResource
                     : (string) $this->returns()->sum('total_return_amount'),
                 2
             ),
+            'returns' => $this->relationLoaded('returns')
+                ? $this->returns->map(fn ($ret) => [
+                    'id' => $ret->id,
+                    'return_number' => $ret->return_number,
+                    'resolution' => $ret->resolution->value,
+                    'resolution_label' => $ret->resolution->label(),
+                    'total_return_amount' => $ret->total_return_amount->toDecimal(),
+                    'created_at' => $ret->created_at?->format('Y-m-d H:i'),
+                ])->values()->all()
+                : [],
 
             // Profit metrics are strictly Owner-only per AGENTS.md Constitution
             'total_profit' => $this->when($isOwner, fn () => $this->calculateTotalProfit()->toDecimal()),

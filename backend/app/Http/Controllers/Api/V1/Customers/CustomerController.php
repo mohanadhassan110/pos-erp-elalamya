@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\V1\Customers;
 
 use App\Actions\Customers\CreateCustomerAction;
+use App\Actions\Customers\CreateCustomerPaymentAction;
 use App\Actions\Customers\ToggleCustomerStatusAction;
 use App\Actions\Customers\UpdateCustomerAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customers\CustomerPaymentRequest;
 use App\Http\Requests\Customers\CustomerRequest;
 use App\Http\Resources\Customers\CustomerResource;
 use App\Models\Customer;
+use App\Services\Ledger\CustomerStatementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -64,5 +67,30 @@ class CustomerController extends Controller
         $updated = $action->execute($customer, $status, $request->user());
 
         return new CustomerResource($updated);
+    }
+
+    public function recordPayment(
+        CustomerPaymentRequest $request,
+        Customer $customer,
+        CreateCustomerPaymentAction $action
+    ): JsonResponse {
+        $payment = $action->execute($customer, $request->validated(), $request->user());
+
+        return response()->json([
+            'message' => 'تم تسجيل دفعة العميل بنجاح.',
+            'customer' => new CustomerResource($customer->fresh()),
+            'payment_id' => $payment->id,
+            'payment_number' => $payment->payment_number,
+        ], 201);
+    }
+
+    public function statement(
+        Request $request,
+        Customer $customer,
+        CustomerStatementService $service
+    ): JsonResponse {
+        $statement = $service->getStatement($customer, $request);
+
+        return response()->json($statement);
     }
 }

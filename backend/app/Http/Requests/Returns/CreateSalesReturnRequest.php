@@ -25,6 +25,8 @@ class CreateSalesReturnRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.invoice_item_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.item_condition' => ['nullable', 'string', 'in:resellable,damaged'],
+            'items.*.return_reason' => ['nullable', 'string', 'max:255'],
 
             // Payment for Cash Refund
             'payment_method_id' => ['nullable', 'integer', 'exists:payment_methods,id'],

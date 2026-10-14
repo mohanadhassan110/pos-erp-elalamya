@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { suppliersApi } from '../../services/api/suppliersApi';
-import type { Supplier, PaginatedResponse } from '../../types/domain';
+import { paymentMethodsApi } from '../../services/api/paymentMethodsApi';
+import type { Supplier, PaginatedResponse, PaymentMethod } from '../../types/domain';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Modal } from '../../components/ui/Modal';
 import { Table, type Column } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
@@ -10,6 +12,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useToast } from '../../app/providers/useToast';
+import { AccountStatementModal } from '../../components/statement/AccountStatementModal';
 
 export const SuppliersPage: React.FC = () => {
   const { showToast } = useToast();
@@ -17,6 +20,7 @@ export const SuppliersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Supplier Edit/Add Modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -35,6 +39,24 @@ export const SuppliersPage: React.FC = () => {
   const [balanceDescription, setBalanceDescription] = useState<string>('');
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [isSubmittingBalance, setIsSubmittingBalance] = useState<boolean>(false);
+
+  // Pay Supplier Modal
+  const [isPayModalOpen, setIsPayModalOpen] = useState<boolean>(false);
+  const [paySupplier, setPaySupplier] = useState<Supplier | null>(null);
+  const [payAmount, setPayAmount] = useState<string>('');
+  const [payMethodId, setPayMethodId] = useState<number>(0);
+  const [payNotes, setPayNotes] = useState<string>('');
+  const [payError, setPayError] = useState<string | null>(null);
+  const [isSubmittingPay, setIsSubmittingPay] = useState<boolean>(false);
+
+  // Statement Modal State
+  const [isStatementOpen, setIsStatementOpen] = useState<boolean>(false);
+  const [statementSupplier, setStatementSupplier] = useState<Supplier | null>(null);
+
+  const handleOpenStatement = (s: Supplier) => {
+    setStatementSupplier(s);
+    setIsStatementOpen(true);
+  };
 
   const fetchSuppliers = useCallback(async () => {
     setIsLoading(true);
@@ -68,6 +90,15 @@ export const SuppliersPage: React.FC = () => {
     };
   }, [search, page, showToast]);
 
+  useEffect(() => {
+    paymentMethodsApi
+      .list()
+      .then((methods) => {
+        setPaymentMethods(methods);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleOpenAddModal = () => {
     setEditingSupplier(null);
     setFormName('');
@@ -94,6 +125,51 @@ export const SuppliersPage: React.FC = () => {
     setBalanceDescription('');
     setBalanceError(null);
     setIsBalanceModalOpen(true);
+  };
+
+  const handleOpenPayModal = (s: Supplier) => {
+    setPaySupplier(s);
+    const numPayable = parseFloat(s.payable);
+    setPayAmount(numPayable > 0 ? String(numPayable) : '');
+    const defaultMethod =
+      paymentMethods.find((m) => m.is_active && m.is_cash) ||
+      paymentMethods.find((m) => m.is_active);
+    setPayMethodId(defaultMethod ? defaultMethod.id : (paymentMethods[0]?.id ?? 1));
+    setPayNotes('');
+    setPayError(null);
+    setIsPayModalOpen(true);
+  };
+
+  const handlePaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPayError(null);
+
+    if (!paySupplier) return;
+    if (!payAmount || Number(payAmount) <= 0) {
+      setPayError('المبلغ المسدد يجب أن يكون رقماً أكبر من الصفر');
+      return;
+    }
+    if (!payMethodId) {
+      setPayError('يرجى اختيار طريقة الدفع');
+      return;
+    }
+
+    setIsSubmittingPay(true);
+    try {
+      await suppliersApi.recordPayment(paySupplier.id, {
+        amount: payAmount,
+        payment_method_id: payMethodId,
+        notes: payNotes.trim() || undefined,
+      });
+      showToast('تم تسجيل سداد الدفعة للمورد بنجاح', 'success');
+      setIsPayModalOpen(false);
+      fetchSuppliers();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'فشل تسجيل سداد الدفعة للمورد';
+      setPayError(errorMsg);
+    } finally {
+      setIsSubmittingPay(false);
+    }
   };
 
   const handleSaveSupplier = async (e: React.FormEvent) => {
@@ -224,10 +300,25 @@ export const SuppliersPage: React.FC = () => {
     {
       key: 'actions',
       header: 'الإجراءات',
-      width: '15rem',
+      width: '26rem',
       align: 'left',
       render: (s: Supplier) => (
         <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenStatement(s)}
+          >
+            كشف حساب
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => handleOpenPayModal(s)}
+            disabled={!s.is_active}
+          >
+            سداد دفعة
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -454,6 +545,93 @@ export const SuppliersPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Pay Supplier Modal */}
+      <Modal
+        isOpen={isPayModalOpen}
+        onClose={() => !isSubmittingPay && setIsPayModalOpen(false)}
+        title={`سداد دفعة للمورد — ${paySupplier?.name || ''}`}
+      >
+        <form onSubmit={handlePaySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {payError && <Alert type="error" message={payError} />}
+
+          {paySupplier && (
+            <div
+              style={{
+                backgroundColor: 'var(--color-primary-50, #EFF6FF)',
+                padding: '0.875rem',
+                borderRadius: 'var(--radius-md, 6px)',
+                border: '1px solid var(--color-primary-200, #BFDBFE)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-900, #1E3A8A)' }}>
+                  إجمالي المستحق للمورد حالياً:
+                </span>
+                <span style={{ fontWeight: 'var(--font-weight-bold)', fontFamily: 'var(--font-family-mono)' }}>
+                  {paySupplier.payable_formatted}
+                </span>
+              </div>
+              <div style={{ marginTop: '0.25rem', fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-700, #1D4ED8)' }}>
+                {paySupplier.is_settled ? 'الحساب خالص / مسدد' : 'مستحق للمورد'}
+              </div>
+            </div>
+          )}
+
+          <Input
+            label="المبلغ المسدد للمورد (ج.م)"
+            type="number"
+            step="0.01"
+            min="0.01"
+            placeholder="0.00"
+            value={payAmount}
+            onChange={(e) => setPayAmount(e.target.value)}
+            required
+            autoFocus
+          />
+
+          <Select
+            label="طريقة الدفع (الخروج من)"
+            value={payMethodId}
+            onChange={(e) => setPayMethodId(Number(e.target.value))}
+            options={paymentMethods.map((pm) => ({
+              value: pm.id,
+              label: pm.name,
+            }))}
+            required
+          />
+
+          <Input
+            label="ملاحظات / بيان السداد"
+            placeholder="مثال: سداد نقدي للمندوب / تحويل بنكي / إيصال..."
+            value={payNotes}
+            onChange={(e) => setPayNotes(e.target.value)}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPayModalOpen(false)}
+              disabled={isSubmittingPay}
+            >
+              إلغاء
+            </Button>
+            <Button type="submit" variant="primary" isLoading={isSubmittingPay}>
+              تأكيد سداد الدفعة
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Supplier Account Statement Modal */}
+      <AccountStatementModal
+        isOpen={isStatementOpen}
+        onClose={() => setIsStatementOpen(false)}
+        entityType="supplier"
+        entityId={statementSupplier?.id ?? null}
+        entityName={statementSupplier?.name ?? ''}
+      />
     </div>
   );
 };

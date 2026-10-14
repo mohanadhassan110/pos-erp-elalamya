@@ -7,7 +7,6 @@ import { formatLiveTime } from '../../utils/formatters';
 import {
   ShoppingCart,
   FileText,
-  RefreshCw,
   Package,
   Tags,
   ArrowDownToLine,
@@ -62,8 +61,7 @@ export const AppLayout: React.FC = () => {
       heading: 'المبيعات',
       items: [
         { to: '/pos', label: 'نقطة البيع (POS)', icon: ShoppingCart },
-        { to: '/invoices', label: 'فواتير المبيعات', icon: FileText },
-        { to: '/returns', label: 'مرتجع واستبدال', icon: RefreshCw },
+        { to: '/invoices', label: 'الفواتير والمرتجعات', icon: FileText },
       ],
     },
     {

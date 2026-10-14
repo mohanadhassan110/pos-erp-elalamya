@@ -1392,4 +1392,70 @@ class SalesReturnTest extends TestCase
             ->assertJsonPath('data.items.0.total_cost', '600.00')
             ->assertJsonPath('data.items.0.profit', '300.00');
     }
+
+    public function test_resellable_item_condition_restores_showroom_stock(): void
+    {
+        $invoice = $this->createPostedRetailInvoice(2);
+        $item = $invoice->items->first();
+        $product = Product::find($item->product_id);
+        $initialStock = $product->stock_quantity->toInt();
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/returns', [
+            'invoice_id' => $invoice->id,
+            'resolution' => SalesReturnResolution::REFUND_CASH->value,
+            'payment_method_id' => $this->cashMethod->id,
+            'items' => [
+                [
+                    'invoice_item_id' => $item->id,
+                    'quantity' => 1,
+                    'item_condition' => 'resellable',
+                    'return_reason' => 'مقاس غير مناسب',
+                ],
+            ],
+        ]);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.items.0.item_condition', 'resellable')
+            ->assertJsonPath('data.items.0.return_reason', 'مقاس غير مناسب');
+
+        $product->refresh();
+        $this->assertEquals($initialStock + 1, $product->stock_quantity->toInt());
+    }
+
+    public function test_damaged_item_condition_routes_to_scrap_holding_without_increasing_stock(): void
+    {
+        $invoice = $this->createPostedRetailInvoice(2);
+        $item = $invoice->items->first();
+        $product = Product::find($item->product_id);
+        $initialStock = $product->stock_quantity->toInt();
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/returns', [
+            'invoice_id' => $invoice->id,
+            'resolution' => SalesReturnResolution::REFUND_CASH->value,
+            'payment_method_id' => $this->cashMethod->id,
+            'items' => [
+                [
+                    'invoice_item_id' => $item->id,
+                    'quantity' => 1,
+                    'item_condition' => 'damaged',
+                    'return_reason' => 'عيب مصنعي في الخياطة',
+                ],
+            ],
+        ]);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.items.0.item_condition', 'damaged')
+            ->assertJsonPath('data.items.0.return_reason', 'عيب مصنعي في الخياطة');
+
+        $product->refresh();
+        // Damaged item MUST NOT increase showroom sellable stock!
+        $this->assertEquals($initialStock, $product->stock_quantity->toInt());
+
+        // Verify that inventory movement explicitly documents defective holding
+        $movement = \App\Models\InventoryMovement::where('product_id', $product->id)
+            ->latest('id')
+            ->first();
+        $this->assertNotNull($movement);
+        $this->assertStringContainsString('تالف/معيب', $movement->reason);
+        $this->assertStringContainsString('مخزن الهوالك/التوالف', $movement->reason);
+        $this->assertEquals($initialStock, $movement->resulting_stock->toInt());
+    }
 }

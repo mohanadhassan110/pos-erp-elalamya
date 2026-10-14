@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { Customer, PaginatedResponse } from '../../types/domain';
+import type { Customer, CustomerStatementResponse, PaginatedResponse } from '../../types/domain';
 
 export interface CustomerFilters {
   [key: string]: string | number | boolean | undefined | null;
@@ -42,5 +42,28 @@ export const customersApi = {
   toggleStatus: async (id: number, is_active?: boolean): Promise<Customer> => {
     const res = await apiClient.patch<Customer>(API_ENDPOINTS.CUSTOMERS.STATUS(id), { is_active });
     return res.data;
+  },
+
+  recordPayment: async (
+    id: number,
+    payload: { amount: string; payment_method_id: number; notes?: string }
+  ): Promise<{ message: string; customer: Customer; payment_id: number; payment_number: string }> => {
+    const res = await apiClient.post<{ message: string; customer: Customer; payment_id: number; payment_number: string }>(
+      API_ENDPOINTS.CUSTOMERS.PAYMENTS(id),
+      payload
+    );
+    return res.data;
+  },
+
+  getStatement: async (
+    id: number,
+    params?: { from_date?: string; to_date?: string }
+  ): Promise<CustomerStatementResponse> => {
+    const res = await apiClient.get<CustomerStatementResponse>(API_ENDPOINTS.CUSTOMERS.STATEMENT(id), { params });
+    const raw = res as unknown as { data?: CustomerStatementResponse; transactions?: unknown[] };
+    if (raw && raw.data && Array.isArray((raw.data as CustomerStatementResponse).transactions)) {
+      return raw.data;
+    }
+    return res as unknown as CustomerStatementResponse;
   },
 };

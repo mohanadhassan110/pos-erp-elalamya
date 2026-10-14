@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { invoicesApi, type InvoiceFilters } from '../../services/api/invoicesApi';
-import type { Invoice } from '../../types/domain';
+import { returnsApi } from '../../services/api/returnsApi';
+import type { Invoice, ReturnableInvoice, SalesReturn } from '../../types/domain';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
@@ -8,9 +10,23 @@ import { Modal } from '../../components/ui/Modal';
 import { Spinner } from '../../components/ui/Spinner';
 import { InvoicePrintModal } from '../../components/invoice/InvoicePrintModal';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-import { Search, Printer, Eye, RotateCw } from 'lucide-react';
+import { ReturnFlow } from '../returns/ReturnFlow';
+import { ReturnHistory } from '../returns/ReturnHistory';
+import { InvoiceReturnAction } from '../returns/InvoiceReturnAction';
+import { Search, Printer, Eye, RotateCw, RotateCcw } from 'lucide-react';
+
+type InvoicesTab = 'sales' | 'returns';
+
+/** `null` = closed, `'search'` = toolbar entry (ask for the original invoice), otherwise pre-loaded. */
+type ReturnFlowTarget = ReturnableInvoice | 'search' | null;
 
 export const InvoicesPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: InvoicesTab = searchParams.get('tab') === 'returns' ? 'returns' : 'sales';
+  const setActiveTab = (tab: InvoicesTab) => {
+    setSearchParams(tab === 'returns' ? { tab: 'returns' } : {}, { replace: true });
+  };
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -21,11 +37,35 @@ export const InvoicesPage: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [saleTypeFilter, setSaleTypeFilter] = useState<'retail' | 'wholesale' | ''>('');
   const [statusFilter, setStatusFilter] = useState<'posted' | 'cancelled' | ''>('');
+  const [returnStatusFilter, setReturnStatusFilter] = useState<'all' | 'no_returns' | 'with_returns' | 'fully_returned'>('all');
 
   // Selected Invoice for Details Modal & Print
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(false);
   const [printInvoiceId, setPrintInvoiceId] = useState<number | null>(null);
+
+  // Returns: eligibility of the open invoice (from the backend) and the return flow modal
+  const [returnable, setReturnable] = useState<ReturnableInvoice | null>(null);
+  const [isLoadingReturnable, setIsLoadingReturnable] = useState<boolean>(false);
+  const [returnFlowTarget, setReturnFlowTarget] = useState<ReturnFlowTarget>(null);
+  const [returnsRefreshKey, setReturnsRefreshKey] = useState<number>(0);
+  const [returnsTotalCount, setReturnsTotalCount] = useState<number>(0);
+
+  // Load returns count
+  useEffect(() => {
+    let active = true;
+    returnsApi.list({ per_page: 1 })
+      .then((res) => {
+        if (active) {
+          setReturnsTotalCount(res.meta?.total ?? res.data.length);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [returnsRefreshKey]);
 
   // Debounce search input
   useEffect(() => {
@@ -89,8 +129,21 @@ export const InvoicesPage: React.FC = () => {
     };
   }, [currentPage, debouncedSearch, saleTypeFilter, statusFilter]);
 
+  const loadReturnable = useCallback(async (invoiceId: number) => {
+    setIsLoadingReturnable(true);
+    setReturnable(null);
+    try {
+      setReturnable(await returnsApi.getReturnableInvoice(invoiceId));
+    } catch {
+      setReturnable(null);
+    } finally {
+      setIsLoadingReturnable(false);
+    }
+  }, []);
+
   const handleOpenDetails = async (invoiceId: number) => {
     setIsLoadingDetails(true);
+    void loadReturnable(invoiceId);
     try {
       const fullInvoice = await invoicesApi.getById(invoiceId);
       setSelectedInvoice(fullInvoice);
@@ -99,6 +152,26 @@ export const InvoicesPage: React.FC = () => {
       if (item) setSelectedInvoice(item);
     } finally {
       setIsLoadingDetails(false);
+    }
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedInvoice(null);
+    setReturnable(null);
+  };
+
+  const handleOpenInvoiceFromReturn = (invoiceId: number) => {
+    setReturnFlowTarget(null);
+    void handleOpenDetails(invoiceId);
+  };
+
+  const handleReturnCompleted = (_result: SalesReturn, refreshed: ReturnableInvoice | null) => {
+    if (refreshed) setReturnable(refreshed);
+    setReturnsRefreshKey((k) => k + 1);
+    void fetchInvoices();
+    // Refresh has_returns / returned_value / net_after_returns on the open invoice
+    if (selectedInvoice) {
+      invoicesApi.getById(selectedInvoice.id).then(setSelectedInvoice).catch(() => {});
     }
   };
 
@@ -112,22 +185,82 @@ export const InvoicesPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: 'var(--font-size-xl, 20px)', fontWeight: 700, color: 'var(--text-primary)' }}>
-            سجل فواتير المبيعات
+            الفواتير
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '2px' }}>
-            استعراض وتتبع فواتير القطاعي والجملة وإعادة طباعتها
+            فواتير البيع القطاعي والجملة، وفواتير المرتجع والاستبدال المرتبطة بها
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            إجمالي الفواتير: <strong style={{ color: 'var(--text-primary)' }}>{totalCount}</strong>
-          </span>
-          <Button variant="secondary" size="md" onClick={fetchInvoices} icon={<RotateCw size={16} />}>
-            تحديث
+          {activeTab === 'sales' && (
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+              إجمالي الفواتير: <strong style={{ color: 'var(--text-primary)' }}>{totalCount}</strong>
+            </span>
+          )}
+          <Button variant="primary" size="md" onClick={() => setReturnFlowTarget('search')} icon={<RotateCcw size={16} />}>
+            فاتورة مرتجع
           </Button>
+          {activeTab === 'sales' && (
+            <Button variant="secondary" size="md" onClick={fetchInvoices} icon={<RotateCw size={16} />}>
+              تحديث
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Tabs: sales invoices | return invoices */}
+      <div role="tablist" aria-label="نوع الفواتير" style={{ display: 'flex', borderBottom: '1px solid var(--border-medium)', gap: '0.5rem' }}>
+        {([
+          { id: 'sales', label: 'فواتير البيع', count: totalCount },
+          { id: 'returns', label: 'فواتير المرتجع (سجل المرتجعات)', count: returnsTotalCount },
+        ] as const).map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '0.65rem 1.25rem',
+                marginBottom: '-1px',
+                border: 'none',
+                borderBottom: isActive ? '3px solid var(--color-navy-950)' : '3px solid transparent',
+                background: 'none',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                fontWeight: isActive ? 700 : 600,
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  fontSize: '11.5px',
+                  padding: '1px 7px',
+                  borderRadius: '10px',
+                  backgroundColor: isActive ? 'var(--color-navy-950)' : 'var(--bg-surface-subtle)',
+                  color: isActive ? '#FFFFFF' : 'var(--text-muted)',
+                  fontWeight: 700,
+                }}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === 'returns' ? (
+        <ReturnHistory refreshKey={returnsRefreshKey} onOpenInvoice={handleOpenDetails} />
+      ) : (
+      <>
 
       {/* Filter Toolbar */}
       <div
@@ -207,6 +340,35 @@ export const InvoicesPage: React.FC = () => {
             <option value="cancelled">ملغاة</option>
           </select>
         </div>
+
+        {/* Return Status Filter */}
+        <div style={{ width: '180px' }}>
+          <select
+            value={returnStatusFilter}
+            onChange={(e) => {
+              setReturnStatusFilter(e.target.value as 'all' | 'no_returns' | 'with_returns' | 'fully_returned');
+              setCurrentPage(1);
+            }}
+            style={{
+              width: '100%',
+              height: 'var(--control-height, 44px)',
+              padding: '0 0.75rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border-medium)',
+              backgroundColor: '#FFFFFF',
+              color: 'var(--text-primary)',
+              fontSize: '14px',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
+            aria-label="تصفية حسب موقف المرتجع"
+          >
+            <option value="all">جميع مواقف المرتجع</option>
+            <option value="no_returns">فواتير بدون مرتجع</option>
+            <option value="with_returns">فواتير بها مرتجع (جزئي أو كلي)</option>
+            <option value="fully_returned">فواتير مرتجعة بالكامل</option>
+          </select>
+        </div>
       </div>
 
       {/* Invoices Dense Table */}
@@ -252,7 +414,16 @@ export const InvoicesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((inv, idx) => {
+                {invoices
+                  .filter((inv) => {
+                    if (returnStatusFilter === 'no_returns') return !inv.has_returns;
+                    if (returnStatusFilter === 'with_returns') return !!inv.has_returns;
+                    if (returnStatusFilter === 'fully_returned') {
+                      return !!inv.has_returns && parseFloat(inv.net_after_returns || '0') <= 0;
+                    }
+                    return true;
+                  })
+                  .map((inv, idx) => {
                   const remainingNum = parseFloat(inv.remaining_amount || '0');
                   return (
                     <tr
@@ -284,9 +455,6 @@ export const InvoicesPage: React.FC = () => {
                               {inv.sale_type_label || (inv.sale_type === 'wholesale' ? 'جملة' : 'قطاعي')}
                             </Badge>
                           )}
-                          {inv.has_returns && (
-                            <Badge variant="warning" size="sm">مرتجع</Badge>
-                          )}
                         </div>
                       </td>
 
@@ -308,8 +476,16 @@ export const InvoicesPage: React.FC = () => {
                       </td>
 
                       {/* Total */}
-                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'left', fontWeight: 700, direction: 'ltr', fontSize: '13px' }}>
-                        {formatCurrency(inv.total)}
+                      <td style={{ padding: '0.625rem 0.75rem', textAlign: 'left', direction: 'ltr', fontSize: '13px' }}>
+                        <div style={{ fontWeight: 700 }}>{formatCurrency(inv.total)}</div>
+                        {inv.has_returns && (
+                          <div style={{ fontSize: '11px', color: '#B45309', fontWeight: 600, marginTop: '2px', direction: 'rtl' }}>
+                            مرتجع: -{formatCurrency(inv.returned_value || 0)}
+                            <span style={{ color: 'var(--color-navy-700)', display: 'block', fontWeight: 700 }}>
+                              الصافي: {formatCurrency(inv.net_after_returns)}
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Paid */}
@@ -330,9 +506,26 @@ export const InvoicesPage: React.FC = () => {
 
                       {/* Status */}
                       <td style={{ padding: '0.625rem 0.75rem', textAlign: 'center' }}>
-                        <Badge variant={inv.status === 'posted' ? 'success' : 'danger'} size="sm">
-                          {inv.status_label || (inv.status === 'posted' ? 'مرحلة' : 'ملغاة')}
-                        </Badge>
+                        {inv.status === 'cancelled' ? (
+                          <Badge variant="danger" size="sm">ملغاة</Badge>
+                        ) : inv.has_returns ? (
+                          parseFloat(inv.net_after_returns || '0') <= 0 ? (
+                            <Badge variant="danger" size="sm" title="تم إرجاع جميع أصناف الفاتورة بالكامل">
+                              مرتجع بالكامل
+                            </Badge>
+                          ) : (
+                            <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                              <Badge variant="success" size="sm">مرحلة</Badge>
+                              <Badge variant="warning" size="sm" title={`قيمة المرتجع: ${inv.returned_value} ج.م`}>
+                                مرتجع جزئي
+                              </Badge>
+                            </div>
+                          )
+                        ) : (
+                          <Badge variant="success" size="sm">
+                            {inv.status_label || 'مرحلة'}
+                          </Badge>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -365,11 +558,14 @@ export const InvoicesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Invoice Details Modal */}
-      {selectedInvoice && (
+      </>
+      )}
+
+      {/* Invoice Details Modal (hidden while the return flow is open so Esc closes only the top dialog) */}
+      {selectedInvoice && !returnFlowTarget && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedInvoice(null)}
+          onClose={handleCloseDetails}
           title={`تفاصيل الفاتورة #${selectedInvoice.invoice_number}`}
           maxWidth="54rem"
         >
@@ -401,7 +597,7 @@ export const InvoicesPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Partial Return Banner on Original Invoice */}
+              {/* Partial / Full Return Banner on Original Invoice */}
               {selectedInvoice.has_returns && (
                 <div
                   style={{
@@ -412,13 +608,50 @@ export const InvoicesPage: React.FC = () => {
                     fontSize: '13px',
                   }}
                 >
-                  <div style={{ fontWeight: 700, color: '#B45309', marginBottom: '0.35rem' }}>
-                    تنبيه: تم عمل مرتجع جزئي على هذه الفاتورة
+                  <div style={{ fontWeight: 700, color: '#B45309', marginBottom: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>
+                      تنبيه: تم تسجيل مردودات مبيعات على هذه الفاتورة
+                      {parseFloat(selectedInvoice.net_after_returns || '0') <= 0 ? ' (مرتجع بالكامل)' : ' (مرتجع جزئي)'}
+                    </span>
+                    <Badge variant={parseFloat(selectedInvoice.net_after_returns || '0') <= 0 ? 'danger' : 'warning'} size="sm">
+                      {parseFloat(selectedInvoice.net_after_returns || '0') <= 0 ? 'مرتجع بالكامل' : 'مرتجع جزئي'}
+                    </Badge>
                   </div>
-                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#0F172A' }}>
-                    <div>قيمة المرتجع: <strong>{formatCurrency(selectedInvoice.returned_value)}</strong></div>
-                    <div>الصافي بعد المرتجع: <strong style={{ color: 'var(--color-primary-700)' }}>{formatCurrency(selectedInvoice.net_after_returns)}</strong></div>
+                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#0F172A', marginBottom: '0.5rem' }}>
+                    <div>إجمالي المبيعات الأصلية: <strong>{formatCurrency(selectedInvoice.total)}</strong></div>
+                    <div>إجمالي المرتجع: <strong style={{ color: '#B45309' }}>{formatCurrency(selectedInvoice.returned_value)}</strong></div>
+                    <div>الصافي الفعلي بعد المرتجع: <strong style={{ color: 'var(--color-primary-700)' }}>{formatCurrency(selectedInvoice.net_after_returns)}</strong></div>
                   </div>
+
+                  {selectedInvoice.returns && selectedInvoice.returns.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #FCD34D', paddingTop: '0.5rem' }}>
+                      <div style={{ fontWeight: 600, color: '#92400E', fontSize: '12px', marginBottom: '4px' }}>
+                        إشعارات المرتجع المسجلة في سجل المرتجعات:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {selectedInvoice.returns.map((ret) => (
+                          <div
+                            key={ret.id}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              backgroundColor: '#FFFFFF',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #FEF08A',
+                              fontSize: '12px',
+                            }}
+                          >
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{ret.return_number}</span>
+                            <span>{ret.resolution_label}</span>
+                            <span style={{ color: '#64748B' }}>{ret.created_at}</span>
+                            <span style={{ fontWeight: 700, color: '#B45309' }}>{formatCurrency(ret.total_return_amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -492,7 +725,7 @@ export const InvoicesPage: React.FC = () => {
 
 
               {/* Modal Actions */}
-              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <Button
                   variant="primary"
                   size="md"
@@ -503,12 +736,38 @@ export const InvoicesPage: React.FC = () => {
                 >
                   طباعة الفاتورة
                 </Button>
-                <Button variant="secondary" size="md" onClick={() => setSelectedInvoice(null)}>
+                <InvoiceReturnAction
+                  returnable={returnable}
+                  isLoading={isLoadingReturnable}
+                  onStart={(inv) => setReturnFlowTarget(inv)}
+                />
+                <Button variant="secondary" size="md" onClick={handleCloseDetails}>
                   إغلاق
                 </Button>
               </div>
             </div>
           )}
+        </Modal>
+      )}
+
+      {/* Return / exchange flow (from invoice details or the toolbar) */}
+      {returnFlowTarget && (
+        <Modal
+          isOpen={true}
+          onClose={() => setReturnFlowTarget(null)}
+          title={
+            returnFlowTarget === 'search'
+              ? 'فاتورة مرتجع — اختيار الفاتورة الأصلية'
+              : `عمل مرتجع / استبدال — الفاتورة ${returnFlowTarget.invoice_number}`
+          }
+          maxWidth="72rem"
+        >
+          <ReturnFlow
+            initialInvoice={returnFlowTarget === 'search' ? null : returnFlowTarget}
+            onCompleted={handleReturnCompleted}
+            onOpenInvoice={handleOpenInvoiceFromReturn}
+            onClose={() => setReturnFlowTarget(null)}
+          />
         </Modal>
       )}
 

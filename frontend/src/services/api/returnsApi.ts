@@ -19,9 +19,13 @@ export interface ReturnFilters {
 }
 
 export const returnsApi = {
-  searchInvoice: async (invoiceNumber: string): Promise<ReturnableInvoice> => {
+  searchInvoice: async (invoiceNumber: string, customerId?: number): Promise<ReturnableInvoice> => {
+    const params: Record<string, string | number> = { query: invoiceNumber };
+    if (customerId) {
+      params.customer_id = customerId;
+    }
     const res = await apiClient.get<ReturnableInvoice>(API_ENDPOINTS.RETURNS.SEARCH_INVOICE, {
-      params: { query: invoiceNumber },
+      params,
     });
     return res.data;
   },
