@@ -111,24 +111,24 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
     window.print();
   };
 
+  const sortedTransactions = useMemo(() => {
+    const list = statement?.transactions;
+    if (!list || list.length === 0) return [];
+    if (sortOrder === 'desc') {
+      return [...list].reverse();
+    }
+    return list;
+  }, [statement?.transactions, sortOrder]);
+
   if (!isOpen) return null;
 
-  const printableRoot = document.getElementById('printable-root');
+  const printableRoot = typeof document !== 'undefined' ? document.getElementById('printable-root') : null;
 
   const isCustomer = entityType === 'customer';
   const titleLabel = isCustomer ? 'كشف حساب عميل' : 'كشف حساب مورد';
   const debitHeader = isCustomer ? 'مدين (+ مبيعات)' : 'مدين (مسدد للمورد)';
   const creditHeader = isCustomer ? 'دائن (- دفعات)' : 'دائن (+ توريدات)';
   const balanceHeader = isCustomer ? 'رصيد المديونية' : 'المستحق للمورد';
-
-  // Sort transactions (default newest-to-oldest)
-  const sortedTransactions = useMemo(() => {
-    if (!statement?.transactions) return [];
-    if (sortOrder === 'desc') {
-      return [...statement.transactions].reverse();
-    }
-    return statement.transactions;
-  }, [statement?.transactions, sortOrder]);
 
   // Compute status pill for closing balance
   const closingNum = statement ? Number(statement.period_summary.closing_balance) : 0;
