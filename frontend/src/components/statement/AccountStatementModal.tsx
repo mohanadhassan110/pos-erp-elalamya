@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { customersApi } from '../../services/api/customersApi';
 import { suppliersApi } from '../../services/api/suppliersApi';
@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { Alert } from '../ui/Alert';
 import { EmptyState } from '../ui/EmptyState';
-import { Printer, X, Calendar, RefreshCw, FileText, Wallet, ArrowUpRight, ArrowDownLeft, Scale } from 'lucide-react';
+import { Printer, X, Calendar, RefreshCw, FileText, Wallet, ArrowUpRight, ArrowDownLeft, Scale, ArrowUpDown } from 'lucide-react';
 
 export interface AccountStatementModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
 
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const fetchStatement = useCallback(
     async (from?: string, to?: string) => {
@@ -119,6 +120,15 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
   const debitHeader = isCustomer ? 'مدين (+ مبيعات)' : 'مدين (مسدد للمورد)';
   const creditHeader = isCustomer ? 'دائن (- دفعات)' : 'دائن (+ توريدات)';
   const balanceHeader = isCustomer ? 'رصيد المديونية' : 'المستحق للمورد';
+
+  // Sort transactions (default newest-to-oldest)
+  const sortedTransactions = useMemo(() => {
+    if (!statement?.transactions) return [];
+    if (sortOrder === 'desc') {
+      return [...statement.transactions].reverse();
+    }
+    return statement.transactions;
+  }, [statement?.transactions, sortOrder]);
 
   // Compute status pill for closing balance
   const closingNum = statement ? Number(statement.period_summary.closing_balance) : 0;
@@ -291,11 +301,37 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
             </div>
 
             {statement && (
-              <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                <span>إجمالي حركات الفترة:</span>
-                <strong style={{ color: '#0F172A', fontFamily: 'var(--font-family-mono)' }}>
-                  {statement.period_summary.transactions_count}
-                </strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <span>إجمالي حركات الفترة:</span>
+                  <strong style={{ color: '#0F172A', fontFamily: 'var(--font-family-mono)' }}>
+                    {statement.period_summary.transactions_count}
+                  </strong>
+                </div>
+
+                {/* Sort Order Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.3rem 0.65rem',
+                    backgroundColor: sortOrder === 'desc' ? '#F0FDF4' : '#F8FAFC',
+                    border: `1px solid ${sortOrder === 'desc' ? '#86EFAC' : '#CBD5E1'}`,
+                    borderRadius: '5px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: sortOrder === 'desc' ? '#15803D' : '#334155',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="انقر للتبديل بين الترتيب الزمني"
+                >
+                  <ArrowUpDown size={13} style={{ color: sortOrder === 'desc' ? '#16A34A' : '#64748B' }} />
+                  <span>الترتيب: <strong>{sortOrder === 'desc' ? 'من الأحدث للأقدم ⬇' : 'من الأقدم للأحدث ⬆'}</strong></span>
+                </button>
               </div>
             )}
           </form>
@@ -415,7 +451,31 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
                       <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                         <tr style={{ backgroundColor: 'var(--color-navy-950, #0B1220)', color: '#F8FAFC' }}>
                           <th style={{ padding: '0.625rem 0.75rem', width: '3rem' }}>#</th>
-                          <th style={{ padding: '0.625rem 0.75rem', width: '9.5rem' }}>التاريخ والوقت</th>
+                          <th style={{ padding: '0.625rem 0.75rem', width: '10.5rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#F8FAFC',
+                                cursor: 'pointer',
+                                padding: 0,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                              }}
+                              title="انقر لتبديل الترتيب الزمني"
+                            >
+                              <span>التاريخ والوقت</span>
+                              <ArrowUpDown size={12} style={{ opacity: 0.8 }} />
+                              <span style={{ fontSize: '10.5px', fontWeight: 500, color: '#93C5FD' }}>
+                                ({sortOrder === 'desc' ? 'الأحدث أولاً' : 'الأقدم أولاً'})
+                              </span>
+                            </button>
+                          </th>
                           <th style={{ padding: '0.625rem 0.75rem', width: '9rem' }}>نوع الحركة</th>
                           <th style={{ padding: '0.625rem 0.75rem', width: '9rem' }}>رقم المرجع</th>
                           <th style={{ padding: '0.625rem 0.75rem' }}>البيان / التفاصيل</th>
@@ -426,7 +486,7 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {statement.transactions.map((tx, idx) => {
+                        {sortedTransactions.map((tx, idx) => {
                           const hasDebit = Number(tx.debit) > 0;
                           const hasCredit = Number(tx.credit) > 0;
                           return (
@@ -536,6 +596,9 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
                     ? `من ${statement.period.from_date || 'البداية'} إلى ${statement.period.to_date || 'الآن'}`
                     : 'كافة المعاملات التاريخية'}
                 </div>
+                <div>
+                  <strong>الترتيب: </strong> {sortOrder === 'desc' ? 'من الأحدث إلى الأقدم' : 'من الأقدم إلى الأحدث'}
+                </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed #cccccc', fontSize: '13px' }}>
                 <div>
@@ -569,7 +632,7 @@ export const AccountStatementModal: React.FC<AccountStatementModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {statement.transactions.map((tx, idx) => (
+                {sortedTransactions.map((tx, idx) => (
                   <tr key={tx.id} style={{ borderBottom: '1px solid #dddddd' }}>
                     <td style={{ padding: '5px 4px', textAlign: 'center' }}>{idx + 1}</td>
                     <td style={{ padding: '5px 6px', direction: 'ltr', textAlign: 'right' }}>{tx.date_formatted}</td>

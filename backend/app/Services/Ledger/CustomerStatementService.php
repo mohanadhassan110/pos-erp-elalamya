@@ -114,6 +114,11 @@ class CustomerStatementService
 
         $currentAccountBalance = $customer->calculateBalance();
 
+        $order = strtolower($request->query('order', 'asc'));
+        if ($order === 'desc') {
+            $items = array_reverse($items);
+        }
+
         return [
             'customer' => [
                 'id' => $customer->id,

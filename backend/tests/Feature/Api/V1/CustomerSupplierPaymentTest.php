@@ -291,6 +291,16 @@ class CustomerSupplierPaymentTest extends TestCase
             ->assertJsonPath('transactions.1.running_balance', '600.00')
             ->assertJsonPath('transactions.2.credit', '150.00')
             ->assertJsonPath('transactions.2.running_balance', '450.00');
+
+        // Test with ?order=desc (newest to oldest)
+        $descResponse = $this->actingAs($this->cashier)
+            ->getJson("/api/v1/customers/{$customer->id}/statement?order=desc");
+
+        $descResponse->assertStatus(200)
+            ->assertJsonPath('transactions.0.credit', '150.00')
+            ->assertJsonPath('transactions.0.running_balance', '450.00')
+            ->assertJsonPath('transactions.2.debit', '1000.00')
+            ->assertJsonPath('transactions.2.running_balance', '1000.00');
     }
 
     public function test_can_get_supplier_statement_with_running_balance(): void

@@ -111,6 +111,11 @@ class SupplierStatementService
 
         $currentPayable = $supplier->calculatePayable();
 
+        $order = strtolower($request->query('order', 'asc'));
+        if ($order === 'desc') {
+            $items = array_reverse($items);
+        }
+
         return [
             'supplier' => [
                 'id' => $supplier->id,
