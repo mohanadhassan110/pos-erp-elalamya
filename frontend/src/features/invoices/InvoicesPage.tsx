@@ -702,25 +702,35 @@ export const InvoicesPage: React.FC = () => {
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 1rem',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  padding: '0.875rem 1rem',
                   backgroundColor: 'var(--bg-surface-subtle)',
                   borderRadius: '6px',
-                  fontWeight: 700,
-                  fontSize: '15px',
+                  fontSize: '14px',
                 }}
               >
-                <span>صافي الفاتورة: {formatCurrency(selectedInvoice.total)}</span>
-                {selectedInvoice.is_replacement && selectedInvoice.replacement_details ? (
-                  <span style={{ color: 'var(--color-success)' }}>
-                    المدفوع الفعلي للفرق: {formatCurrency(selectedInvoice.replacement_details.difference_paid_amount || selectedInvoice.replacement_details.difference_amount)}
-                  </span>
-                ) : (
-                  <span style={{ color: 'var(--color-success)' }}>المدفوع: {formatCurrency(selectedInvoice.paid_amount)}</span>
+                {parseFloat(selectedInvoice.discount_amount || '0') > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', fontSize: '13px', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.375rem' }}>
+                    <span>المجموع قبل الخصم: <strong style={{ color: '#0F172A' }}>{formatCurrency(selectedInvoice.subtotal)}</strong></span>
+                    <span style={{ color: '#B91C1C', fontWeight: 700 }}>
+                      الخصم الممنوح: - {formatCurrency(selectedInvoice.discount_amount)}
+                    </span>
+                  </div>
                 )}
-                {parseFloat(selectedInvoice.remaining_amount) > 0 && (
-                  <span style={{ color: 'var(--color-danger)' }}>المتبقي: {formatCurrency(selectedInvoice.remaining_amount)}</span>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', fontWeight: 700, fontSize: '15px' }}>
+                  <span>صافي الفاتورة: {formatCurrency(selectedInvoice.total)}</span>
+                  {selectedInvoice.is_replacement && selectedInvoice.replacement_details ? (
+                    <span style={{ color: 'var(--color-success)' }}>
+                      المدفوع الفعلي للفرق: {formatCurrency(selectedInvoice.replacement_details.difference_paid_amount || selectedInvoice.replacement_details.difference_amount)}
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--color-success)' }}>المدفوع: {formatCurrency(selectedInvoice.paid_amount)}</span>
+                  )}
+                  {parseFloat(selectedInvoice.remaining_amount) > 0 && (
+                    <span style={{ color: 'var(--color-danger)' }}>المتبقي: {formatCurrency(selectedInvoice.remaining_amount)}</span>
+                  )}
+                </div>
               </div>
 
 

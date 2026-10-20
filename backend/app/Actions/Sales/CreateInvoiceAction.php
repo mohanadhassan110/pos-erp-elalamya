@@ -309,6 +309,20 @@ class CreateInvoiceAction
 
             // 4. Calculate Final Invoice Totals
             $discountAmount = Money::zero();
+            if (isset($data['discount_amount']) && $data['discount_amount'] !== null && $data['discount_amount'] !== '') {
+                $rawDiscount = is_numeric($data['discount_amount']) ? (string) $data['discount_amount'] : '0.00';
+                $discountAmount = Money::fromDecimal($rawDiscount);
+                if ($discountAmount->isNegative()) {
+                    throw ValidationException::withMessages([
+                        'discount_amount' => ['مبلغ الخصم لا يمكن أن يكون سالباً.'],
+                    ]);
+                }
+                if ($discountAmount->isGreaterThan($invoiceSubtotal)) {
+                    throw ValidationException::withMessages([
+                        'discount_amount' => ['مبلغ الخصم لا يمكن أن يتجاوز المجموع الفرعي للفاتورة.'],
+                    ]);
+                }
+            }
             $invoiceTotal = $invoiceSubtotal->subtract($discountAmount);
 
             // 5. Validate & Process Payments

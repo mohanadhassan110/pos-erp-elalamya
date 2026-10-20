@@ -23,6 +23,8 @@ import {
   PlusCircle,
   Barcode as BarcodeIcon,
   RotateCcw,
+  X,
+  Tag,
 } from 'lucide-react';
 
 export interface CartLine {
@@ -78,6 +80,8 @@ export const PosPage: React.FC = () => {
 
   // Payment & Checkout State
   const [paidAmountInput, setPaidAmountInput] = useState<string>('');
+  const [discountInput, setDiscountInput] = useState<string>('');
+  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
   const [invoiceNotes, setInvoiceNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -137,9 +141,14 @@ export const PosPage: React.FC = () => {
   // Helper to get selected customer object
   const currentCustomer = customers.find((c) => String(c.id) === selectedCustomerId);
 
-  // Subtotal & Total Calculations
+  // Subtotal, Discount & Total Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const total = subtotal;
+  const parsedDiscountInput = parseFloat(discountInput) || 0;
+  const computedDiscount = discountType === 'percentage'
+    ? Math.round((subtotal * (parsedDiscountInput / 100)) * 100) / 100
+    : parsedDiscountInput;
+  const discountAmount = Math.min(subtotal, Math.max(0, computedDiscount));
+  const total = Math.max(0, subtotal - discountAmount);
   const paidAmountNumber = parseFloat(paidAmountInput) || 0;
   const remainingDebt = Math.max(0, total - paidAmountNumber);
   const customerCredit = Math.max(0, paidAmountNumber - total);
@@ -355,6 +364,7 @@ export const PosPage: React.FC = () => {
         customer_id: selectedCustomerId ? parseInt(selectedCustomerId, 10) : null,
         idempotency_key: idempotencyKey,
         notes: invoiceNotes.trim() || undefined,
+        discount_amount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
         items: cart.map((item) => {
           if (item.type === 'product') {
             return {
@@ -409,6 +419,7 @@ export const PosPage: React.FC = () => {
     selectedCustomerId,
     selectedPaymentMethodId,
     paidAmountNumber,
+    discountAmount,
     idempotencyKey,
     invoiceNotes,
     showToast,
@@ -452,6 +463,8 @@ export const PosPage: React.FC = () => {
   const handleStartNewSale = () => {
     setCart([]);
     setPaidAmountInput('');
+    setDiscountInput('');
+    setDiscountType('fixed');
     setInvoiceNotes('');
     setCheckoutError(null);
     setCompletedInvoice(null);
@@ -796,7 +809,10 @@ export const PosPage: React.FC = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setCart([])}
+              onClick={() => {
+                setCart([]);
+                setDiscountInput('');
+              }}
               disabled={cart.length === 0}
               className="text-xs text-rose-600 hover:text-rose-700 border-rose-200"
             >
@@ -813,19 +829,133 @@ export const PosPage: React.FC = () => {
             </h2>
 
             {/* Financial Summary Card with Prominent Grand Total (>= 36px bold) */}
-            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '1rem', marginBottom: '0.875rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B', marginBottom: '0.5rem' }}>
                 <span>المجموع الفرعي:</span>
                 <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '14px', direction: 'ltr' }}>
                   <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(subtotal)}</span> ج.م
                 </span>
               </div>
+
+              {discountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: '#B91C1C', marginBottom: '0.5rem', backgroundColor: '#FEF2F2', padding: '5px 8px', borderRadius: '5px', border: '1px solid #FECACA' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Tag size={13} />
+                    <span>الخصم المطبق {discountType === 'percentage' ? `(${parsedDiscountInput}%)` : ''}:</span>
+                  </span>
+                  <span style={{ fontWeight: 700, fontSize: '14px', direction: 'ltr' }}>
+                    - <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(discountAmount)}</span> ج.م
+                  </span>
+                </div>
+              )}
+
               <div style={{ borderTop: '2px solid #E2E8F0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>إجمالي الفاتورة:</span>
                 <span style={{ fontSize: '38px', fontWeight: 900, color: '#0B1220', lineHeight: 1, direction: 'ltr' }}>
                   <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(total)}</span> <span style={{ fontSize: '20px', fontWeight: 700 }}>ج.م</span>
                 </span>
               </div>
+            </div>
+
+            {/* Invoice Discount Section */}
+            <div style={{ marginBottom: '0.875rem', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Tag size={14} color="#64748B" />
+                  <span>خصم على الفاتورة:</span>
+                </label>
+                {/* Segmented Toggle: Fixed vs Percentage */}
+                <div style={{ display: 'inline-flex', borderRadius: '5px', border: '1px solid #CBD5E1', overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType('fixed')}
+                    style={{
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: discountType === 'fixed' ? '#0F172A' : '#FFFFFF',
+                      color: discountType === 'fixed' ? '#FFFFFF' : '#64748B',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    مبلغ (ج.م)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType('percentage')}
+                    style={{
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      border: 'none',
+                      borderRight: '1px solid #CBD5E1',
+                      cursor: 'pointer',
+                      backgroundColor: discountType === 'percentage' ? '#0F172A' : '#FFFFFF',
+                      color: discountType === 'percentage' ? '#FFFFFF' : '#64748B',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    نسبة (%)
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  step={discountType === 'percentage' ? '1' : '0.5'}
+                  min="0"
+                  max={discountType === 'percentage' ? 100 : subtotal}
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value)}
+                  placeholder={discountType === 'percentage' ? 'أدخل النسبة المئوية للخصم (مثال: 5)' : 'أدخل مبلغ الخصم بالجنيه (0.00)'}
+                  disabled={cart.length === 0}
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    padding: '0 0.75rem 0 2rem',
+                    backgroundColor: cart.length === 0 ? '#F1F5F9' : '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#B91C1C',
+                    fontFamily: 'monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  className="al-input"
+                />
+                {discountInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setDiscountInput('')}
+                    style={{
+                      position: 'absolute',
+                      left: '0.5rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94A3B8',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title="إلغاء الخصم"
+                  >
+                    <X size={15} />
+                  </button>
+                ) : null}
+              </div>
+
+              {discountType === 'percentage' && parsedDiscountInput > 0 && subtotal > 0 && (
+                <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', textAlign: 'left', direction: 'ltr' }}>
+                  = {formatNumber(discountAmount)} ج.م
+                </div>
+              )}
             </div>
 
             {/* Payment Details */}

@@ -27,6 +27,7 @@ class CreateInvoiceRequest extends FormRequest
             ],
             'idempotency_key' => ['nullable', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.type' => ['required', Rule::enum(InvoiceItemType::class)],
             'items.*.quantity' => ['required', 'integer', 'gt:0'],

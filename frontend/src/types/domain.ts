@@ -355,6 +355,7 @@ export interface CreateInvoicePayload {
   customer_id?: number | null;
   idempotency_key?: string;
   notes?: string;
+  discount_amount?: string;
   items: CreateInvoiceItemPayload[];
   payments?: CreateInvoicePaymentPayload[];
 }

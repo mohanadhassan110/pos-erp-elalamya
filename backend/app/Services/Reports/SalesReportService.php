@@ -31,6 +31,7 @@ class SalesReportService
             ->flip();
 
         $grossSales = Money::zero();
+        $totalDiscounts = Money::zero();
         $retailSales = Money::zero();
         $wholesaleSales = Money::zero();
         $replacementSales = Money::zero();
@@ -38,6 +39,7 @@ class SalesReportService
 
         foreach ($invoices as $invoice) {
             $grossSales = $grossSales->add($invoice->total);
+            $totalDiscounts = $totalDiscounts->add($invoice->discount_amount);
 
             if ($invoice->sale_type === SaleType::RETAIL) {
                 $retailSales = $retailSales->add($invoice->total);
@@ -105,6 +107,7 @@ class SalesReportService
             'items_returned_count' => $totalItemsReturned,
 
             'net_sales' => $netSales->toDecimal(),
+            'total_discounts' => $totalDiscounts->toDecimal(),
             'included_statuses' => ['posted'],
             'excluded_statuses' => ['cancelled'],
         ];
@@ -116,9 +119,14 @@ class SalesReportService
     public function getRealizedProfit(Carbon $startUtc, Carbon $endUtc): array
     {
         // 1. Posted invoice items within period
-        $postedInvoiceIds = Invoice::where('status', InvoiceStatus::POSTED)
+        $postedInvoices = Invoice::where('status', InvoiceStatus::POSTED)
             ->whereBetween('created_at', [$startUtc, $endUtc])
-            ->pluck('id');
+            ->get();
+        $postedInvoiceIds = $postedInvoices->pluck('id');
+        $totalDiscounts = $postedInvoices->reduce(
+            fn(Money $carry, $inv) => $carry->add($inv->discount_amount),
+            Money::zero()
+        );
 
         $invoiceItems = InvoiceItem::whereIn('invoice_id', $postedInvoiceIds)
             ->with(['product.category'])
@@ -216,9 +224,9 @@ class SalesReportService
         }
 
         // Net Realized Calculations
-        $netRealizedRevenue = $grossRevenue->subtract($returnedRevenue);
+        $netRealizedRevenue = $grossRevenue->subtract($returnedRevenue)->subtract($totalDiscounts);
         $netRealizedCogs = $grossCogs->subtract($returnedCogsReversal);
-        $netRealizedProfit = $grossProfit->subtract($profitReversal);
+        $netRealizedProfit = $grossProfit->subtract($profitReversal)->subtract($totalDiscounts);
 
         $marginPercentage = '0.00';
         if ($netRealizedRevenue->isGreaterThan(Money::zero())) {
@@ -242,9 +250,10 @@ class SalesReportService
         }
 
         return [
-            'gross_revenue' => $grossRevenue->toDecimal(),
+            'gross_revenue' => $grossRevenue->subtract($totalDiscounts)->toDecimal(),
+            'total_discounts' => $totalDiscounts->toDecimal(),
             'gross_cogs' => $grossCogs->toDecimal(),
-            'gross_profit' => $grossProfit->toDecimal(),
+            'gross_profit' => $grossProfit->subtract($totalDiscounts)->toDecimal(),
 
             'returned_revenue' => $returnedRevenue->toDecimal(),
             'returned_cogs_reversal' => $returnedCogsReversal->toDecimal(),

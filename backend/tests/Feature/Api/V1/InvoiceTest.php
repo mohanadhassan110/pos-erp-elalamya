@@ -1038,4 +1038,92 @@ class InvoiceTest extends TestCase
         // Retail customer has no ledger account: zero customer transactions created
         $this->assertSame(0, CustomerTransaction::count());
     }
+
+    public function test_invoice_creation_with_valid_discount(): void
+    {
+        $payload = [
+            'sale_type' => 'retail',
+            'discount_amount' => '150.00',
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->product1->id,
+                    'quantity' => 2, // 2 * 500 = 1000 subtotal
+                    'unit_sale_price' => '500.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '850.00', // exactly 1000 - 150
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.subtotal', '1000.00')
+            ->assertJsonPath('data.discount_amount', '150.00')
+            ->assertJsonPath('data.total', '850.00')
+            ->assertJsonPath('data.paid_amount', '850.00')
+            ->assertJsonPath('data.remaining_amount', '0.00');
+
+        $this->assertDatabaseHas('invoices', [
+            'subtotal' => 1000.00,
+            'discount_amount' => 150.00,
+            'total' => 850.00,
+        ]);
+    }
+
+    public function test_invoice_creation_rejects_discount_exceeding_subtotal(): void
+    {
+        $payload = [
+            'sale_type' => 'retail',
+            'discount_amount' => '1200.00',
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->product1->id,
+                    'quantity' => 2, // subtotal 1000
+                    'unit_sale_price' => '500.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '100.00',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['discount_amount']);
+    }
+
+    public function test_invoice_creation_rejects_negative_discount(): void
+    {
+        $payload = [
+            'sale_type' => 'retail',
+            'discount_amount' => '-50.00',
+            'items' => [
+                [
+                    'type' => 'product',
+                    'product_id' => $this->product1->id,
+                    'quantity' => 1,
+                    'unit_sale_price' => '500.00',
+                ],
+            ],
+            'payments' => [
+                [
+                    'payment_method_id' => $this->cashMethod->id,
+                    'amount' => '500.00',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->cashier)->postJson('/api/v1/invoices', $payload);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['discount_amount']);
+    }
 }
