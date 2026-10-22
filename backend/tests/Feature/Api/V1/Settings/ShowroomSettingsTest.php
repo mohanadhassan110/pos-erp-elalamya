@@ -113,4 +113,41 @@ class ShowroomSettingsTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['phones']);
     }
+
+    public function test_unlocked_cashier_can_view_and_update_showroom_settings(): void
+    {
+        $token = $this->cashier->createToken('test-terminal')->plainTextToken;
+        $tokenId = $this->cashier->tokens()->latest()->first()->id;
+        \Illuminate\Support\Facades\Cache::put("reports_unlocked_token_{$tokenId}", true, now()->addMinutes(15));
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/settings/showroom');
+
+        $res->assertOk()
+            ->assertJson(['showroom_name' => 'معرض العالمية للمفروشات']);
+
+        $updateRes = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/settings/showroom', [
+                'phones' => '01000000000',
+            ]);
+
+        $updateRes->assertOk();
+        $this->assertEquals('01000000000', Setting::get('showroom_phone'));
+    }
+
+    public function test_unlocked_cashier_can_update_reports_pin(): void
+    {
+        $token = $this->cashier->createToken('test-terminal')->plainTextToken;
+        $tokenId = $this->cashier->tokens()->latest()->first()->id;
+        \Illuminate\Support\Facades\Cache::put("reports_unlocked_token_{$tokenId}", true, now()->addMinutes(15));
+
+        $res = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/reports/password', [
+                'password' => '5678',
+            ]);
+
+        $res->assertOk();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('5678', Setting::get('reports_password_hash')));
+    }
 }
+

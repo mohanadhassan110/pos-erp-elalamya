@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Reports;
 
+use App\Domain\Auth\Enums\UserRole;
 use App\Domain\Sales\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportDateFilterRequest;
@@ -669,18 +670,29 @@ class ReportController extends Controller
     }
 
     /**
-     * Set or update reports gate password (Owner only).
+     * Set or update reports gate PIN (Owner or Cashier with active reports access).
      */
     public function setPassword(SetReportsPasswordRequest $request): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user->role !== UserRole::OWNER) {
+            $token = $user->currentAccessToken();
+            $tokenKey = $token?->id ?? ('user_'.$user->id);
+            if (! Cache::get("reports_unlocked_token_{$tokenKey}")) {
+                return ApiResponse::forbidden('غير مصرح لك بتغيير رمز PIN إلا بعد إلغاء القفل بالرمز الحالي أولاً', 'FORBIDDEN');
+            }
+        }
+
         $newPassword = $request->validated('password');
 
         Setting::set('reports_password_hash', Hash::make($newPassword), 'string', 'security');
 
-        Log::info('تم تحديث كلمة مرور قسم التقارير بواسطة المالك', [
-            'owner_id' => $request->user()?->id,
+        Log::info('تم تحديث رمز PIN لقسم التقارير والإعدادات', [
+            'user_id' => $user->id,
+            'role' => $user->role->value,
         ]);
 
-        return ApiResponse::success(null, 'تم تعيين كلمة مرور قسم التقارير بنجاح');
+        return ApiResponse::success(null, 'تم تعيين رمز الـ PIN لقسم التقارير والإعدادات بنجاح');
     }
 }

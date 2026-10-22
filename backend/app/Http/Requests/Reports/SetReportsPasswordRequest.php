@@ -14,15 +14,15 @@ class SetReportsPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:4'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'password.required' => 'كلمة المرور الجديدة لقسم التقارير مطلوبة.',
-            'password.min' => 'يجب ألا تقل كلمة مرور التقارير عن 8 أحرف.',
+            'password.required' => 'رمز الـ PIN الجديد مطلوب.',
+            'password.min' => 'يجب ألا يقل رمز الـ PIN عن 4 أرقام/أحرف.',
         ];
     }
 }

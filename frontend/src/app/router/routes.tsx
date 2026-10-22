@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RequireAuth, RequireRole } from './Guards';
 import { AppLayout } from './AppLayout';
-import { LoginPage } from './pages/LoginPage';
 import { CategoriesPage } from '../../features/categories/CategoriesPage';
 import { ProductsPage } from '../../features/products/ProductsPage';
 import { CustomersPage } from '../../features/customers/CustomersPage';
@@ -19,8 +18,8 @@ import { SettingsPage } from '../../features/settings/SettingsPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<LoginPage />} />
+      {/* Auto-redirect /login directly to POS */}
+      <Route path="/login" element={<Navigate to="/pos" replace />} />
 
       {/* Protected ERP Shell Routes */}
       <Route
@@ -65,11 +64,11 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Owner Settings Section */}
+        {/* Settings Section (Subject to server-side PIN gate) */}
         <Route
           path="settings"
           element={
-            <RequireRole roles={['owner']}>
+            <RequireRole roles={['owner', 'cashier']}>
               <SettingsPage />
             </RequireRole>
           }

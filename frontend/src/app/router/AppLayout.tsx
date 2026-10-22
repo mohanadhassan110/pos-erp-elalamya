@@ -4,6 +4,8 @@ import { useAuth } from '../providers/useAuth';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { formatLiveTime } from '../../utils/formatters';
+import { useToast } from '../providers/useToast';
+import { reportsApi } from '../../services/api/reportsApi';
 import {
   ShoppingCart,
   FileText,
@@ -16,7 +18,7 @@ import {
   Building2,
   BarChart3,
   Settings,
-  LogOut,
+  Lock,
   Clock,
   User as UserIcon,
   Menu,
@@ -33,10 +35,9 @@ interface NavGroup {
 }
 
 export const AppLayout: React.FC = () => {
-  const { user, isOwner, logout } = useAuth();
+  const { user, isOwner } = useAuth();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -46,13 +47,21 @@ export const AppLayout: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
+  const { showToast } = useToast();
+  const [isLocking, setIsLocking] = useState<boolean>(false);
+
+  const handleLockReports = async () => {
+    setIsLocking(true);
     try {
-      await logout();
-      navigate('/login');
+      await reportsApi.lock();
+      showToast('تم قفل التقارير وإعدادات النظام بنجاح', 'info');
+      if (window.location.pathname.startsWith('/reports') || window.location.pathname.startsWith('/settings')) {
+        navigate('/pos');
+      }
+    } catch {
+      showToast('تم قفل الجلسة', 'info');
     } finally {
-      setIsLoggingOut(false);
+      setIsLocking(false);
     }
   };
 
@@ -82,21 +91,12 @@ export const AppLayout: React.FC = () => {
       ],
     },
     {
-      heading: 'التقارير',
+      heading: 'التقارير والإدارة',
       items: [
-        { to: '/reports', label: 'التقارير والأرباح', icon: BarChart3 },
+        { to: '/reports', label: 'التقارير والأرباح 🔒', icon: BarChart3 },
+        { to: '/settings', label: 'إعدادات النظام 🔒', icon: Settings },
       ],
     },
-    ...(isOwner
-      ? [
-          {
-            heading: 'الإدارة',
-            items: [
-              { to: '/settings', label: 'إعدادات النظام', icon: Settings, isOwnerOnly: true },
-            ],
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -191,21 +191,23 @@ export const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          {/* Logout Action */}
+          {/* Lock Reports & Settings Action */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleLogout}
-            isLoading={isLoggingOut}
-            icon={<LogOut size={16} />}
+            onClick={handleLockReports}
+            isLoading={isLocking}
+            icon={<Lock size={15} style={{ color: '#FCD34D' }} />}
             style={{
-              color: '#CBD5E1',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              height: '36px',
+              color: '#F8FAFC',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              height: '34px',
+              fontSize: '12.5px',
             }}
+            title="قفل التقارير وإعدادات النظام برمز الـ PIN"
           >
-            خروج
+            قفل التقارير
           </Button>
         </div>
       </header>

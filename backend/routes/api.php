@@ -44,8 +44,8 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // Owner Settings Endpoints (Task 6 — Showroom Display Settings)
-    Route::middleware(['auth:sanctum', 'role:owner'])->prefix('settings')->group(function () {
+    // Showroom Settings Endpoints (Protected by PIN / reports.access)
+    Route::middleware(['auth:sanctum', 'reports.access'])->prefix('settings')->group(function () {
         Route::get('/showroom', [ShowroomSettingsController::class, 'show'])->name('api.v1.settings.showroom.show');
         Route::put('/showroom', [ShowroomSettingsController::class, 'update'])->name('api.v1.settings.showroom.update');
     });
@@ -133,7 +133,7 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.reports.lock');
 
             Route::post('/password', [ReportController::class, 'setPassword'])
-                ->middleware('role:owner')
+                ->middleware('role:owner,cashier')
                 ->name('api.v1.reports.password');
 
             // Protected Report Analytics (Owner or Cashier with active reports.access session)

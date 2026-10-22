@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { settingsApi, type ShowroomSettings } from '../../services/api/settingsApi';
+import { reportsApi } from '../../services/api/reportsApi';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -38,6 +39,13 @@ export const SettingsPage: React.FC = () => {
   } | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState<boolean>(true);
 
+  // PIN Gate State
+  const [isSettingsLocked, setIsSettingsLocked] = useState<boolean>(false);
+  const [unlockPin, setUnlockPin] = useState<string>('');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [isUnlocking, setIsUnlocking] = useState<boolean>(false);
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+
   // Active section tab
   const [activeTab, setActiveTab] = useState<'info' | 'password' | 'system'>('info');
 
@@ -63,9 +71,16 @@ export const SettingsPage: React.FC = () => {
         setTagline(safeData.tagline || '');
         setReturnPolicy(safeData.return_policy || '');
         setThankYouLine(safeData.thank_you_line || '');
+        setIsSettingsLocked(false);
       })
-      .catch((err) => {
-        if (active) setShowroomError(mapErrorMessage(err, 'تعذر تحميل إعدادات المعرض'));
+      .catch((err: unknown) => {
+        if (!active) return;
+        const error = err as { code?: string; message?: string };
+        if (error?.code === 'REPORTS_LOCKED') {
+          setIsSettingsLocked(true);
+        } else {
+          setShowroomError(mapErrorMessage(err, 'تعذر تحميل إعدادات المعرض'));
+        }
       })
       .finally(() => {
         if (active) setIsLoadingShowroom(false);
@@ -85,7 +100,29 @@ export const SettingsPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadTrigger]);
+
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unlockPin.trim()) return;
+
+    setIsUnlocking(true);
+    setUnlockError(null);
+
+    try {
+      await reportsApi.unlock(unlockPin.trim());
+      setIsSettingsLocked(false);
+      setUnlockPin('');
+      setIsLoadingShowroom(true);
+      setReloadTrigger((prev: number) => prev + 1);
+      showToast('تم إلغاء قفل الإعدادات بنجاح', 'success');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setUnlockError(error?.message || 'رمز الـ PIN غير صحيح، يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
 
   const handleSaveShowroom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,13 +153,13 @@ export const SettingsPage: React.FC = () => {
     e.preventDefault();
     setPasswordError(null);
 
-    if (reportsPassword.length < 8) {
-      setPasswordError('كلمة المرور يجب ألا تقل عن 8 أحرف');
+    if (reportsPassword.length < 4) {
+      setPasswordError('رمز الـ PIN يجب ألا يقل عن 4 أرقام أو أحرف');
       return;
     }
 
     if (reportsPassword !== reportsPasswordConfirm) {
-      setPasswordError('كلمتا المرور غير متطابقتين');
+      setPasswordError('رمزا الـ PIN غير متطابقين');
       return;
     }
 
@@ -132,9 +169,9 @@ export const SettingsPage: React.FC = () => {
       await settingsApi.setReportsPassword(reportsPassword);
       setReportsPassword('');
       setReportsPasswordConfirm('');
-      showToast('تم تحديث كلمة سر التقارير بنجاح', 'success');
+      showToast('تم تحديث رمز الـ PIN بنجاح', 'success');
     } catch (err: unknown) {
-      const msg = mapErrorMessage(err, 'تعذر تعيين كلمة السر');
+      const msg = mapErrorMessage(err, 'تعذر تعيين رمز الـ PIN');
       setPasswordError(msg);
       showToast(msg, 'error');
     } finally {
@@ -154,8 +191,42 @@ export const SettingsPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+      {isSettingsLocked ? (
+        <div style={{ maxWidth: '30rem', margin: '3rem auto', width: '100%' }}>
+          <Card title="إعدادات النظام مقفلة برمز PIN">
+            <form onSubmit={handleUnlockSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.6, margin: 0 }}>
+                شاشة إعدادات النظام وتغيير رمز الـ PIN مقفلة لحماية بيانات المعرض. يرجى إدخال رمز الـ PIN للمتابعة (الرمز الافتراضي: 1234).
+              </p>
+
+              {unlockError && <Alert type="error" message={unlockError} />}
+
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', marginBottom: '0.375rem' }}>
+                  رمز الـ PIN
+                </label>
+                <Input
+                  type="password"
+                  value={unlockPin}
+                  onChange={(e) => setUnlockPin(e.target.value)}
+                  placeholder="أدخل رمز الـ PIN (الافتراضي: 1234)..."
+                  disabled={isUnlocking}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <Button type="submit" variant="primary" disabled={isUnlocking || !unlockPin.trim()}>
+                  {isUnlocking ? 'جاري التحقق...' : 'إلغاء القفل ومتابعة'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      ) : (
+        <>
+          {/* Navigation Tabs */}
+          <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
         <button
           type="button"
           onClick={() => setActiveTab('info')}
@@ -195,7 +266,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <KeyRound size={18} />
-          <span>كلمة سر التقارير</span>
+          <span>رمز الـ PIN للتقارير والإعدادات</span>
         </button>
 
         <button
@@ -338,38 +409,38 @@ export const SettingsPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Tab 2: Reports Password */}
+      {/* Tab 2: Reports & Settings PIN */}
       {activeTab === 'password' && (
-        <Card title="تعيين أو تغيير كلمة سر تقارير المبيعات والأرباح">
+        <Card title="تعيين أو تغيير رمز الـ PIN لحماية التقارير والإعدادات">
           <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '32rem' }}>
             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              المالك يدخل للتقارير تلقائياً دون كلمة سر. الكاشير يحتاج إدخال كلمة السر لفتح شاشة التقارير مؤقتاً لمدة 15 دقيقة.
+              يتم استخدام رمز الـ PIN لحماية شاشات التقارير المالية والأرباح وإعدادات المعرض من الوصول غير المصرح به (الرمز الافتراضي الحالي: 1234).
             </p>
 
             {passwordError && <Alert type="error" message={passwordError} />}
 
             <Input
-              label="كلمة السر الجديدة"
+              label="رمز الـ PIN الجديد"
               type="password"
               value={reportsPassword}
               onChange={(e) => setReportsPassword(e.target.value)}
-              placeholder="••••••••"
-              helperText="يجب ألا تقل عن 8 أحرف"
+              placeholder="••••"
+              helperText="يجب ألا يقل عن 4 أرقام أو أحرف"
               required
             />
 
             <Input
-              label="تأكيد كلمة السر"
+              label="تأكيد رمز الـ PIN"
               type="password"
               value={reportsPasswordConfirm}
               onChange={(e) => setReportsPasswordConfirm(e.target.value)}
-              placeholder="••••••••"
+              placeholder="••••"
               required
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <Button type="submit" variant="primary" size="md" isLoading={isSavingPassword}>
-                تحديث كلمة سر التقارير
+                حفظ رمز الـ PIN الجديد
               </Button>
             </div>
           </form>
@@ -414,6 +485,8 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
         </Card>
+      )}
+        </>
       )}
     </div>
   );

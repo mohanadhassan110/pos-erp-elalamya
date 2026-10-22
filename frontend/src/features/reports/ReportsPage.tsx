@@ -471,23 +471,23 @@ export const ReportsPage: React.FC = () => {
 
       {isReportsLocked ? (
         <div style={{ maxWidth: '30rem', margin: '3rem auto', width: '100%' }}>
-          <Card title="قسم التقارير مقفل بكلمة مرور">
+          <Card title="قسم التقارير مقفل برمز PIN">
             <form onSubmit={handleUnlockSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.6, margin: 0 }}>
-                قسم التقارير يحتوي على مؤشرات الأداء والأرباح. يتطلب هذا القسم إدخال كلمة المرور المصرح بها لإلغاء القفل مؤقتاً.
+                قسم التقارير يحتوي على مؤشرات الأداء والأرباح. يتطلب هذا القسم إدخال رمز الـ PIN المصرح به لإلغاء القفل مؤقتاً (الرمز الافتراضي: 1234).
               </p>
 
               {unlockError && <Alert type="error" message={unlockError} />}
 
               <div>
                 <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', marginBottom: '0.375rem' }}>
-                  كلمة مرور التقارير
+                  رمز الـ PIN
                 </label>
                 <Input
                   type="password"
                   value={unlockPassword}
                   onChange={(e) => setUnlockPassword(e.target.value)}
-                  placeholder="أدخل كلمة المرور..."
+                  placeholder="أدخل رمز الـ PIN (الافتراضي: 1234)..."
                   disabled={isSubmittingUnlock}
                   autoFocus
                 />

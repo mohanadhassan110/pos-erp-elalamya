@@ -4,6 +4,12 @@ import { authApi } from '../../services/api/auth';
 import { tokenStorage } from '../../services/api/client';
 import { AuthContext, type AuthContextValue } from './authContextDef';
 
+const DEFAULT_TERMINAL_LOGIN: LoginCredentials = {
+  login: 'cashier',
+  password: 'password123',
+  device_name: 'showroom-terminal',
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(tokenStorage.get());
@@ -12,8 +18,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = useCallback(async () => {
     const currentToken = tokenStorage.get();
     if (!currentToken) {
-      setUser(null);
-      setIsLoading(false);
+      try {
+        const loginData = await authApi.login(DEFAULT_TERMINAL_LOGIN);
+        setUser(loginData.user);
+        setToken(loginData.token);
+      } catch {
+        setUser(null);
+        setToken(null);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -23,8 +37,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(currentToken);
     } catch {
       tokenStorage.clear();
-      setUser(null);
-      setToken(null);
+      try {
+        const loginData = await authApi.login(DEFAULT_TERMINAL_LOGIN);
+        setUser(loginData.user);
+        setToken(loginData.token);
+      } catch {
+        setUser(null);
+        setToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -35,22 +55,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const init = async () => {
       const currentToken = tokenStorage.get();
-      if (!currentToken) {
-        if (isMounted) {
-          setUser(null);
-          setIsLoading(false);
+      if (currentToken) {
+        try {
+          const userData = await authApi.getMe();
+          if (isMounted) {
+            setUser(userData);
+            setToken(currentToken);
+            setIsLoading(false);
+          }
+          return;
+        } catch {
+          tokenStorage.clear();
         }
-        return;
       }
 
+      // Automatically authenticate terminal without manual login page
       try {
-        const userData = await authApi.getMe();
+        const loginData = await authApi.login(DEFAULT_TERMINAL_LOGIN);
         if (isMounted) {
-          setUser(userData);
-          setToken(currentToken);
+          setUser(loginData.user);
+          setToken(loginData.token);
         }
-      } catch {
-        tokenStorage.clear();
+      } catch (err) {
+        console.error('Failed station terminal auto-login', err);
         if (isMounted) {
           setUser(null);
           setToken(null);
@@ -65,8 +92,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     void init();
 
     const handleUnauthorized = () => {
-      setUser(null);
-      setToken(null);
+      tokenStorage.clear();
+      void (async () => {
+        try {
+          const loginData = await authApi.login(DEFAULT_TERMINAL_LOGIN);
+          if (isMounted) {
+            setUser(loginData.user);
+            setToken(loginData.token);
+          }
+        } catch {
+          if (isMounted) {
+            setUser(null);
+            setToken(null);
+          }
+        }
+      })();
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -91,10 +131,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await authApi.logout();
+    } catch {
+      // Ignored
     } finally {
-      setUser(null);
-      setToken(null);
-      setIsLoading(false);
+      tokenStorage.clear();
+      try {
+        const data = await authApi.login(DEFAULT_TERMINAL_LOGIN);
+        setUser(data.user);
+        setToken(data.token);
+      } catch {
+        setUser(null);
+        setToken(null);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
